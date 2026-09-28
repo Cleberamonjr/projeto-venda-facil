@@ -54,6 +54,7 @@ declare
   v_beta integer;
   v_mrr numeric;
   v_total integer;
+  v_assinaturas jsonb;
 begin
   if not public.sou_admin_luxi() then
     raise exception 'Acesso administrativo negado';
@@ -103,7 +104,44 @@ begin
     end
   ),0) into v_mrr
   from public.assinaturas
-  where status in ('ativa','ativo');
+  where status in ('ativa','ativo')
+    and (trial_ate is null or trial_ate <= now());
+
+  select coalesce(jsonb_agg(x order by x.inicio desc), '[]'::jsonb)
+    into v_assinaturas
+  from (
+    select
+      a.id,
+      l.nome as loja,
+      a.plano,
+      a.status,
+      case
+        when a.status = 'trial' and a.trial_ate > now() then 'beta'
+        else 'pagante'
+      end as tipo,
+      coalesce(
+        (to_jsonb(a)->>'criada_em')::timestamptz,
+        (to_jsonb(l)->>'criada_em')::timestamptz,
+        (to_jsonb(a)->>'atualizada_em')::timestamptz
+      ) as inicio,
+      greatest(
+        0,
+        floor(extract(epoch from (
+          now() - coalesce(
+            (to_jsonb(a)->>'criada_em')::timestamptz,
+            (to_jsonb(l)->>'criada_em')::timestamptz,
+            (to_jsonb(a)->>'atualizada_em')::timestamptz,
+            now()
+          )
+        )) / 86400)
+      )::integer as dias_ativos,
+      (
+        a.status in ('ativa','ativo','trial')
+        and (a.status <> 'trial' or a.trial_ate is null or a.trial_ate > now())
+      ) as ativa
+    from public.assinaturas a
+    left join public.lojas l on l.id = a.loja_id
+  ) x;
 
   return jsonb_build_object(
     'lojas', v_lojas,
@@ -116,6 +154,7 @@ begin
     'beta_ativos', v_beta,
     'total', v_total,
     'mrr', v_mrr,
+    'assinaturas_detalhes', v_assinaturas,
     'inicio', (select count(*) from public.assinaturas where plano='inicio' and status in ('ativa','ativo')),
     'controle', (select count(*) from public.assinaturas where plano='controle' and status in ('ativa','ativo')),
     'crescimento', (select count(*) from public.assinaturas where plano='crescimento' and status in ('ativa','ativo')),
