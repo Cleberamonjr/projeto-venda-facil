@@ -4,7 +4,7 @@ import { VitePWA } from "vite-plugin-pwa";
 const TS = Date.now();
 export default defineConfig({
   base: "./",
-  define: { "import.meta.env.VITE_APP_VERSION": JSON.stringify("2.7.1-estavel"), "import.meta.env.VITE_SENHA_MESTRE": JSON.stringify("Chelsead10!"), "import.meta.env.VITE_BUILD_COUNT": JSON.stringify("7") },
+  define: { "import.meta.env.VITE_APP_VERSION": JSON.stringify("2.7.1-estavel"), "import.meta.env.VITE_BUILD_COUNT": JSON.stringify("7") },
   build: { minify:"terser", terserOptions:{compress:{drop_console:true}},
     rollupOptions:{output:{ entryFileNames:`assets/[name]-[hash]-${TS}.js`, chunkFileNames:`assets/[name]-[hash]-${TS}.js`, assetFileNames:`assets/[name]-[hash]-${TS}.[ext]` }}},
   plugins:[react(),VitePWA({registerType:"autoUpdate",injectRegister:null,
