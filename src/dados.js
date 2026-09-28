@@ -72,6 +72,29 @@ export const auth = {
     if (error) throw new Error(traduzErro(error.message));
     return data.user;
   },
+  async validarConviteBeta(token) {
+    const { data, error } = await sb.rpc("validar_convite_beta", { p_token: token });
+    if (error) throw new Error("Não consegui validar este convite. Tente de novo.");
+    if (!data?.email) throw new Error("Este convite é inválido, expirou ou já foi utilizado.");
+    return data;
+  },
+  async cadastrarBeta(token, email, senha) {
+    const convite = await this.validarConviteBeta(token);
+    const informado = email.trim().toLowerCase();
+    if (informado !== convite.email.toLowerCase()) {
+      throw new Error("Este link é exclusivo para o e-mail convidado.");
+    }
+    const { data, error } = await sb.auth.signUp({ email: informado, password: senha });
+    if (error) throw new Error(traduzErro(error.message));
+    if (data.session) await this.consumirConviteBeta(token);
+    return { user: data.user, confirmado: !!data.session };
+  },
+  async consumirConviteBeta(token) {
+    const { data, error } = await sb.rpc("consumir_convite_beta", { p_token: token });
+    if (error) throw new Error("Não consegui confirmar este convite.");
+    if (!data) throw new Error("Este convite não corresponde ao e-mail desta conta.");
+    return true;
+  },
   async entrar(email, senha) {
     const { data, error } = await sb.auth.signInWithPassword({
       email,

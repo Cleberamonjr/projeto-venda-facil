@@ -974,6 +974,15 @@ export default function OrganizeJewelry() {
     }
   });
   const [conviteErro, setConviteErro] = useState("");
+  const [betaToken, setBetaToken] = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).get("beta") || null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [betaEmail, setBetaEmail] = useState("");
+  const [betaErro, setBetaErro] = useState("");
   const limparConvite = () => {
     setConvite(null);
     try {
@@ -984,6 +993,17 @@ export default function OrganizeJewelry() {
       /* ambiente sem history/URL (ex.: alguns webviews) — sem problema,
          o pior caso é tentar aceitar de novo, e aceitar_convite já é
          seguro para isso (só falha, não duplica). */
+    }
+  };
+
+  const limparBeta = () => {
+    setBetaToken(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("beta");
+      window.history.replaceState({}, "", url);
+    } catch (e) {
+      /* ambiente sem history/URL */
     }
   };
 
@@ -1009,6 +1029,10 @@ export default function OrganizeJewelry() {
           const est = await recarregar();
           if (est) {
             setTela("app");
+          } else if (betaToken) {
+            await dados.auth.consumirConviteBeta(betaToken);
+            limparBeta();
+            setTela("cadastro");
           } else if (convite) {
             // Já tem sessão mas ainda não tem loja, e chegou com um
             // convite pendente na URL — tenta vincular automaticamente
@@ -1022,6 +1046,15 @@ export default function OrganizeJewelry() {
               setConviteErro(e.message || "Convite inválido ou já utilizado.");
               setTela("convite");
             }
+          }
+        } else if (betaToken) {
+          try {
+            const conviteBeta = await dados.auth.validarConviteBeta(betaToken);
+            setBetaEmail(conviteBeta.email);
+            setTela("beta");
+          } catch (e) {
+            setBetaErro(e.message || "Convite Beta inválido ou expirado.");
+            setTela("beta");
           }
         } else if (convite) {
           setTela("convite");
@@ -1306,6 +1339,36 @@ export default function OrganizeJewelry() {
       </div>
     );
 
+  if (tela === "beta")
+    return (
+      <div className="oj">
+        <style>{CSS}</style>
+        <AceitarConvite
+          betaEmail={betaEmail}
+          erroInicial={betaErro}
+          criarConta={async (email, senha) => {
+            const resultado = await dados.auth.cadastrarBeta(betaToken, email, senha);
+            setContaLogada(true);
+            return resultado.confirmado;
+          }}
+          entrarConta={async (email, senha) => {
+            await dados.auth.entrar(email, senha);
+            await dados.auth.consumirConviteBeta(betaToken);
+            setContaLogada(true);
+          }}
+          aceitar={async () => {
+            limparBeta();
+            const est = await recarregar();
+            setTela(est ? "app" : "cadastro");
+          }}
+          cancelar={() => {
+            limparBeta();
+            setBetaErro("");
+            setTela("login");
+          }}
+        />
+      </div>
+    );
   if (tela === "convite")
     return (
       <div className="oj">
@@ -2285,10 +2348,10 @@ function Login({ onMestre, voltar, onEntrar, verPlanos, irCadastro, onDemo, loja
    normal — não pergunta plano nem dados da loja, porque ela está
    entrando numa loja que já existe, não criando uma. Depois de logada
    (conta nova ou já existente), `aceitar()` vincula a esta loja. */
-function AceitarConvite({ criarConta, entrarConta, aceitar, cancelar, erroInicial }) {
+function AceitarConvite({ criarConta, entrarConta, aceitar, cancelar, erroInicial, betaEmail = "" }) {
   const [modo, setModo] = useState("criar"); // criar | entrar
   const [etapa, setEtapa] = useState("form"); // form | aguardando
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(betaEmail);
   const [senha, setSenha] = useState("");
   const [senha2, setSenha2] = useState("");
   const [processando, setProcessando] = useState(false);
@@ -2394,14 +2457,20 @@ function AceitarConvite({ criarConta, entrarConta, aceitar, cancelar, erroInicia
       {erro && <div className="oj-erro" style={{ margin: "0 0 14px" }}>{erro}</div>}
 
       <div className="oj-campo">
-        <label>E-mail</label>
+        <label>{betaEmail ? "E-mail convidado" : "E-mail"}</label>
         <input
           className="oj-in"
           value={email}
           autoCapitalize="none"
           inputMode="email"
           onChange={(e) => setEmail(e.target.value)}
+          readOnly={!!betaEmail}
         />
+        {betaEmail && (
+          <div className="oj-meta" style={{ marginTop: 6 }}>
+            Este convite só pode ser usado com este e-mail.
+          </div>
+        )}
       </div>
 
       <CampoSenha
@@ -2620,6 +2689,7 @@ function GestaoBeta() {
   const [dias, setDias] = useState("30");
   const [criando, setCriando] = useState(false);
   const [msg, setMsg] = useState("");
+  const [linkBeta, setLinkBeta] = useState("");
   const [lista, setLista] = useState([]);
   const [carregando, setCarregando] = useState(true);
 
@@ -2642,7 +2712,9 @@ function GestaoBeta() {
     setCriando(true);
     setMsg("");
     try {
-      await dados.criarAcessoBeta({ email: email.trim(), dias: Number(dias) || 30 });
+      const acesso = await dados.criarAcessoBeta({ email: email.trim(), dias: Number(dias) || 30 });
+      if (!acesso?.convite_token) throw new Error("O convite foi salvo, mas não recebi o link.");
+      setLinkBeta(`${window.location.origin}${window.location.pathname}?beta=${encodeURIComponent(acesso.convite_token)}`);
       setMsg(`✓ ${email.trim()} liberada por ${dias} dias`);
       setEmail("");
       await recarregar();
@@ -2693,6 +2765,22 @@ function GestaoBeta() {
         {msg && (
           <div className={msg.startsWith("✓") ? "oj-aviso" : "oj-erro"} style={{ margin: "6px 0" }}>
             {msg}
+          </div>
+        )}
+        {linkBeta && (
+          <div className="oj-aviso" style={{ margin: "6px 0 12px" }}>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Link do convite (copie e envie manualmente)</div>
+            <input className="oj-in" value={linkBeta} readOnly onFocus={(e) => e.target.select()} />
+            <button
+              className="oj-btn sec mini"
+              style={{ marginTop: 8 }}
+              onClick={async () => { await navigator.clipboard.writeText(linkBeta); setMsg("✓ Link copiado"); }}
+            >
+              Copiar link
+            </button>
+            <div className="oj-meta" style={{ marginTop: 8 }}>
+              Uso único e exclusivo para o e-mail liberado. Quem receber o link ainda precisará criar uma senha.
+            </div>
           </div>
         )}
         <button className="oj-btn" onClick={liberar} disabled={criando || !email.trim()}>
