@@ -120,17 +120,23 @@ begin
         else 'pagante'
       end as tipo,
       coalesce(
-        (to_jsonb(a)->>'criada_em')::timestamptz,
-        (to_jsonb(l)->>'criada_em')::timestamptz,
-        (to_jsonb(a)->>'atualizada_em')::timestamptz
+        nullif(to_jsonb(a)->>'created_at','')::timestamptz,
+        nullif(to_jsonb(a)->>'criada_em','')::timestamptz,
+        nullif(to_jsonb(l)->>'created_at','')::timestamptz,
+        nullif(to_jsonb(l)->>'criada_em','')::timestamptz,
+        nullif(to_jsonb(a)->>'updated_at','')::timestamptz,
+        nullif(to_jsonb(a)->>'atualizada_em','')::timestamptz
       ) as inicio,
       greatest(
         0,
         floor(extract(epoch from (
           now() - coalesce(
-            (to_jsonb(a)->>'criada_em')::timestamptz,
-            (to_jsonb(l)->>'criada_em')::timestamptz,
-            (to_jsonb(a)->>'atualizada_em')::timestamptz,
+            nullif(to_jsonb(a)->>'created_at','')::timestamptz,
+            nullif(to_jsonb(a)->>'criada_em','')::timestamptz,
+            nullif(to_jsonb(l)->>'created_at','')::timestamptz,
+            nullif(to_jsonb(l)->>'criada_em','')::timestamptz,
+            nullif(to_jsonb(a)->>'updated_at','')::timestamptz,
+            nullif(to_jsonb(a)->>'atualizada_em','')::timestamptz,
             now()
           )
         )) / 86400)
