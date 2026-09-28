@@ -53,6 +53,10 @@ const ENUM_PARA_TIPO_DESPESA = { fixa: "Fixa", variavel: "Variável" };
 
 /* ---------- autenticação ---------- */
 export const auth = {
+  async ehAdmin() {
+    const { data, error } = await sb.rpc("sou_admin_luxi");
+    return !error && data === true;
+  },
   async cadastrar(email, senha) {
     // BETA FECHADO: só cria conta se o e-mail estiver liberado no painel admin.
     const { data: liberado, error: eV } = await sb.rpc("email_liberado_beta", {
@@ -150,6 +154,33 @@ function comTimeout(promise, ms = 12000, oQue = "consulta") {
 export async function carregarTudo() {
   const u = await auth.usuario();
   if (!u) return null;
+
+  if (await auth.ehAdmin()) {
+    return {
+      lojaId: null,
+      perfil: {
+        nome: u.email,
+        loja: "Painel Luxi",
+        fornecedores: [],
+        margem: "100",
+        fiado: false,
+        papel: "dona",
+        plano: "joalheria",
+        assinado: true,
+        mestre: true,
+        admin: true,
+      },
+      assinantes: {},
+      entradas: [],
+      estoque: [],
+      consultoras: [],
+      vendas: [],
+      clientes: [],
+      maletas: [],
+      despesas: [],
+      colecoes: [],
+    };
+  }
 
   // 1) é dona de alguma loja?
   let { data: loja } = await sb
@@ -691,37 +722,9 @@ export async function migrarDoLocalStorage(lojaId) {
 
 /* ---------- Dados reais do admin (só acessível com service role via RPC) ---------- */
 export async function carregarDadosAdmin() {
-  // Busca contagem real de assinantes por plano direto do banco
-  const [assin, erros] = await Promise.all([
-    sb.from("assinaturas")
-      .select("plano, status, trial_ate, inadimplente")
-      .then(({ data }) => data || []),
-    sb.from("app_config")
-      .select("erros_json")
-      .maybeSingle()
-      .then(({ data }) => data?.erros_json || []),
-  ]);
-
-  const contar = (plano, status) =>
-    assin.filter((a) => a.plano === plano && a.status === status).length;
-
-  const agora = new Date();
-  const trial = assin.filter(
-    (a) => a.status === "trial" && new Date(a.trial_ate) > agora
-  ).length;
-
-  return {
-    inicio:       contar("inicio", "ativo"),
-    controle:     contar("controle", "ativo"),
-    crescimento:  contar("crescimento", "ativo"),
-    joalheria:    contar("joalheria", "ativo"),
-    inteligencia: contar("inteligencia", "ativo"),
-    livre:        assin.filter((a) => a.plano === "livre").length,
-    trial,
-    inadimplentes: assin.filter((a) => a.inadimplente).length,
-    total: assin.filter((a) => a.status === "ativo").length,
-    erros: Array.isArray(erros) ? erros : [],
-  };
+  const { data, error } = await sb.rpc("dados_admin_luxi");
+  if (error) throw new Error(error.message || "Não consegui carregar os dados administrativos.");
+  return data || {};
 }
 
 /* ---------- Acessos beta (plano grátis por tempo determinado) ---------- */
