@@ -2523,7 +2523,31 @@ function Admin({ d }) {
       <div className="oj-card">
         <div className="oj-lbl">Painel administrativo — dados reais</div>
         <div className="oj-valor ouro">{brl(mrr)}</div>
-        <div className="oj-meta">{total} assinatura(s) ativa(s) · faturamento recorrente estimado pelos planos atuais</div>
+        <div className="oj-meta">{total} assinatura(s) ativas · MRR calculado somente sobre assinaturas ativas fora do período de Beta/trial.</div>
+      </div>
+      <div className="oj-sec">Assinaturas ativas</div>
+      <div className="oj-card">
+        {(dadosAdmin.assinaturas_detalhes || []).filter((a) => a.ativa).length === 0 ? (
+          <div className="oj-meta">Nenhuma assinatura ativa no banco.</div>
+        ) : (
+          (dadosAdmin.assinaturas_detalhes || []).filter((a) => a.ativa).map((a) => (
+            <div className="oj-item" key={a.id}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="oj-nome">{a.loja || "Loja sem nome"}</div>
+                <div className="oj-meta">
+                  {a.tipo === "beta" ? "Beta" : "Pagante"} · {a.plano || "sem plano"} ·
+                  desde {a.inicio ? new Date(a.inicio).toLocaleDateString("pt-BR") : "—"}
+                </div>
+              </div>
+              <div className="oj-dir">
+                <div className="oj-preco">{a.dias_ativos} dias</div>
+                <span className={"oj-tag " + (a.tipo === "beta" ? "estoque" : "ok")}>
+                  {a.tipo === "beta" ? "beta" : "ativa"}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <div className="oj-grid2">
