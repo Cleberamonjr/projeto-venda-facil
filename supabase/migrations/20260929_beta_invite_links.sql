@@ -1,6 +1,7 @@
 -- One-time Beta invite links bound to the exact invited email.
 alter table public.acessos_beta add column if not exists convite_token text;
 create unique index if not exists acessos_beta_convite_token_uidx on public.acessos_beta (convite_token) where convite_token is not null;
+update public.acessos_beta set convite_token = replace(gen_random_uuid()::text,'-','') where convite_token is null;
 
 create or replace function public.liberar_beta(p_email text, p_dias integer default 30, p_plano text default 'crescimento', p_obs text default null)
 returns jsonb language plpgsql security definer set search_path = public as $$

@@ -2734,6 +2734,18 @@ function GestaoBeta() {
     }
   };
 
+  const linkDoAcesso = (acesso) => acesso?.convite_token
+    ? `${window.location.origin}${window.location.pathname}?beta=${encodeURIComponent(acesso.convite_token)}`
+    : "";
+  const copiarLink = async (link) => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setMsg("✓ Link copiado");
+    } catch (e) {
+      setMsg("Selecione o link e copie manualmente.");
+    }
+  };
+
   const ativos = lista.filter((a) => a.ativo && new Date(a.expira_em) > new Date());
 
   return (
@@ -2798,13 +2810,38 @@ function GestaoBeta() {
           lista.map((a) => {
             const ativa = a.ativo && new Date(a.expira_em) > new Date();
             return (
-              <div key={a.id || a.email} className="oj-item">
+              <div key={a.id || a.email} className="oj-item" style={{ alignItems: "flex-start" }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="oj-nome">{a.email}</div>
                   <div className="oj-meta">
                     {a.obs ? a.obs + " · " : ""}
                     expira {new Date(a.expira_em).toLocaleDateString("pt-BR")}
                   </div>
+                  {linkDoAcesso(a) ? (
+                    <div style={{ marginTop: 9 }}>
+                      <div className="oj-meta" style={{ marginBottom: 5, fontWeight: 600 }}>
+                        Link individual do Beta
+                      </div>
+                      <input
+                        className="oj-in"
+                        value={linkDoAcesso(a)}
+                        readOnly
+                        onFocus={(e) => e.target.select()}
+                        aria-label={`Link Beta de ${a.email}`}
+                      />
+                      <button
+                        className="oj-btn sec mini"
+                        style={{ marginTop: 6 }}
+                        onClick={() => copiarLink(linkDoAcesso(a))}
+                      >
+                        Copiar link para reenviar
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="oj-meta" style={{ marginTop: 8 }}>
+                      Link ainda não disponível. Libere novamente para gerar um.
+                    </div>
+                  )}
                 </div>
                 <div
                   className="oj-tag"
