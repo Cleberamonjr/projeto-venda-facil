@@ -2618,7 +2618,6 @@ function Admin({ d }) {
 function GestaoBeta() {
   const [email, setEmail] = useState("");
   const [dias, setDias] = useState("30");
-  const [obs, setObs] = useState("");
   const [criando, setCriando] = useState(false);
   const [msg, setMsg] = useState("");
   const [lista, setLista] = useState([]);
@@ -2643,10 +2642,9 @@ function GestaoBeta() {
     setCriando(true);
     setMsg("");
     try {
-      await dados.criarAcessoBeta({ email: email.trim(), dias: Number(dias) || 30, obs: obs.trim() });
+      await dados.criarAcessoBeta({ email: email.trim(), dias: Number(dias) || 30 });
       setMsg(`✓ ${email.trim()} liberada por ${dias} dias`);
       setEmail("");
-      setObs("");
       await recarregar();
     } catch (e) {
       setMsg("Erro: " + (e.message || "tente de novo"));
@@ -2681,8 +2679,7 @@ function GestaoBeta() {
             placeholder="cliente@email.com"
           />
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <div className="oj-campo" style={{ flex: 1 }}>
+        <div className="oj-campo">
             <label>Dias de acesso</label>
             <input
               className="oj-in"
@@ -2692,16 +2689,6 @@ function GestaoBeta() {
               value={dias}
               onChange={(e) => setDias(e.target.value)}
             />
-          </div>
-          <div className="oj-campo" style={{ flex: 2 }}>
-            <label>Quem é (opcional)</label>
-            <input
-              className="oj-in"
-              value={obs}
-              onChange={(e) => setObs(e.target.value)}
-              placeholder="Ex: Maria, indicação da Ana"
-            />
-          </div>
         </div>
         {msg && (
           <div className={msg.startsWith("✓") ? "oj-aviso" : "oj-erro"} style={{ margin: "6px 0" }}>
