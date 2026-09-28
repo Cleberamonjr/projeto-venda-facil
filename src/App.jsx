@@ -2497,130 +2497,92 @@ function Vitrine({ voltar }) {
 
 /* ---------------- painel do administrador ---------------- */
 function Admin({ d }) {
-  /* Em produção estes números vêm do Supabase: contagem de assinaturas ativas
-     por plano, cruzada com o status do gateway de pagamento. */
-  const base = d.assinantes || { controle: 0, crescimento: 0, joalheria: 0, livre: 0, inadimplentes: 0, trial: 0 };
+  const [dadosAdmin, setDadosAdmin] = useState(null);
+  const [erroAdmin, setErroAdmin] = useState("");
+  useEffect(() => {
+    let vivo = true;
+    dados.carregarDadosAdmin()
+      .then((x) => { if (vivo) setDadosAdmin(x); })
+      .catch((err) => { if (vivo) setErroAdmin(err.message || "Erro ao carregar painel."); });
+    return () => { vivo = false; };
+  }, []);
+
+  if (erroAdmin) return <div className="oj-erro">{erroAdmin}</div>;
+  if (!dadosAdmin) return <div className="oj-card"><div className="oj-meta">Carregando dados reais…</div></div>;
+
+  const total = Number(dadosAdmin.total || 0);
+  const mrr = Number(dadosAdmin.mrr || 0);
   const linhas = PLANOS.map((p) => ({
     ...p,
-    qtd: base[p.id] || 0,
-    receita: (base[p.id] || 0) * p.valor,
+    qtd: Number(dadosAdmin[p.id] || 0),
+    receita: Number(dadosAdmin[p.id] || 0) * p.valor,
   }));
-  const total = linhas.reduce((s, l) => s + l.qtd, 0);
-  const mrr = linhas.reduce((s, l) => s + l.receita, 0);
-
-  /* custos da operacao Luxi, estimados */
-  const custoIA = total * 1.2;      // media de leituras por assinante
-  const infra = 135;                 // Supabase Pro + dominio
-  const gateway = mrr * 0.02;
-  const custoTotal = custoIA + infra + gateway;
-  const lucro = mrr - custoTotal;
-  const previsto = mrr + base.trial * 0.35 * (mrr / (total || 1));
 
   return (
     <>
-      <div className="oj-card" style={{ borderColor: lucro >= 0 ? "var(--verde)" : "var(--alerta)" }}>
-        <div className="oj-lbl">Resultado da Luxi neste mês</div>
-        <div
-          className="oj-valor"
-          style={{ color: lucro >= 0 ? "var(--verde)" : "var(--alerta)" }}
-        >
-          {brl(lucro)}
-        </div>
-        <div className="oj-meta" style={{ marginTop: 8, lineHeight: 1.6 }}>
-          {lucro >= 0
-            ? `Você está no azul. A receita de ${brl(mrr)} cobre os ${brl(custoTotal)} de custo — leitura de romaneio, infraestrutura e taxa do gateway.`
-            : `Você está no vermelho. ${brl(mrr)} de receita para ${brl(custoTotal)} de custo. O maior peso é ${custoIA > infra ? "a leitura de romaneio: reveja as cotas dos planos baixos" : "a infraestrutura fixa: ela só se paga com mais assinantes"}.`}
-        </div>
-        <div style={{ marginTop: 12, borderTop: "1px solid var(--linha)", paddingTop: 10 }}>
-          {[
-            ["Leitura de romaneio", custoIA],
-            ["Infraestrutura", infra],
-            ["Taxa do gateway", gateway],
-          ].map(([r, v]) => (
-            <div className="oj-uso" key={r} style={{ marginBottom: 5 }}>
-              <span>{r}</span>
-              <b style={{ marginLeft: "auto" }}>− {brl(v)}</b>
-            </div>
-          ))}
-        </div>
+      <div className="oj-card">
+        <div className="oj-lbl">Painel administrativo — dados reais</div>
+        <div className="oj-valor ouro">{brl(mrr)}</div>
+        <div className="oj-meta">{total} assinatura(s) ativa(s) · faturamento recorrente estimado pelos planos atuais</div>
       </div>
 
       <div className="oj-grid2">
         <div className="oj-card flat">
-          <div className="oj-lbl">Previsão do mês que vem</div>
-          <div className="oj-valor" style={{ fontSize: 24, color: "var(--marinho)" }}>
-            {brl(previsto)}
-          </div>
-          <div className="oj-meta">
-            considera 35% dos {base.trial} em teste convertendo
-          </div>
+          <div className="oj-lbl">Lojas</div>
+          <div className="oj-valor">{dadosAdmin.lojas || 0}</div>
+          <div className="oj-meta">{dadosAdmin.lojas_ativas || 0} ativa(s)</div>
         </div>
         <div className="oj-card flat">
-          <div className="oj-lbl">Em risco</div>
-          <div className="oj-valor rose" style={{ fontSize: 24 }}>
-            {brl(base.inadimplentes * (total ? mrr / total : 0))}
-          </div>
-          <div className="oj-meta">{base.inadimplentes} inadimplente(s)</div>
+          <div className="oj-lbl">Clientes cadastradas</div>
+          <div className="oj-valor">{dadosAdmin.clientes || 0}</div>
+          <div className="oj-meta">dados reais do banco</div>
+        </div>
+        <div className="oj-card flat">
+          <div className="oj-lbl">Estoque</div>
+          <div className="oj-valor">{dadosAdmin.estoque || 0}</div>
+          <div className="oj-meta">peças não arquivadas</div>
+        </div>
+        <div className="oj-card flat">
+          <div className="oj-lbl">Beta / trial</div>
+          <div className="oj-valor">{dadosAdmin.trial || 0}</div>
+          <div className="oj-meta">acessos temporários ativos</div>
         </div>
       </div>
 
       <div className="oj-card">
-        <div className="oj-lbl">Receita recorrente mensal</div>
-        <div className="oj-valor ouro">{brl(mrr)}</div>
-        <div className="oj-meta" style={{ marginTop: 6 }}>
-          {total} assinante(s) pagante(s) · ticket médio{" "}
-          {brl(total ? mrr / total : 0)}
-        </div>
+        <div className="oj-lbl">Faturamento de vendas no mês</div>
+        <div className="oj-valor">{brl(dadosAdmin.vendas_mes || 0)}</div>
       </div>
 
       <div className="oj-grid2">
         <div className="oj-card flat">
-          <div className="oj-lbl">Em teste agora</div>
-          <div className="oj-valor" style={{ fontSize: 26 }}>{base.trial}</div>
-          <div className="oj-meta">janela de 72h</div>
+          <div className="oj-lbl">Inadimplentes</div>
+          <div className="oj-valor rose">{dadosAdmin.inadimplentes || 0}</div>
         </div>
         <div className="oj-card flat">
-          <div className="oj-lbl">Inadimplentes</div>
-          <div className="oj-valor rose" style={{ fontSize: 26 }}>
-            {base.inadimplentes}
-          </div>
-          <div className="oj-meta">acesso bloqueado</div>
+          <div className="oj-lbl">Convites Beta</div>
+          <div className="oj-valor">{dadosAdmin.beta_ativos || 0}</div>
         </div>
       </div>
 
-      <div className="oj-sec">Assinantes por plano</div>
+      <div className="oj-sec">Assinaturas por plano</div>
       <div className="oj-card">
         {linhas.map((l) => (
           <div key={l.id} style={{ marginBottom: 14 }}>
             <div className="oj-uso">
-              <span>
-                {l.nome} · R$ {l.preco}
-              </span>
+              <span>{l.nome} · R$ {l.preco}</span>
               <b style={{ marginLeft: "auto" }}>{l.qtd}</b>
             </div>
             <div className="oj-barra">
               <i style={{ width: (total ? (l.qtd / total) * 100 : 0) + "%" }} />
             </div>
-            <div className="oj-meta" style={{ marginTop: 4 }}>
-              {brl(l.receita)} por mês
-            </div>
+            <div className="oj-meta" style={{ marginTop: 4 }}>{brl(l.receita)} por mês</div>
           </div>
         ))}
-        <div className="oj-item">
-          <div>
-            <div className="oj-nome">Livre</div>
-            <div className="oj-meta">não pagantes, até 10 códigos</div>
-          </div>
-          <div className="oj-dir">
-            <div className="oj-preco">{base.livre}</div>
-          </div>
-        </div>
       </div>
 
       <div className="oj-aviso">
-        Estes números são de demonstração. Em produção eles vêm da tabela de assinaturas
-        no Supabase, atualizada pelo webhook do gateway a cada cobrança aprovada,
-        recusada ou cancelada.
+        Este painel não usa dados de demonstração. As métricas acima vêm da função administrativa do Supabase.
       </div>
 
       <GestaoBeta />
