@@ -1376,8 +1376,8 @@ export default function OrganizeJewelry() {
             setTela("app");
           }}
           onMestre={async () => {
-            await salvar(dadosDemo());
-            setTela("app");
+            const est = await recarregar();
+            setTela(est ? "app" : "login");
           }}
           voltar={() => setTela("login")}
         />
@@ -1396,8 +1396,8 @@ export default function OrganizeJewelry() {
             setTela(est ? "app" : "cadastro");
           }}
           onMestre={async () => {
-            await salvar(dadosDemo());
-            setTela("app");
+            const est = await recarregar();
+            setTela(est ? "app" : "login");
           }}
           onDemo={async () => {
             await salvar(dadosDemoCliente());
@@ -2089,17 +2089,17 @@ function TourDemo({ onSair, irPara }) {
 /* Acesso do dono da Luxi. A senha real vem de variável de ambiente em produção;
    o fallback só existe para o ambiente de desenvolvimento. O acesso não é mais
    exposto por botão — abre por combinação de toques no rodapé (ver Login). */
-const MESTRE = {
-  usuarios: ["mestre", "admin"],
-  senhas: [import.meta.env.VITE_SENHA_MESTRE || "__dev__"],
-};
+const ADMIN_EMAILS = [
+  "cleberamjr@gmail.com",
+  "clebeamonjr@gmail.com",
+  "clebernjr@outlook.com",
+];
 
 function Login({ onMestre, voltar, onEntrar, verPlanos, irCadastro, onDemo, loja, logo }) {
   const [u, setU] = useState("");
   const [se, setSe] = useState("");
   const [erro, setErro] = useState("");
   const [mestreVisivel, setMestreVisivel] = useState(false);
-  const [senhaMestre, setSenhaMestre] = useState("");
   const [entrando, setEntrando] = useState(false);
 
   // Rate limiting no cliente: bloqueia após 5 tentativas por 60s.
@@ -2258,7 +2258,8 @@ function Login({ onMestre, voltar, onEntrar, verPlanos, irCadastro, onDemo, loja
             </button>
           )}
 
-          {/* Acesso do dono: toque 5x no ponto. Sem botão visível. */}
+          {/* Atalho discreto: cinco toques apenas preenchem o e-mail administrativo.
+              A autenticação continua sendo feita pelo Supabase Auth. */}
           <div
             style={{ marginTop: 18, textAlign: "center" }}
             onClick={() => {
@@ -2266,41 +2267,13 @@ function Login({ onMestre, voltar, onEntrar, verPlanos, irCadastro, onDemo, loja
               window.__mk = n;
               if (n >= 5) {
                 window.__mk = 0;
-                setMestreVisivel(true);
+                setU(ADMIN_EMAILS[0]);
+                setErro("E-mail administrativo preenchido. Entre com sua senha normal.");
               }
             }}
           >
             <span style={{ color: "var(--linha)", fontSize: 18, cursor: "default" }}>·</span>
           </div>
-
-          {mestreVisivel && (
-            <div style={{ marginTop: 8 }}>
-              <div className="oj-campo">
-                <label>Senha do administrador</label>
-                <input
-                  className="oj-in"
-                  type="password"
-                  value={senhaMestre}
-                  onChange={(e) => setSenhaMestre(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      if (MESTRE.senhas.includes(senhaMestre.trim())) onMestre();
-                      else setErro("Senha do administrador incorreta.");
-                    }
-                  }}
-                />
-              </div>
-              <button
-                className="oj-btn sec"
-                onClick={() => {
-                  if (MESTRE.senhas.includes(senhaMestre.trim())) onMestre();
-                  else setErro("Senha do administrador incorreta.");
-                }}
-              >
-                Entrar como administrador
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </>
