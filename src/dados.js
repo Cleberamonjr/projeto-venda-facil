@@ -148,11 +148,21 @@ export async function criarLoja({ nome, fornecedores, formas, margem, plano, don
     .single();
   if (error) throw error;
 
+  // Cliente beta recebe os dias que foram liberados no painel admin;
+  // quem não é beta segue com o teste padrão de 72h.
+  let trialAte = new Date(Date.now() + 72 * 3600 * 1000).toISOString();
+  try {
+    const { data: beta } = await sb.rpc("meu_acesso_beta");
+    if (beta?.expira_em) trialAte = beta.expira_em;
+  } catch (e) {
+    /* se a consulta falhar, mantém o teste padrão — nunca impede a criação da loja */
+  }
+
   await sb.from("assinaturas").insert({
     loja_id: loja.id,
     plano,
     status: "trial",
-    trial_ate: new Date(Date.now() + 72 * 3600 * 1000).toISOString(),
+    trial_ate: trialAte,
   });
 
   await sb.from("consultoras").insert({
@@ -771,4 +781,14 @@ export async function revogarBeta(email) {
 export async function listarAcessosBeta() {
   const { data } = await sb.from("acessos_beta").select("*").order("criado_em", { ascending: false });
   return data || [];
+}
+
+/* ---------- prazo do beta da própria cliente (para os textos da tela) ---------- */
+export async function meuAcessoBeta() {
+  try {
+    const { data, error } = await sb.rpc("meu_acesso_beta");
+    return error ? null : data || null;
+  } catch (e) {
+    return null;
+  }
 }

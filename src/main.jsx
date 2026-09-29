@@ -15,14 +15,16 @@ class ErroBoundary extends React.Component {
       const stack = String((this.state.info && this.state.info.componentStack) || (this.state.erro && this.state.erro.stack) || "").slice(0, 600);
       return React.createElement("div", { style:{ padding:"48px 24px", fontFamily:"'Helvetica Neue', Arial, sans-serif", maxWidth:520, margin:"0 auto" }},
         React.createElement("div", { style:{ fontSize:40, marginBottom:12, textAlign:"center" }}, "🌸"),
-        React.createElement("h1", { style:{ fontSize:20, color:"#A56B77", marginBottom:8, textAlign:"center" }}, "Ops, algo travou"),
-        React.createElement("p", { style:{ color:"#9A8A90", fontSize:13, lineHeight:1.6, marginBottom:16, textAlign:"center" }},
-          "Seus dados estão salvos. Detalhe técnico abaixo:"),
-        React.createElement("div", { style:{ background:"#FDF2F4", border:"1px solid #EDD", borderRadius:10, padding:"12px 14px", marginBottom:18, fontSize:12, color:"#A8562F", fontFamily:"monospace", wordBreak:"break-word", whiteSpace:"pre-wrap", lineHeight:1.5 }},
-          "ERRO: " + msg + "\n\n" + stack),
+        React.createElement("h1", { style:{ fontSize:20, color:"#8B505C", marginBottom:8, textAlign:"center" }}, "Ops, algo travou"),
+        React.createElement("p", { style:{ color:"#746569", fontSize:14, lineHeight:1.6, marginBottom:18, textAlign:"center" }},
+          "Seus dados estão salvos. É só recarregar — se acontecer de novo, fale com a gente."),
+        React.createElement("details", { style:{ marginBottom:20, fontSize:12, color:"#746569" }},
+          React.createElement("summary", { style:{ cursor:"pointer", textAlign:"center", padding:8 }}, "Detalhes técnicos (para o suporte)"),
+          React.createElement("div", { style:{ background:"#FDF2F4", border:"1px solid #EDD", borderRadius:10, padding:"12px 14px", marginTop:8, color:"#A8562F", fontFamily:"monospace", wordBreak:"break-word", whiteSpace:"pre-wrap", lineHeight:1.5 }},
+            msg + "\n\n" + stack)),
         React.createElement("button", {
           onClick: () => { try{ if('caches' in window){ caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))); } }catch(_){} window.location.reload(); },
-          style:{ background:"#C48A94", color:"#fff", border:"none", borderRadius:12, padding:"14px 28px", fontSize:15, cursor:"pointer", fontFamily:"inherit", display:"block", margin:"0 auto" }
+          style:{ background:"#A0606D", color:"#fff", border:"none", borderRadius:12, padding:"14px 28px", fontSize:15, cursor:"pointer", fontFamily:"inherit", display:"block", margin:"0 auto" }
         }, "Recarregar")
       );
     }

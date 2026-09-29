@@ -25,7 +25,10 @@ const CSS = `
   --marinho:#1E3358;
   --marinho-cl:#E7ECF5;
   --tinta:#3A2F35;
-  --tinta-cl:#9A8A90;
+  --tinta-cl:#746569;
+  /* botão principal: rosé mais fundo para o texto branco ser legível (≥ 4.5:1) */
+  --rose-btn:#A0606D;
+  --rose-btn-h:#8B505C;
   --verde:#4E7C5B;
   --alerta:#A8562F;
   --roxo:#8A6E80;
@@ -129,7 +132,7 @@ const CSS = `
 .oj-link-sutil{
   display:block; width:100%; margin-top:14px; padding:8px;
   background:none; border:none; cursor:pointer;
-  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:13px; color:var(--rose-esc);
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:13px; color:var(--rose-btn-h);
   text-align:center; letter-spacing:.01em;
 }
 .oj-link-sutil:hover{text-decoration:underline}
@@ -137,7 +140,7 @@ const CSS = `
 .oj-senha-wrap .oj-in{padding-right:46px;width:100%}
 .oj-senha-olho{
   position:absolute; right:6px; top:50%; transform:translateY(-50%);
-  width:36px; height:36px; display:flex; align-items:center; justify-content:center;
+  width:40px; height:40px; display:flex; align-items:center; justify-content:center;
   background:none; border:none; cursor:pointer; color:var(--tinta-cl);
   border-radius:8px; transition:color .15s;
 }
@@ -165,7 +168,7 @@ const CSS = `
 /* botão Vender — ação principal, sempre à mão */
 .oj-vender-btn{
   margin-left:auto;display:inline-flex;align-items:center;gap:6px;
-  background:var(--rose);color:#fff;border:none;border-radius:100px;
+  background:var(--rose-btn);color:#fff;border:none;border-radius:100px;
   padding:9px 18px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;
   box-shadow:0 4px 14px -4px rgba(196,138,148,.6);transition:all .18s;flex-shrink:0;
 }
@@ -173,7 +176,7 @@ const CSS = `
 .oj-vender-btn:active{transform:scale(.97)}
 .oj-vender-btn svg{width:16px;height:16px;stroke:#fff;stroke-width:2.4;fill:none;stroke-linecap:round}
 .oj-nome-marca{font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:34px;font-weight:500;line-height:1;letter-spacing:.03em;color:var(--rose-esc)}
-.oj-loja{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tinta-cl);margin-top:3px}
+.oj-loja{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--tinta-cl);margin-top:3px}
 .oj-marca b{color:var(--dourado);font-weight:600}
 .oj-h1{font-size:29px;line-height:1.08;margin:12px 0 0;font-weight:600}
 .oj-sub{font-size:13px;color:var(--tinta-cl);margin-top:3px}
@@ -181,7 +184,7 @@ const CSS = `
 /* cartões */
 .oj-card{background:#fff;border:1px solid var(--linha);border-radius:16px;padding:16px;margin:12px 20px}
 .oj-card.flat{background:var(--bege-2);border-color:transparent}
-.oj-lbl{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--tinta-cl);font-weight:500}
+.oj-lbl{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--tinta-cl);font-weight:500}
 .oj-valor{font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:34px;font-weight:600;line-height:1;margin-top:6px}
 .oj-valor.ouro{color:var(--dourado)}
 .oj-valor.rose{color:var(--rose-esc)}
@@ -196,7 +199,7 @@ const CSS = `
 .oj-metrica.destaque{background:linear-gradient(160deg,#fff,#FCF6F7);border-color:var(--rose-cl)}
 .oj-metrica-top{display:flex;align-items:center;gap:7px;margin-bottom:9px}
 .oj-mi{width:16px;height:16px;flex-shrink:0;stroke:var(--rose);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.oj-metrica-lbl{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--tinta-cl);font-weight:600}
+.oj-metrica-lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--tinta-cl);font-weight:600}
 .oj-metrica-val{font-size:21px;font-weight:700;line-height:1.05;color:var(--tinta);letter-spacing:-.01em}
 .oj-metrica-val.pos{color:#2D6A4A}
 .oj-metrica-val.neg{color:var(--rose-esc)}
@@ -208,20 +211,20 @@ const CSS = `
 /* controles */
 .oj-btn{
   width:100%;border:none;border-radius:12px;padding:14px;font-family:inherit;
-  font-size:15px;font-weight:500;background:var(--rose);color:#fff;cursor:pointer;
+  font-size:15px;font-weight:500;background:var(--rose-btn);color:#fff;cursor:pointer;
   transition:background .15s;
 }
-.oj-btn:hover{background:var(--rose-esc)}
+.oj-btn:hover{background:var(--rose-btn-h)}
 .oj-btn:disabled{background:var(--linha);color:var(--tinta-cl);cursor:not-allowed}
 .oj-btn.sec{background:transparent;color:var(--rose-esc);border:1px solid var(--rose)}
 .oj-btn.sec:hover{background:var(--rose-cl)}
-.oj-btn.mini{width:auto;padding:8px 14px;font-size:13px;border-radius:9px}
+.oj-btn.mini{width:auto;padding:10px 16px;font-size:13px;border-radius:9px}
 .oj-btn.perigo{background:transparent;color:var(--alerta);border:1px solid var(--alerta)}
 .oj-btn.perigo:hover{background:#F7E9E2}
 
 .oj-in{
   width:100%;border:1px solid var(--linha);border-radius:10px;padding:12px;
-  font-family:inherit;font-size:15px;background:#fff;color:var(--tinta);margin-top:6px;
+  font-family:inherit;font-size:16px;background:#fff;color:var(--tinta);margin-top:6px;
 }
 .oj-in:focus{outline:2px solid var(--rose);outline-offset:1px;border-color:transparent}
 .oj-campo{margin-bottom:14px}
@@ -229,10 +232,10 @@ const CSS = `
 
 .oj-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
 .oj-chip{
-  border:1px solid var(--linha);background:#fff;border-radius:999px;padding:7px 13px;
-  font-family:inherit;font-size:12.5px;color:var(--tinta-cl);cursor:pointer;
+  border:1px solid var(--linha);background:#fff;border-radius:999px;padding:9px 14px;
+  font-family:inherit;font-size:13px;color:var(--tinta-cl);cursor:pointer;
 }
-.oj-chip[data-on="1"]{background:var(--rose-cl);border-color:var(--rose);color:var(--rose-esc);font-weight:500}
+.oj-chip[data-on="1"]{background:var(--rose-cl);border-color:var(--rose);color:var(--rose-btn-h);font-weight:500}
 
 /* listas */
 .oj-item{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--linha)}
@@ -368,7 +371,7 @@ const CSS = `
 }
 .oj-atalho-ico{width:15px;height:15px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .oj-atalho:hover{border-color:var(--rose);color:var(--rose-esc)}
-.oj-atalho[data-on="1"]{background:var(--rose);border-color:var(--rose);color:#fff}
+.oj-atalho[data-on="1"]{background:var(--rose-btn);border-color:var(--rose-btn);color:#fff}
 /* responsividade — telas pequenas */
 @media (max-width:400px){
   .oj-h1{font-size:24px}
@@ -707,6 +710,10 @@ const PRECO_LEITURA_AVULSA = 0.9;
    Cole aqui o link de cada plano gerado no painel da Yampi:
    Vendas > Link de Pagamento > +Novo Link.
    Deixe "" enquanto não tiver o link — o app mostra instrução de contato. */
+/* WhatsApp de contato/suporte, só com números: DDI+DDD+número (ex.: "5511912345678").
+   Enquanto estiver vazio, o app não promete atendimento por WhatsApp. */
+const WHATSAPP_SUPORTE = "";
+
 const LINKS_PAGAMENTO = {
   inicio: "",       // Essencial R$ 39,90
   controle: "",     // Revendedora R$ 69,90
@@ -937,6 +944,55 @@ export default function OrganizeJewelry() {
     await instalavel.userChoice;
     setInstalavel(null);
   };
+
+  // Comportamentos de usabilidade globais (valem para todas as telas e modais):
+  //  • Esc fecha o modal aberto
+  //  • a página de trás não rola enquanto há um modal aberto
+  //  • campos numéricos abrem já selecionados (some o "0" pré-preenchido)
+  //  • cada rótulo fica ligado ao seu campo (tocar no rótulo foca o campo; leitor de tela lê)
+  useEffect(() => {
+    let n = 0;
+    let agendado = false;
+    const ajustar = () => {
+      agendado = false;
+      document.body.style.overflow = document.querySelector(".oj-fundo") ? "hidden" : "";
+      document.querySelectorAll(".oj-campo").forEach((c) => {
+        const l = c.querySelector(":scope > label");
+        const el = c.querySelector("input,select,textarea");
+        if (!l || !el || el.getAttribute("aria-label")) return;
+        if (!el.id) el.id = "campo-" + ++n;
+        if (!l.htmlFor) l.htmlFor = el.id;
+      });
+    };
+    const obs = new MutationObserver(() => {
+      if (!agendado) {
+        agendado = true;
+        requestAnimationFrame(ajustar);
+      }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+    ajustar();
+    const teclas = (e) => {
+      if (e.key !== "Escape") return;
+      const fundos = document.querySelectorAll(".oj-fundo");
+      if (fundos.length) fundos[fundos.length - 1].click();
+    };
+    const foco = (e) => {
+      const t = e.target;
+      if (t && t.tagName === "INPUT" && t.type === "number")
+        setTimeout(() => {
+          try { t.select(); } catch (_) { /* ignora */ }
+        }, 0);
+    };
+    document.addEventListener("keydown", teclas);
+    document.addEventListener("focusin", foco);
+    return () => {
+      obs.disconnect();
+      document.removeEventListener("keydown", teclas);
+      document.removeEventListener("focusin", foco);
+      document.body.style.overflow = "";
+    };
+  }, []);
   const [tela, setTela] = useState("login"); // login | app | vendas | cadastro
   const [aba, setAba] = useState("painel");
   const [fescala, setFescala] = useState(() => {
@@ -1021,9 +1077,15 @@ export default function OrganizeJewelry() {
   };
 
   useEffect(() => {
+    // Rede de segurança: com internet lenta ou instável, o app NUNCA fica preso
+    // em "Abrindo sua loja…". Passados 10s, libera a tela (login) em vez de travar.
+    const travaSeguranca = setTimeout(() => setCarregando(false), 10000);
     (async () => {
       try {
-        const u = await dados.auth.usuario();
+        const u = await Promise.race([
+          dados.auth.usuario(),
+          new Promise((resolve) => setTimeout(() => resolve(null), 8000)),
+        ]);
         if (u) {
           setContaLogada(true);
           const est = await recarregar();
@@ -1062,6 +1124,7 @@ export default function OrganizeJewelry() {
       } catch (e) {
         console.error("Falha ao carregar loja", e);
       }
+      clearTimeout(travaSeguranca);
       setCarregando(false);
     })();
     const t1 = setTimeout(() => setSaindo(true), 3900);
@@ -1069,6 +1132,7 @@ export default function OrganizeJewelry() {
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(travaSeguranca);
     };
   }, []);
 
@@ -1344,6 +1408,7 @@ export default function OrganizeJewelry() {
       <div className="oj">
         <style>{CSS}</style>
         <AceitarConvite
+          beta
           betaEmail={betaEmail}
           erroInicial={betaErro}
           criarConta={async (email, senha) => {
@@ -1543,6 +1608,7 @@ export default function OrganizeJewelry() {
       </div>
     ) : (
       <Equipe
+        irPara={irPara}
         d={d}
         salvar={salvar}
         dentro={dentro}
@@ -1559,6 +1625,7 @@ export default function OrganizeJewelry() {
       </div>
     ) : (
       <Contas
+        irPara={irPara}
         d={d}
         salvar={salvar}
         dentro={dentro}
@@ -1817,7 +1884,7 @@ export default function OrganizeJewelry() {
         />
       </div>
 
-      <Aviso d={d} salvar={salvar} />
+      <Aviso d={d} irPara={irPara} />
 
       <div className="oja" key={aba}>
         {["catalogo", "clientes", "maleta", "graficos", "equipe", "contas", "admin", "perfil", "integracoes"].includes(aba) && (
@@ -2348,7 +2415,7 @@ function Login({ onMestre, voltar, onEntrar, verPlanos, irCadastro, onDemo, loja
    normal — não pergunta plano nem dados da loja, porque ela está
    entrando numa loja que já existe, não criando uma. Depois de logada
    (conta nova ou já existente), `aceitar()` vincula a esta loja. */
-function AceitarConvite({ criarConta, entrarConta, aceitar, cancelar, erroInicial, betaEmail = "" }) {
+function AceitarConvite({ criarConta, entrarConta, aceitar, cancelar, erroInicial, betaEmail = "", beta = false }) {
   const [modo, setModo] = useState("criar"); // criar | entrar
   const [etapa, setEtapa] = useState("form"); // form | aguardando
   const [email, setEmail] = useState(betaEmail);
@@ -2439,6 +2506,25 @@ function AceitarConvite({ criarConta, entrarConta, aceitar, cancelar, erroInicia
       </div>
     );
 
+  // Link de convite beta inválido, vencido ou já usado: NÃO mostra formulário de cadastro.
+  // Quem não foi indicada só pode ver a demonstração (beta fechado).
+  if (beta && !betaEmail)
+    return (
+      <div style={{ padding: "60px 24px", textAlign: "center" }} className="oja">
+        <Marca size={62} animar={false} />
+        <h1 className="oj-h1 oj-serif" style={{ fontSize: 30, marginTop: 18 }}>
+          Este convite não está mais válido
+        </h1>
+        <p className="oj-sub" style={{ margin: "12px 0 26px", lineHeight: 1.6 }}>
+          O link pode ter expirado ou já ter sido usado. Peça um novo link para quem
+          te indicou — enquanto isso, você pode conhecer o Luxi pela demonstração.
+        </p>
+        <button className="oj-btn" onClick={cancelar}>
+          Ver a demonstração
+        </button>
+      </div>
+    );
+
   return (
     <div style={{ padding: "60px 24px" }} className="oja">
       <Marca size={62} animar={false} />
@@ -2446,10 +2532,14 @@ function AceitarConvite({ criarConta, entrarConta, aceitar, cancelar, erroInicia
         <b>Luxi</b>
       </div>
       <h1 className="oj-h1 oj-serif" style={{ fontSize: 36, marginTop: 14 }}>
-        Você foi convidada
+        {beta ? "Seu acesso ao beta está liberado" : "Você foi convidada"}
       </h1>
       <p className="oj-sub" style={{ marginBottom: 24, lineHeight: 1.6 }}>
-        {modo === "criar"
+        {beta
+          ? modo === "criar"
+            ? "Você foi escolhida para testar o Luxi antes de todo mundo. Crie sua senha para entrar — leva menos de um minuto."
+            : "Entre com a sua senha para ativar o seu acesso ao beta."
+          : modo === "criar"
           ? "Crie sua conta para acessar sua maleta e suas vendas nesta loja."
           : "Entre com sua conta para acessar sua maleta e suas vendas nesta loja."}
       </p>
@@ -2726,6 +2816,7 @@ function GestaoBeta() {
   };
 
   const revogar = async (em) => {
+    if (!window.confirm(`Revogar o acesso de ${em}?\n\nA loja dela volta para o plano Livre — os dados ficam guardados.`)) return;
     try {
       await dados.revogarBeta(em);
       await recarregar();
@@ -2874,13 +2965,16 @@ function GestaoBeta() {
 /* ---------------- painel do administrador (fim) ---------------- */
 
 /* ---------------- aviso de teste / limite ---------------- */
-function Aviso({ d, salvar }) {
+function Aviso({ d, irPara }) {
   const p = d.perfil;
   const plano = planoAtivo(p);
   const codigos = new Set(d.estoque.filter((x) => x.qtd > 0).map((x) => x.codigo)).size;
 
-  const assinar = () =>
-    salvar({ ...d, perfil: { ...p, assinado: true, atrasoDesde: null } });
+  // Assinar NÃO marca a conta como paga: leva à tela de plano, onde o pagamento
+  // de verdade acontece. E o botão só aparece quando existe um link de pagamento.
+  const pagamentoAberto = Object.values(LINKS_PAGAMENTO).some(Boolean);
+  const assinar = () => irPara && irPara("perfil");
+  const tempoRestante = (h) => (h > 72 ? `${Math.ceil(h / 24)} dias` : `${h}h`);
 
   if (p.mestre)
     return (
@@ -2896,22 +2990,26 @@ function Aviso({ d, salvar }) {
         <b>Modo leitura — pagamento em atraso há {diasAtraso(p)} dias.</b> Seus dados
         estão todos aqui e nada foi apagado, mas novos romaneios e baixas de venda ficam
         bloqueados até a regularização.
-        <button className="oj-btn mini" style={{ marginTop: 10 }} onClick={assinar}>
-          Regularizar agora
-        </button>
+        {pagamentoAberto && (
+          <button className="oj-btn mini" style={{ marginTop: 10 }} onClick={assinar}>
+            Regularizar agora
+          </button>
+        )}
       </div>
     );
 
   if (emTeste(p))
     return (
       <div className="oj-aviso">
-        <b>{horasRestantes(p)}h restantes</b> do seu teste. Você está com o{" "}
+        <b>Faltam {tempoRestante(horasRestantes(p))}</b> do seu teste. Você está com o{" "}
         {plano.nome} completo: {plano.itens[1].toLowerCase()} e{" "}
         {plano.itens[2].toLowerCase()}. Quando o teste acabar, isso sai do ar — o
         cadastro fica.
-        <button className="oj-btn mini" style={{ marginTop: 10 }} onClick={assinar}>
-          Assinar o {plano.nome} · R$ {plano.preco}
-        </button>
+        {pagamentoAberto && (
+          <button className="oj-btn mini" style={{ marginTop: 10 }} onClick={assinar}>
+            Assinar o {plano.nome} · R$ {plano.preco}
+          </button>
+        )}
       </div>
     );
 
@@ -2920,9 +3018,11 @@ function Aviso({ d, salvar }) {
       <div className="oj-erro">
         <b>Você está no plano Livre</b> — até {LIVRE.limite} códigos ({codigos} em uso).
         Alerta de peça parada, cotação de metais e giro por peça estão desligados.
-        <button className="oj-btn mini" style={{ marginTop: 10 }} onClick={assinar}>
-          Reativar o {acharPlano(p.plano).nome} · R$ {acharPlano(p.plano).preco}
-        </button>
+        {pagamentoAberto && (
+          <button className="oj-btn mini" style={{ marginTop: 10 }} onClick={assinar}>
+            Reativar o {acharPlano(p.plano).nome} · R$ {acharPlano(p.plano).preco}
+          </button>
+        )}
       </div>
     );
 
@@ -3004,6 +3104,14 @@ function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, a
   const [cupomTxt, setCupomTxt] = useState("");
   const [cupom, setCupom] = useState(null);
   const [cupomErro, setCupomErro] = useState("");
+  // Cliente beta: mostra os dias reais liberados (em vez do "72h" padrão).
+  const [beta, setBeta] = useState(null);
+  useEffect(() => {
+    if (contaLogada) dados.meuAcessoBeta().then(setBeta);
+  }, [contaLogada]);
+  const diasBeta = beta?.expira_em
+    ? Math.max(1, Math.ceil((new Date(beta.expira_em).getTime() - Date.now()) / 864e5))
+    : 0;
 
   const aplicarCupom = () => {
     const c = validarCupom(cupomTxt);
@@ -3075,6 +3183,17 @@ function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, a
           </ul>
         </div>
 
+        {beta ? (
+          <div className="oj-card" style={{ margin: "26px 0 16px" }}>
+            <div className="oj-lbl">Seu acesso beta</div>
+            <div className="oj-valor ouro" style={{ fontSize: 30 }}>{diasBeta} dias</div>
+            <div className="oj-meta" style={{ marginTop: 8, lineHeight: 1.6 }}>
+              Você usa o Luxi completo por {diasBeta} dias, sem cartão e sem cobrança.
+              Passado o beta, tudo o que você cadastrou continua aqui.
+            </div>
+          </div>
+        ) : (
+          <>
         <div className="oj-sec" style={{ margin: "30px 0 4px" }}>
           Escolha seu plano
         </div>
@@ -3084,7 +3203,7 @@ function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, a
           cadastrou.
         </div>
 
-        {PLANOS.map((x) => (
+        {PLANOS.filter((x) => !x.emBreve).map((x) => (
           <div
             key={x.id}
             className="oj-plano"
@@ -3178,8 +3297,11 @@ function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, a
           )}
         </div>
 
+          </>
+        )}
+
         <button className="oj-btn" onClick={() => setP(contaLogada ? 2 : 1)}>
-          Testar 72h grátis com o {plano.nome}
+          {beta ? "Começar meu beta" : `Testar 72h grátis com o ${plano.nome}`}
         </button>
         {!contaLogada && (
           <button
@@ -3505,7 +3627,9 @@ function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, a
       </button>
       {p === 1 && (
         <div className="oj-meta" style={{ textAlign: "center", marginTop: 14 }}>
-          {plano.nome} liberado por 72 horas · R$ {plano.preco}/mês só se você continuar
+          {beta
+            ? `Beta liberado por ${diasBeta} dias · sem cartão`
+            : `${plano.nome} liberado por 72 horas · R$ ${plano.preco}/mês só se você continuar`}
         </div>
       )}
     </div>
@@ -5535,7 +5659,7 @@ function NumInput({ valor, aoMudar, sufixo, disabled, ...resto }) {
 }
 
 /* ---------------- equipe ---------------- */
-function Equipe({ d, salvar, dentro, criarConsultora, atualizarConsultora, removerConsultora }) {
+function Equipe({ d, salvar, dentro, criarConsultora, atualizarConsultora, removerConsultora, irPara }) {
   const [nome, setNome] = useState("");
   const [comissao, setComissao] = useState(15);
   const [foto, setFoto] = useState(null);
@@ -5643,18 +5767,19 @@ function Equipe({ d, salvar, dentro, criarConsultora, atualizarConsultora, remov
             venda, quem vendeu e quanto ela tem a receber. Envie o convite pelo WhatsApp
             e ela acessa a própria maleta. Sem planilha e sem discussão no fim do mês.
           </div>
-          <button
-            className="oj-btn"
-            style={{ marginTop: 14 }}
-            onClick={() =>
-              salvar({
-                ...d,
-                perfil: { ...d.perfil, plano: "crescimento", assinado: true },
-              })
-            }
-          >
-            Assinar o Lojista · R$ 106,90
-          </button>
+          {Object.values(LINKS_PAGAMENTO).some(Boolean) ? (
+            <button
+              className="oj-btn"
+              style={{ marginTop: 14 }}
+              onClick={() => irPara && irPara("perfil")}
+            >
+              Assinar o Lojista · R$ 106,90
+            </button>
+          ) : (
+            <div className="oj-meta" style={{ marginTop: 14 }}>
+              A assinatura abre em breve — assim que abrir, você é avisada por aqui.
+            </div>
+          )}
         </div>
       </>
     );
@@ -6046,15 +6171,9 @@ function Integracoes({ d, salvar }) {
           planilha. Em vez de cadastrar centenas de peças à mão, você começa com tudo já
           dentro — normalmente o que leva semanas passa a levar uma tarde.
         </div>
-        <button
-          className="oj-btn"
-          style={{ marginTop: 14 }}
-          onClick={() =>
-            salvar({ ...d, perfil: { ...d.perfil, plano: "joalheria", assinado: true } })
-          }
-        >
-          Mudar para o Operação · R$ 179,90
-        </button>
+        <div className="oj-meta" style={{ marginTop: 14 }}>
+          Este recurso chega junto com o plano Operação, que ainda está em preparação.
+        </div>
       </div>
     );
 
@@ -6318,10 +6437,15 @@ function Perfil({ d, salvar, irPara }) {
                         usando <b>o mesmo e-mail do seu cadastro</b> — assim sua loja é
                         liberada automaticamente, na hora.
                       </>
-                    ) : (
+                    ) : WHATSAPP_SUPORTE ? (
                       <>
                         Para ativar o {pl.nome} (R$ {pl.preco}/mês), fale com a gente pelo
                         WhatsApp que enviamos o link de pagamento.
+                      </>
+                    ) : (
+                      <>
+                        A assinatura do {pl.nome} (R$ {pl.preco}/mês) ainda não está aberta.
+                        Assim que abrir, avisamos você por aqui.
                       </>
                     )}
                   </div>
@@ -6340,13 +6464,31 @@ function Perfil({ d, salvar, irPara }) {
                           Abrir o pagamento
                         </button>
                       )}
-                      <button
-                        className="oj-btn"
-                        style={temLink ? { marginTop: 8 } : {}}
-                        onClick={verificarPagamento}
-                      >
-                        Já paguei
-                      </button>
+                      {!temLink && WHATSAPP_SUPORTE && (
+                        <button
+                          className="oj-btn"
+                          onClick={() =>
+                            window.open(
+                              `https://wa.me/${WHATSAPP_SUPORTE}?text=${encodeURIComponent(
+                                `Oi! Quero ativar o plano ${pl.nome} do Luxi.`
+                              )}`,
+                              "_blank",
+                              "noopener"
+                            )
+                          }
+                        >
+                          Chamar no WhatsApp
+                        </button>
+                      )}
+                      {temLink && (
+                        <button
+                          className="oj-btn"
+                          style={{ marginTop: 8 }}
+                          onClick={verificarPagamento}
+                        >
+                          Já paguei
+                        </button>
+                      )}
                       <button className="oj-btn sec" onClick={() => setPagando(null)}>
                         Voltar
                       </button>
@@ -6775,6 +6917,7 @@ function Maleta({ d, salvar }) {
               <div className="oj-dir" style={{ display: "flex", gap: 6 }}>
                 <button
                   className="oj-btn sec mini"
+                  aria-label={`Tirar uma unidade de ${p.nome || p.codigo}`}
                   onClick={() =>
                     setSel({ ...sel, [p.id]: Math.max(0, (sel[p.id] || 0) - 1) })
                   }
@@ -6786,6 +6929,7 @@ function Maleta({ d, salvar }) {
                 </span>
                 <button
                   className="oj-btn sec mini"
+                  aria-label={`Colocar mais uma unidade de ${p.nome || p.codigo}`}
                   onClick={() =>
                     setSel({ ...sel, [p.id]: Math.min(p.qtd, (sel[p.id] || 0) + 1) })
                   }
@@ -7348,7 +7492,7 @@ function Mais({ irPara, mestre }) {
 }
 
 /* ---------------- contas ---------------- */
-function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda }) {
+function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda, irPara }) {
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState("");
   const [tipo, setTipo] = useState("Fixa");
@@ -7405,8 +7549,6 @@ function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda }
   const codigos = new Set(d.estoque.filter((p) => p.qtd > 0).map((p) => p.codigo)).size;
   const pct = plano.limite === Infinity ? 0 : Math.min(100, (codigos / plano.limite) * 100);
 
-  const trocar = async (pid) =>
-    await salvar({ ...d, perfil: { ...d.perfil, plano: pid, assinado: true } });
 
   const reiniciar = async () => await salvar(VAZIO);
 
@@ -7433,18 +7575,13 @@ function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda }
             </div>
           </>
         )}
-        <div className="oj-chips" style={{ marginTop: 12 }}>
-          {PLANOS.map((x) => (
-            <button
-              key={x.id}
-              className="oj-chip"
-              data-on={plano.id === x.id ? "1" : "0"}
-              onClick={() => trocar(x.id)}
-            >
-              {x.nome} · R$ {x.preco}
-            </button>
-          ))}
-        </div>
+        <button
+          className="oj-link-sutil"
+          style={{ textAlign: "left", marginTop: 8 }}
+          onClick={() => irPara && irPara("perfil")}
+        >
+          Ver planos e detalhes da assinatura ›
+        </button>
       </div>
 
       <div className="oj-card">
