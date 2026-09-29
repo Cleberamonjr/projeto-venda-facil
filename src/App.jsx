@@ -1130,6 +1130,7 @@ export default function OrganizeJewelry() {
   }, []);
   const [tela, setTela] = useState("login"); // login | app | vendas | cadastro
   const [minimoAbertura, setMinimoAbertura] = useState(false);
+  const [precisaNovaSenha, setPrecisaNovaSenha] = useState(false);
   const [aba, setAba] = useState("painel");
   const [fescala, setFescala] = useState(() => {
     const s = Number(localStorage.getItem("luxi:fescala"));
@@ -1285,6 +1286,21 @@ export default function OrganizeJewelry() {
       clearTimeout(travaSeguranca);
     };
   }, []);
+
+  // Depois que a administradora redefine uma senha, a cliente é obrigada a criar a dela no primeiro acesso.
+  useEffect(() => {
+    if (!contaLogada) {
+      setPrecisaNovaSenha(false);
+      return;
+    }
+    let vivo = true;
+    dados.auth.precisaTrocarSenha().then((v) => {
+      if (vivo) setPrecisaNovaSenha(!!v);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [contaLogada]);
 
   useEffect(() => {
     if (!minimoAbertura || carregando) return;
@@ -1546,6 +1562,27 @@ export default function OrganizeJewelry() {
         <div style={{ paddingTop: 90 }}>
           <Carregando texto="Abrindo sua loja…" />
         </div>
+      </div>
+    );
+
+  if (precisaNovaSenha)
+    return (
+      <div className="oj">
+        <style>{CSS}</style>
+        <NovaSenhaObrigatoria
+          aoConcluir={() => setPrecisaNovaSenha(false)}
+          sair={async () => {
+            try {
+              await dados.auth.sair();
+            } catch (e) {
+              console.error("Falha ao sair", e);
+            }
+            setContaLogada(false);
+            setD(VAZIO);
+            setTela("login");
+            setPrecisaNovaSenha(false);
+          }}
+        />
       </div>
     );
 
@@ -2813,6 +2850,7 @@ function Admin({ d }) {
   // Painel fiel ao USO REAL: o que cada loja de fato cadastrou, vendeu e quando usou por último.
   const [uso, setUso] = useState(null);
   const [erroAdmin, setErroAdmin] = useState("");
+  const [alvoSenha, setAlvoSenha] = useState("");
   useEffect(() => {
     let vivo = true;
     dados.carregarUsoLojas()
@@ -2897,6 +2935,18 @@ function Admin({ d }) {
                     {quando(l.ultima_atividade)}
                     {l.situacao === "beta" && l.dias_restantes != null ? ` · restam ${l.dias_restantes} dia(s) de beta` : ""}
                   </div>
+                  {l.dona_email && (
+                    <button
+                      className="oj-link-sutil"
+                      style={{ textAlign: "left", padding: "6px 0" }}
+                      onClick={() => {
+                        setAlvoSenha(l.dona_email);
+                        document.getElementById("redefinir-senha")?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                    >
+                      Redefinir senha dela
+                    </button>
+                  )}
                   {l.situacao === "encerrado" && (
                     <div className="oj-meta" style={{ color: "var(--alerta)", marginTop: 2 }}>
                       O teste acabou. Para ela voltar, libere o e-mail dela no beta abaixo.
@@ -2924,6 +2974,8 @@ function Admin({ d }) {
       </div>
 
       <GestaoBeta />
+
+      <RedefinirSenha emailInicial={alvoSenha} />
 
       <TrocarSenha />
     </>
@@ -6457,6 +6509,192 @@ function Integracoes({ d, salvar }) {
 }
 
 /* ---------------- perfil e plano ---------------- */
+/* ---------------- ajudar uma cliente que não consegue entrar (só a administradora) ---------------- */
+function RedefinirSenha({ emailInicial = "" }) {
+  const [email, setEmail] = useState(emailInicial);
+  const [senha, setSenha] = useState("");
+  const [ocupada, setOcupada] = useState(false);
+  const [erro, setErro] = useState("");
+  const [res, setRes] = useState(null);
+  const [copiado, setCopiado] = useState(false);
+  const [hist, setHist] = useState([]);
+
+  useEffect(() => {
+    if (emailInicial) {
+      setEmail(emailInicial);
+      setRes(null);
+      setErro("");
+    }
+  }, [emailInicial]);
+  const carregarHist = () => dados.auditoriaAdmin().then(setHist);
+  useEffect(() => {
+    carregarHist();
+  }, []);
+
+  const redefinir = async () => {
+    setErro("");
+    setRes(null);
+    setCopiado(false);
+    const em = email.trim().toLowerCase();
+    if (!em.includes("@")) return setErro("Digite o e-mail da cliente.");
+    if (senha && senha.length < 8) return setErro("A senha temporária precisa ter ao menos 8 caracteres.");
+    if (!window.confirm(`Redefinir a senha de ${em}?\n\nOs acessos atuais dela serão encerrados e, ao entrar com a senha temporária, o app vai pedir que ela crie uma senha nova.`)) return;
+    setOcupada(true);
+    try {
+      const r = await dados.redefinirSenhaCliente(em, senha.trim() || undefined);
+      setRes(r);
+      setSenha("");
+      carregarHist();
+    } catch (e) {
+      setErro(e.message || "Não consegui redefinir agora. Tente de novo.");
+    } finally {
+      setOcupada(false);
+    }
+  };
+
+  const mensagem = res
+    ? `Oi! Sua senha temporária do Luxi é: ${res.senha}\n\nEntre em ${window.location.origin} com o seu e-mail e essa senha. O app vai pedir para você criar uma senha nova só sua.`
+    : "";
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(mensagem);
+      setCopiado(true);
+    } catch (e) {
+      setCopiado(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="oj-sec" id="redefinir-senha">Ajudar uma cliente a entrar</div>
+      <div className="oj-card">
+        <div className="oj-meta" style={{ marginBottom: 12, lineHeight: 1.55 }}>
+          Se uma cliente não consegue entrar, gere uma senha temporária e envie por WhatsApp. Ao entrar, o app pede
+          que ela crie uma senha só dela. Os acessos antigos dela são encerrados.
+        </div>
+        {erro && <div className="oj-erro" role="alert" style={{ margin: "0 0 12px" }}>{erro}</div>}
+        <div className="oj-campo">
+          <label>E-mail da cliente</label>
+          <input
+            className="oj-in"
+            type="email"
+            aria-label="E-mail da cliente"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setRes(null);
+            }}
+            placeholder="cliente@email.com"
+          />
+        </div>
+        <div className="oj-campo">
+          <label>Senha temporária (deixe em branco para o Luxi gerar uma)</label>
+          <input
+            className="oj-in"
+            aria-label="Senha temporária"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            placeholder="Opcional — mínimo 8 caracteres"
+            autoComplete="off"
+          />
+        </div>
+        <button className="oj-btn" onClick={redefinir} disabled={ocupada || !email.trim()}>
+          {ocupada ? "Redefinindo…" : "Gerar senha temporária"}
+        </button>
+
+        {res && (
+          <div style={{ marginTop: 16 }} role="status">
+            <div className="oj-lbl">Senha temporária — aparece só agora</div>
+            <div
+              style={{
+                fontFamily: "ui-monospace, Menlo, Consolas, monospace",
+                fontSize: 24,
+                letterSpacing: ".06em",
+                margin: "6px 0 10px",
+                wordBreak: "break-all",
+                userSelect: "all",
+              }}
+            >
+              {res.senha}
+            </div>
+            <div className="oj-meta" style={{ marginBottom: 12, lineHeight: 1.55 }}>
+              Para {res.email}. Ela entra com essa senha e o app pede a nova.
+              {res.registrado === false &&
+                " Atenção: a senha foi trocada, mas não consegui marcá-la como temporária — peça que ela troque em Minha conta depois de entrar."}
+            </div>
+            <button className="oj-btn sec" onClick={copiar}>
+              {copiado ? "Mensagem copiada ✓" : "Copiar mensagem"}
+            </button>
+            <button
+              className="oj-btn sec"
+              style={{ marginTop: 8 }}
+              onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, "_blank", "noopener")}
+            >
+              Enviar pelo WhatsApp
+            </button>
+          </div>
+        )}
+
+        {hist.length > 0 && (
+          <div style={{ marginTop: 18 }}>
+            <div className="oj-lbl" style={{ marginBottom: 6 }}>Últimas redefinições</div>
+            {hist.slice(0, 5).map((h, i) => (
+              <div className="oj-meta" key={i} style={{ lineHeight: 1.6 }}>
+                {new Date(h.quando).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                {" · "}
+                {h.alvo}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ---------------- primeira entrada depois de uma redefinição: criar a senha nova ---------------- */
+function NovaSenhaObrigatoria({ aoConcluir, sair }) {
+  const [nova, setNova] = useState("");
+  const [nova2, setNova2] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState("");
+
+  const salvar = async () => {
+    setErro("");
+    if (nova.length < 8) return setErro("Use ao menos 8 caracteres.");
+    if (nova !== nova2) return setErro("As duas senhas não são iguais.");
+    setSalvando(true);
+    try {
+      await dados.auth.definirNovaSenha(nova);
+      aoConcluir();
+    } catch (e) {
+      setErro(e.message || "Não consegui salvar. Tente de novo.");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  return (
+    <div style={{ padding: "60px 24px", maxWidth: 520, margin: "0 auto" }} className="oja">
+      <Marca size={62} animar={false} />
+      <h1 className="oj-h1 oj-serif" style={{ fontSize: 30, marginTop: 18 }}>Crie a sua nova senha</h1>
+      <p className="oj-sub" style={{ margin: "10px 0 22px", lineHeight: 1.6 }}>
+        A sua senha foi redefinida pela equipe do Luxi. Antes de continuar, crie uma senha só sua — assim mais
+        ninguém a conhece.
+      </p>
+      {erro && <div className="oj-erro" role="alert" style={{ margin: "0 0 14px" }}>{erro}</div>}
+      <CampoSenha label="Nova senha — mínimo 8 caracteres" valor={nova} onChange={setNova} autoComplete="new-password" disabled={salvando} />
+      <CampoSenha label="Repita a nova senha" valor={nova2} onChange={setNova2} onEnter={salvar} autoComplete="new-password" disabled={salvando} />
+      <button className="oj-btn" onClick={salvar} disabled={salvando}>
+        {salvando ? "Salvando…" : "Salvar e continuar"}
+      </button>
+      <button className="oj-btn sec" style={{ marginTop: 8 }} onClick={sair} disabled={salvando}>
+        Sair
+      </button>
+    </div>
+  );
+}
+
 /* ---------------- trocar senha (cliente e administradora: é a mesma conta) ---------------- */
 function TrocarSenha() {
   const [aberto, setAberto] = useState(false);

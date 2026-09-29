@@ -357,6 +357,73 @@ await teste('M. incluir produto: escolher o fornecedor e ele ser gravado', async
   return { ok: temChips && gravado?.fornecedor === 'Del Rey', detalhe: `opções=${chips.filter((c) => /Prata|Rey|Outro/.test(c)).join(',')}; gravado=${gravado?.fornecedor}` };
 });
 
+// ---------- P. administradora redefine a senha de uma cliente ----------
+await teste('P. admin gera senha temporária: aparece uma vez, com o token dela, e vai para o histórico', async () => {
+  let visto = null;
+  const cfg = { rpc: { sou_admin_luxi: true, uso_lojas_luxi: USO, auditoria_admin_recente: [{ quando: new Date().toISOString(), acao: 'redefinir_senha', alvo: 'antiga@x.com' }] },
+    rotas: [[/functions\/v1\/admin-redefinir-senha/, (init) => { visto = { auth: new Headers(init.headers).get('authorization'), corpo: JSON.parse(init.body) }; return json({ ok: true, email: 'vini@x.com', senha: 'Kx7mQp9rTw', gerada: true, registrado: true }); }]] };
+  const a = await abrir({ sessao: admin, cfg });
+  a.w.confirm = () => true; // o jsdom não tem janela de confirmação
+  await esperarPor(() => a.w.document.querySelector('.oj-hamb'));
+  a.w.document.querySelector('.oj-hamb').click(); await pausa(300);
+  a.clicar('Uso do Luxi', 'nav');
+  if (!(await esperarPor(() => a.texto().includes('Ajudar uma cliente a entrar')))) return { ok: false, detalhe: 'cartão não apareceu' };
+  const campo = a.w.document.querySelector('input[aria-label="E-mail da cliente"]');
+  a.digitar(campo, 'vini@x.com'); await pausa(200);
+  a.clicar('Gerar senha temporária');
+  const mostrou = await esperarPor(() => a.texto().includes('Kx7mQp9rTw'));
+  const t = a.texto(); a.fechar();
+  const ok = mostrou && visto?.corpo?.email === 'vini@x.com' && visto.corpo.senha === undefined && visto.auth === 'Bearer a.b.c' && t.includes('Copiar mensagem') && t.includes('Enviar pelo WhatsApp') && t.includes('antiga@x.com');
+  return { ok, detalhe: `mostrou=${mostrou}; enviou o token da administradora=${visto?.auth === 'Bearer a.b.c'}; pediu geração automática=${visto?.corpo?.senha === undefined}; histórico=${t.includes('antiga@x.com')}` };
+});
+
+await teste('P2. cada loja da lista tem "Redefinir senha dela", que preenche o e-mail', async () => {
+  const a = await abrir({ sessao: admin, cfg: { rpc: { sou_admin_luxi: true, uso_lojas_luxi: USO, auditoria_admin_recente: [] } } });
+  a.w.HTMLElement.prototype.scrollIntoView = () => {};
+  await esperarPor(() => a.w.document.querySelector('.oj-hamb'));
+  a.w.document.querySelector('.oj-hamb').click(); await pausa(300);
+  a.clicar('Uso do Luxi', 'nav');
+  await esperarPor(() => a.texto().includes('Redefinir senha dela'));
+  a.clicar('Redefinir senha dela'); await pausa(300);
+  const campo = a.w.document.querySelector('input[aria-label="E-mail da cliente"]');
+  const valor = campo?.value; a.fechar();
+  return { ok: valor === 'vini@x.com', detalhe: `e-mail preenchido="${valor}"` };
+});
+
+// ---------- Q. cliente com senha temporária é obrigada a criar a dela ----------
+await teste('Q. senha temporária: a cliente só usa o app depois de criar a senha nova', async () => {
+  const futuro = new Date(Date.now() + 5 * 864e5).toISOString();
+  const cfg = { rpc: { sou_admin_luxi: false, preciso_trocar_senha: true, concluir_troca_senha: null }, tabelas: {
+    lojas: [{ id: 'L1', nome: 'Loja X', dona_id: 'u1', margem_padrao: 100, formas_pagamento: ['Dinheiro'], fornecedores_json: [] }],
+    assinaturas: [{ loja_id: 'L1', plano: 'crescimento', status: 'trial', trial_ate: futuro }],
+    consultoras: [{ id: 'c1', loja_id: 'L1', nome: 'Dona', eh_dona: true, ativa: true, comissao: 0 }] } };
+  const a = await abrir({ sessao: usuario('dona@x.com', 'u1'), cfg });
+  if (!(await esperarPor(() => a.texto().includes('Crie a sua nova senha')))) return { ok: false, detalhe: 'a tela obrigatória não apareceu' };
+  const semApp = !a.w.document.querySelector('.oj-atalho');
+  const [n1, n2] = a.w.document.querySelectorAll('input[type=password]');
+  a.digitar(n1, 'NovaSenha99'); a.digitar(n2, 'OutraCoisa88'); await pausa(200);
+  a.clicar('Salvar e continuar');
+  const barrou = await esperarPor(() => a.texto().includes('não são iguais'));
+  a.digitar(a.w.document.querySelectorAll('input[type=password]')[1], 'NovaSenha99'); await pausa(200);
+  a.clicar('Salvar e continuar');
+  const liberou = await esperarPor(() => !a.texto().includes('Crie a sua nova senha') && a.w.document.querySelector('.oj-atalho'));
+  const trocou = a.log.some((l) => l.startsWith('PUT /auth/v1/user')), concluiu = a.log.some((l) => l.includes('concluir_troca_senha'));
+  a.fechar();
+  return { ok: semApp && barrou && liberou && trocou && concluiu, detalhe: `app bloqueado antes=${semApp}; recusou senhas diferentes=${barrou}; liberou depois=${!!liberou}; salvou no servidor=${trocou}; limpou a marca=${concluiu}` };
+});
+
+await teste('Q2. cliente comum (sem redefinição) entra no app normalmente', async () => {
+  const futuro = new Date(Date.now() + 5 * 864e5).toISOString();
+  const cfg = { rpc: { sou_admin_luxi: false, preciso_trocar_senha: false }, tabelas: {
+    lojas: [{ id: 'L1', nome: 'Loja X', dona_id: 'u1', margem_padrao: 100, formas_pagamento: ['Dinheiro'], fornecedores_json: [] }],
+    assinaturas: [{ loja_id: 'L1', plano: 'crescimento', status: 'trial', trial_ate: futuro }],
+    consultoras: [{ id: 'c1', loja_id: 'L1', nome: 'Dona', eh_dona: true, ativa: true, comissao: 0 }] } };
+  const a = await abrir({ sessao: usuario('dona@x.com', 'u1'), cfg });
+  const entrou = await esperarPor(() => a.w.document.querySelector('.oj-atalho'));
+  await pausa(500); const t = a.texto(); a.fechar();
+  return { ok: !!entrou && !t.includes('Crie a sua nova senha') };
+});
+
 const todos = resultados.every(Boolean);
 console.log(todos ? `\nTODOS OS ${resultados.length} TESTES PASSARAM` : `\n${resultados.filter((x) => !x).length} TESTE(S) FALHARAM — NÃO PUBLIQUE`);
 process.exit(todos ? 0 : 1);

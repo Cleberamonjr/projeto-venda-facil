@@ -139,6 +139,22 @@ export const auth = {
     if (eAtual) throw new Error("A senha atual não confere.");
     const { error } = await sb.auth.updateUser({ password: novaSenha });
     if (error) throw new Error(traduzErro(error.message));
+    try { await sb.rpc("concluir_troca_senha"); } catch (e) { /* sem marca pendente: segue */ }
+    return true;
+  },
+  // A administradora redefiniu a senha desta conta? Então ela precisa criar uma nova antes de usar o app.
+  async precisaTrocarSenha() {
+    try {
+      const { data, error } = await sb.rpc("preciso_trocar_senha");
+      return !error && data === true;
+    } catch (e) {
+      return false; // se a consulta falhar, nunca trava o acesso
+    }
+  },
+  async definirNovaSenha(nova) {
+    const { error } = await sb.auth.updateUser({ password: nova });
+    if (error) throw new Error(traduzErro(error.message));
+    await sb.rpc("concluir_troca_senha");
     return true;
   },
   async entrar(email, senha) {
@@ -884,4 +900,32 @@ export async function carregarUsoLojas() {
   const { data, error } = await sb.rpc("uso_lojas_luxi");
   if (error) throw new Error(error.message?.includes("negado") ? "Acesso restrito à administradora." : "Não consegui carregar o painel. Tente de novo.");
   return data;
+}
+
+
+/* ---------- painel admin: ajudar uma cliente que não consegue entrar ---------- */
+export async function redefinirSenhaCliente(email, senha) {
+  const { data, error } = await sb.functions.invoke("admin-redefinir-senha", {
+    body: { email, ...(senha ? { senha } : {}) },
+  });
+  if (error) {
+    let codigo = "";
+    try { codigo = (await error.context.json())?.erro || ""; } catch (e) { /* sem corpo */ }
+    const mensagens = {
+      cliente_nao_encontrada: "Não achei nenhuma conta com esse e-mail.",
+      conta_de_administracao: "Esta é uma conta de administração — para ela, use “Trocar minha senha”.",
+      muitas_tentativas: "Muitas redefinições na última hora. Espere um pouco.",
+      senha_invalida: "A senha precisa ter de 8 a 72 caracteres.",
+      email_invalido: "Esse e-mail não parece certo.",
+      acesso_negado: "Só a administradora pode fazer isso.",
+      nao_autenticado: "Sua sessão expirou. Entre de novo.",
+    };
+    throw new Error(mensagens[codigo] || "Não consegui redefinir agora. Tente de novo.");
+  }
+  return data;
+}
+
+export async function auditoriaAdmin() {
+  const { data, error } = await sb.rpc("auditoria_admin_recente");
+  return error ? [] : data || [];
 }

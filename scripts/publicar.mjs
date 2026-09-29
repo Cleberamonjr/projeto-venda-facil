@@ -27,7 +27,9 @@ passo('1/4 Construindo o app');
 if (rodar('npm', ['run', 'build']).status !== 0) falhar('O build falhou.');
 
 passo('2/4 Rodando os testes');
-if (rodar('node', ['tests/funcao-conta.mjs']).status !== 0) falhar('A função de criar conta falhou nos testes.');
+for (const f of fs.readdirSync(path.join(raiz, 'tests')).filter((x) => /^funcao-.*\.mjs$/.test(x)).sort()) {
+  if (rodar('node', ['tests/' + f]).status !== 0) falhar(`A função de servidor "${f.replace(/^funcao-|\.mjs$/g, '')}" falhou nos testes.`);
+}
 if (rodar('node', ['tests/smoke.mjs']).status !== 0) falhar('Algum teste falhou — corrija antes de publicar.');
 
 const dist = path.join(raiz, 'dist');
