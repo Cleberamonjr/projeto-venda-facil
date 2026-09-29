@@ -424,6 +424,65 @@ await teste('Q2. cliente comum (sem redefinição) entra no app normalmente', as
   return { ok: !!entrou && !t.includes('Crie a sua nova senha') };
 });
 
+// ---------- P. suporte: a administradora abre a loja de uma cliente ----------
+const em10 = new Date(Date.now() + 10 * 864e5).toISOString(), ontem = new Date(Date.now() - 864e5).toISOString();
+const LOJA_SUPORTE = {
+  loja: { id: 'l2', nome: 'Atelie Andressa', whatsapp: '5511999990001' },
+  dona: { email: 'and@x.com', ultimo_login: ontem, conta_criada: '2026-09-12T00:00:00Z' },
+  assinatura: { plano: 'crescimento', status: 'trial', trial_ate: em10 },
+  resumo: { pecas: 2, unidades: 5, vendas_total: 2, vendas_30d: 2, valor_30d: 11800, a_receber: 4900, clientes: 1, consultoras: 1, romaneios: 1, ultima_atividade: ontem },
+  atividade: [
+    { quando: ontem, tipo: 'venda', nome: 'Anel solitário', codigo: 'AN-1', qtd: 1, valor: 6900, extra: 'Maria' },
+    { quando: ontem, tipo: 'peca', nome: 'Brinco argola', codigo: 'BR-2', qtd: 2, valor: 4900, extra: 'Del Rey' },
+    { quando: ontem, tipo: 'romaneio', nome: null, codigo: null, qtd: 12, valor: 90000, extra: 'Prata Fina' },
+    { quando: ontem, tipo: 'despesa', nome: 'Embalagens', codigo: null, qtd: null, valor: 5000, extra: 'variavel' } ],
+  dias: Array.from({ length: 30 }, (_, i) => ({ dia: '2026-09-' + String(i + 1).padStart(2, '0'), n: i % 7 === 0 ? 3 : 0 })),
+  pecas: [{ id: 'p1', codigo: 'AN-1', nome: 'Anel solitário', qtd: 3, custo_centavos: 2500, venda_centavos: 6900, banho: 'Ouro 18k', fornecedor: 'Prata Fina', tem_foto: true, capa: 'https://eraxjtfedswksiyigasf.supabase.co/storage/v1/object/public/fotos-pecas/l2/1.jpg' }],
+  vendas: [{ id: 'v1', nome: 'Brinco argola', codigo: 'BR-2', qtd: 1, valor_centavos: 4900, vendida_em: ontem, modalidade: 'Fiado', cliente: 'Joana', pago: false }],
+  clientes: [{ id: 'c1', nome: 'Maria', telefone: '11988887777', cpf: '12345678900', endereco: 'Rua A, 10' }],
+  despesas: [{ id: 'd1', nome: 'Embalagens', tipo: 'variavel', competencia: '2026-09-25', valor_centavos: 5000 }],
+  consultoras: [{ id: 'k1', nome: 'Bia', eh_dona: false, ativa: true, comissao: 20, usuario_id: null }],
+  entradas: [{ id: 'e1', fornecedor: 'Prata Fina', criada_em: ontem, qtd_itens: 12, total_centavos: 90000 }] };
+const abrirPainelAdmin = async (cfgExtra = {}) => {
+  const a = await abrir({ sessao: admin, cfg: { rpc: { sou_admin_luxi: true, uso_lojas_luxi: USO, admin_ver_loja: LOJA_SUPORTE }, ...cfgExtra } });
+  await esperarPor(() => a.w.document.querySelector('.oj-hamb'));
+  a.w.document.querySelector('.oj-hamb').click(); await pausa(300);
+  a.clicar('Uso do Luxi', 'nav');
+  await esperarPor(() => a.texto().includes('Atelie Andressa'));
+  return a;
+};
+
+await teste('S. suporte: clica na loja e vê os dados e a atividade (somente leitura, 1 registro)', async () => {
+  const a = await abrirPainelAdmin();
+  a.w.document.querySelector('button[aria-label*="Atelie Andressa"]').click();
+  const abriu = await esperarPor(() => a.texto().includes('Modo suporte'));
+  await pausa(200);
+  const t1 = a.texto();
+  const esperado1 = ['somente leitura', 'fica registrado', 'Atelie Andressa', 'and@x.com', 'restam 10 dia', 'Vendeu Anel solitário (1 un) por R$ 69,00 para Maria', 'Cadastrou a peça BR-2 — Brinco argola (2 un) · fornecedor Del Rey', 'Importou um romaneio de Prata Fina · 12 itens', 'Lançou a despesa Embalagens', 'R$ 49,00'];
+  a.clicar('Vendas', '[aria-label="Seções da loja"]'); await pausa(150);
+  const tVendas = a.texto();
+  a.clicar('Clientes', '[aria-label="Seções da loja"]'); await pausa(150);
+  const tCli = a.texto();
+  a.clicar('Equipe', '[aria-label="Seções da loja"]'); await pausa(150);
+  const tEq = a.texto();
+  const faltou = esperado1.filter((x) => !t1.includes(x));
+  const gravou = a.log.filter((l) => /^(POST|PATCH|DELETE|PUT) \/rest\/v1\/(?!rpc\/)/.test(l));
+  const aberturas = a.log.filter((l) => l.includes('admin_ver_loja')).length;
+  a.fechar();
+  return { ok: abriu && !faltou.length && tVendas.includes('a receber') && tCli.includes('11988887777') && tEq.includes('convite pendente') && !gravou.length && aberturas === 1 && !/SEGREDO|convite_codigo/.test(tEq),
+    detalhe: [faltou.length && 'faltou: ' + faltou.join(' | '), gravou.length && 'GRAVOU NO BANCO: ' + gravou.join(','), `aberturas registradas=${aberturas}`].filter(Boolean).join(' ; ') };
+});
+
+await teste('S2. suporte: se o SQL ainda não foi rodado, explica e deixa voltar', async () => {
+  const a = await abrirPainelAdmin({ rotas: [[/rpc\/admin_ver_loja/, () => json({ code: 'PGRST202', message: 'Could not find the function public.admin_ver_loja(p_loja) in the schema cache' }, 404)]] });
+  a.w.document.querySelector('button[aria-label*="Atelie Andressa"]').click();
+  const explicou = await esperarPor(() => a.texto().includes('ainda não foi ativada'));
+  a.clicar('Voltar às lojas');
+  const voltou = await esperarPor(() => a.texto().includes('Lojas e uso'));
+  a.fechar();
+  return { ok: explicou && voltou, detalhe: `explicou=${explicou}; voltou à lista=${voltou}` };
+});
+
 const todos = resultados.every(Boolean);
 console.log(todos ? `\nTODOS OS ${resultados.length} TESTES PASSARAM` : `\n${resultados.filter((x) => !x).length} TESTE(S) FALHARAM — NÃO PUBLIQUE`);
 process.exit(todos ? 0 : 1);

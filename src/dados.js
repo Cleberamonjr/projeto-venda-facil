@@ -929,3 +929,16 @@ export async function auditoriaAdmin() {
   const { data, error } = await sb.rpc("auditoria_admin_recente");
   return error ? [] : data || [];
 }
+
+/* ---------- suporte: a administradora abre a loja de uma cliente (somente leitura, fica registrado) ---------- */
+export async function verLojaSuporte(lojaId) {
+  const { data, error } = await sb.rpc("admin_ver_loja", { p_loja: lojaId });
+  if (error) {
+    const msg = `${error.code || ""} ${error.message || ""}`;
+    if (/PGRST202|Could not find the function|does not exist/i.test(msg))
+      throw new Error("A visão de suporte ainda não foi ativada no servidor (falta rodar o SQL 20260930_admin_ver_loja).");
+    if (/negado/i.test(msg)) throw new Error("Acesso restrito à administradora.");
+    throw new Error("Não consegui abrir essa loja. Tente de novo.");
+  }
+  return data;
+}

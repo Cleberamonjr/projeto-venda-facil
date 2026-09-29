@@ -43,3 +43,10 @@ Como nenhuma cliente é forçada a atualizar, quem ainda não tocou em "Atualiza
 
 ## Segredos
 Nunca no código nem no chat. Tokens colados em conversa devem ser revogados no mesmo dia.
+
+## Acesso de suporte da administradora (ver a loja de uma cliente)
+No painel **Uso do Luxi**, o botão "Ver loja e atividade" abre a loja da cliente em **somente leitura**.
+Cada abertura é gravada em `auditoria_admin` (quem, qual loja, quando). A função `admin_ver_loja` só responde à
+administradora e não devolve o código de convite das consultoras. Regra: **rode o SQL antes** de publicar o app que o usa
+(`supabase/migrations/20260930_admin_ver_loja.sql`); sem ele, a tela avisa em vez de quebrar.
+Alterações nos dados da cliente (correções) NÃO estão incluídas de propósito: exigem função própria, motivo e registro.

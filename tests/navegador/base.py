@@ -64,7 +64,7 @@ def loja_padrao(n_pecas=0):
         "pecas": pecas,
     }
 
-def preparar_contexto(browser, viewport, tabelas=None, rpc=None, logado=True, capturas=None, sw="block", **kw):
+def preparar_contexto(browser, viewport, tabelas=None, rpc=None, logado=True, capturas=None, sw="block", login_falha=False, **kw):
     """Cria um contexto de navegador com o Supabase simulado. `capturas` (lista) recebe as gravações."""
     ctx = browser.new_context(viewport=viewport, service_workers=sw, **kw)
     rpc = {"sou_admin_luxi": False, "meu_acesso_beta": None, **(rpc or {})}
@@ -81,6 +81,9 @@ def preparar_contexto(browser, viewport, tabelas=None, rpc=None, logado=True, ca
         cab = {"access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "*"}
         if metodo == "OPTIONS": return route.fulfill(status=204, headers=cab)
         def j(corpo, status=200): route.fulfill(status=status, headers={**cab, "content-type": "application/json"}, body=json.dumps(corpo))
+        if caminho.startswith("/auth/v1/token") and login_falha:
+            capturas.append(("token", "POST", None))
+            return j({"error": "invalid_grant", "error_description": "Invalid login credentials"}, 400)
         if caminho.startswith("/auth/v1/user"): return j(USUARIO) if logado else j({"message": "sem sessão"}, 401)
         if caminho.startswith("/auth/v1/"): return j({})
         if caminho.startswith("/storage/v1/object/") and metodo == "POST":

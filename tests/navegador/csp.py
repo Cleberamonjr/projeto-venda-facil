@@ -4,6 +4,7 @@ import sys, re, json, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from base import *
+import suporte
 from playwright.sync_api import sync_playwright
 
 FOTO = "/tmp/foto-teste.jpg"
@@ -87,8 +88,10 @@ def rodar(politica, verbose=True):
         # 3) administradora
         uso = {"resumo": {"lojas": 1, "usando_7d": 0, "pecas": 0, "vendas_30d": 0, "valor_vendas_30d": 0, "romaneios_30d": 0, "beta": 0, "pagantes": 0},
                "lojas": [{"id": "l1", "nome": "Loja A", "dona_email": "a@a.com", "situacao": "beta", "plano": "crescimento", "pecas": 1, "vendas_total": 0, "vendas_30d": 0, "romaneios_30d": 0, "consultoras": 0, "dias_restantes": 20, "ultima_atividade": None}]}
-        ctx, pg, _, er = novo(b, srv, rpc={"sou_admin_luxi": True, "uso_lojas_luxi": uso, "auditoria_admin_recente": []})
+        ctx, pg, _, er = novo(b, srv, rpc={"sou_admin_luxi": True, "uso_lojas_luxi": uso, "auditoria_admin_recente": [], "admin_ver_loja": suporte.LOJA})
         pg.goto(srv.url); esperar_app(pg); percorrer_menu(pg)
+        garantir_menu(pg, True); pg.evaluate("[...document.querySelectorAll('nav.oj-lateral button')].find(b => b.textContent.includes('Uso do Luxi'))?.click()"); pg.wait_for_selector("button[aria-label*='Loja A']", timeout=8000)
+        pg.click("button[aria-label*='Loja A']"); pg.wait_for_selector("text=Modo suporte", timeout=8000); pg.wait_for_timeout(500)
         resultado["administradora"] = (violacoes(pg), er); ctx.close()
 
         # 4) link de convite do beta (tema escuro também)

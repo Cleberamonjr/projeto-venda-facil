@@ -2859,11 +2859,207 @@ function Vitrine({ voltar }) {
 }
 
 /* ---------------- painel do administrador ---------------- */
+/* ---------------- suporte: a administradora vê a loja de uma cliente (somente leitura) ---------------- */
+function LojaSuporte({ loja, voltar, pedirSenha }) {
+  const [dado, setDado] = useState(null);
+  const [erro, setErro] = useState("");
+  const [aba, setAba] = useState("atividade");
+  useEffect(() => {
+    let vivo = true;
+    dados.verLojaSuporte(loja.id)
+      .then((x) => { if (vivo) setDado(x); })
+      .catch((e) => { if (vivo) setErro(e.message || "Não consegui abrir essa loja."); });
+    return () => { vivo = false; };
+  }, [loja.id]);
+
+  const cent = (v) => brl((Number(v) || 0) / 100);
+  const data = (iso) => (iso ? new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—");
+  const dia = (iso) => (iso ? new Date(iso).toLocaleDateString("pt-BR") : "—");
+  const ha = (iso) => {
+    if (!iso) return "nunca";
+    const d = Math.floor((Date.now() - new Date(iso).getTime()) / 864e5);
+    return d <= 0 ? "hoje" : d === 1 ? "ontem" : `há ${d} dias`;
+  };
+
+  const topo = (
+    <>
+      <button className="oj-link-sutil" style={{ textAlign: "left", padding: "8px 0" }} onClick={voltar}>‹ Voltar às lojas</button>
+      <div className="oj-aviso" role="note">
+        <b>Modo suporte · somente leitura.</b> Você está vendo os dados desta loja como administradora.
+        Este acesso fica registrado.
+      </div>
+    </>
+  );
+  if (erro) return (<>{topo}<div className="oj-erro">{erro}</div></>);
+  if (!dado) return (<>{topo}<div className="oj-card"><div className="oj-meta">Abrindo a loja de {loja.nome || "cliente"}…</div></div></>);
+
+  const l = dado.loja || {}, dona = dado.dona || {}, a = dado.assinatura || {}, r = dado.resumo || {};
+  const ate = a.trial_ate ? new Date(a.trial_ate) : null;
+  const restam = ate ? Math.ceil((ate.getTime() - Date.now()) / 864e5) : null;
+  const situacao =
+    a.status === "ativa" ? ["assinatura paga", "oj-tag ok"]
+    : a.status === "trial" && restam > 0 ? [`teste/beta · restam ${restam} dia(s)`, "oj-tag estoque"]
+    : a.status ? ["teste encerrado", "oj-tag parada"] : ["sem assinatura", "oj-tag"];
+  const zap = String(l.whatsapp || "").replace(/\D/g, "");
+  const dias = dado.dias || [];
+  const maxDia = Math.max(1, ...dias.map((x) => x.n || 0));
+  const frase = (e) => {
+    const nome = e.nome || e.codigo || "peça";
+    if (e.tipo === "venda") return `Vendeu ${nome} (${e.qtd || 1} un) por ${cent(e.valor)}${e.extra ? " para " + e.extra : ""}`;
+    if (e.tipo === "peca") return `Cadastrou a peça ${e.codigo || ""} — ${e.nome || ""} (${e.qtd ?? 0} un)${e.extra ? " · fornecedor " + e.extra : ""}`;
+    if (e.tipo === "romaneio") return `Importou um romaneio${e.extra ? " de " + e.extra : ""} · ${e.qtd || 0} itens · ${cent(e.valor)}`;
+    if (e.tipo === "baixa") return `Deu baixa em ${nome} (${e.qtd || 1} un)${e.extra ? " — " + e.extra : ""}`;
+    if (e.tipo === "despesa") return `Lançou a despesa ${e.nome || ""} — ${cent(e.valor)}`;
+    if (e.tipo === "cliente") return `Cadastrou a cliente ${e.nome || ""}`;
+    return e.tipo;
+  };
+  const abas = [["atividade", "Atividade"], ["pecas", "Peças"], ["vendas", "Vendas"], ["clientes", "Clientes"], ["contas", "Contas"], ["equipe", "Equipe"], ["romaneios", "Romaneios"]];
+  const vazio = (t) => <div className="oj-meta" style={{ padding: "8px 0" }}>{t}</div>;
+
+  return (
+    <>
+      {topo}
+      <div className="oj-card">
+        <div className="oj-lbl">Loja</div>
+        <div className="oj-nome" style={{ fontSize: 20 }}>{l.nome || "Loja sem nome"}</div>
+        <div className="oj-meta" style={{ wordBreak: "break-all" }}>{dona.email || "—"}</div>
+        <div style={{ margin: "8px 0" }}><span className={situacao[1]}>{situacao[0]}</span></div>
+        <div className="oj-meta" style={{ lineHeight: 1.6 }}>
+          Conta criada em {dia(dona.conta_criada)} · último login {ha(dona.ultimo_login)}
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+          {zap && (
+            <button className="oj-btn mini" onClick={() => window.open(`https://wa.me/${zap}`, "_blank", "noopener")}>
+              Chamar no WhatsApp
+            </button>
+          )}
+          {dona.email && (
+            <button className="oj-btn sec mini" onClick={() => pedirSenha(dona.email)}>Redefinir a senha dela</button>
+          )}
+        </div>
+      </div>
+
+      <div className="oj-grid2">
+        <div className="oj-card flat"><div className="oj-lbl">Peças</div><div className="oj-valor">{r.pecas || 0}</div><div className="oj-meta">{r.unidades || 0} unidades</div></div>
+        <div className="oj-card flat"><div className="oj-lbl">Vendas em 30 dias</div><div className="oj-valor">{r.vendas_30d || 0}</div><div className="oj-meta">{cent(r.valor_30d)}</div></div>
+        <div className="oj-card flat"><div className="oj-lbl">A receber</div><div className="oj-valor">{cent(r.a_receber)}</div><div className="oj-meta">vendas ainda não pagas</div></div>
+        <div className="oj-card flat"><div className="oj-lbl">Última atividade</div><div className="oj-valor" style={{ fontSize: 20 }}>{r.ultima_atividade ? ha(r.ultima_atividade) : "nunca"}</div><div className="oj-meta">{r.clientes || 0} clientes · {r.romaneios || 0} romaneios</div></div>
+      </div>
+
+      <div className="oj-card">
+        <div className="oj-lbl">Atividade nos últimos 30 dias</div>
+        <svg viewBox="0 0 300 52" width="100%" height="52" role="img"
+             aria-label={`Ações por dia nos últimos 30 dias; ${dias.filter((x) => x.n > 0).length} dias com atividade`}>
+          {dias.map((x, i) => {
+            const h = x.n ? Math.max(4, (x.n / maxDia) * 44) : 2;
+            return <rect key={x.dia || i} x={i * 10 + 1} y={50 - h} width="7" height={h} rx="2" fill={x.n ? "var(--rose)" : "var(--linha)"} />;
+          })}
+        </svg>
+        <div className="oj-meta" style={{ display: "flex", justifyContent: "space-between" }}><span>30 dias atrás</span><span>hoje</span></div>
+      </div>
+
+      <div className="oj-chips" role="tablist" aria-label="Seções da loja" style={{ margin: "8px 20px" }}>
+        {abas.map(([k, t]) => (
+          <button key={k} className="oj-chip" role="tab" aria-selected={aba === k} data-on={aba === k ? "1" : "0"} onClick={() => setAba(k)}>{t}</button>
+        ))}
+      </div>
+
+      <div className="oj-card">
+        {aba === "atividade" && ((dado.atividade || []).length === 0 ? vazio("Ainda não fez nada no app.") :
+          dado.atividade.map((e, i) => (
+            <div className="oj-item" key={i} style={{ alignItems: "flex-start" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="oj-nome" style={{ fontWeight: 500 }}>{frase(e)}</div>
+                <div className="oj-meta">{data(e.quando)}</div>
+              </div>
+            </div>
+          )))}
+
+        {aba === "pecas" && ((dado.pecas || []).length === 0 ? vazio("Nenhuma peça cadastrada.") :
+          <>
+            {dado.pecas.map((p) => (
+              <div className="oj-item" key={p.id} style={{ alignItems: "flex-start" }}>
+                {typeof p.capa === "string" && p.capa.startsWith("https://")
+                  ? <img src={p.capa} alt="" width="44" height="44" style={{ borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                  : <span aria-hidden="true" style={{ width: 44, height: 44, borderRadius: 10, background: "var(--bege-2)", flexShrink: 0 }} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="oj-nome">{p.codigo} · {p.nome}</div>
+                  <div className="oj-meta">
+                    {p.qtd} un · custo {cent(p.custo_centavos)} · venda {cent(p.venda_centavos)}
+                    {p.banho ? ` · ${p.banho}` : ""}{p.fornecedor && p.fornecedor !== "Cadastro manual" ? ` · ${p.fornecedor}` : ""}
+                    {p.tem_foto ? " · com foto" : ""}
+                  </div>
+                </div>
+                {p.arquivada && <span className="oj-tag parada">arquivada</span>}
+              </div>
+            ))}
+            {(r.pecas || 0) > dado.pecas.length && vazio(`Mostrando as ${dado.pecas.length} mais recentes.`)}
+          </>)}
+
+        {aba === "vendas" && ((dado.vendas || []).length === 0 ? vazio("Nenhuma venda registrada.") :
+          dado.vendas.map((v) => (
+            <div className="oj-item" key={v.id} style={{ alignItems: "flex-start" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="oj-nome">{v.nome || v.codigo} · {v.qtd} un · {cent(v.valor_centavos)}</div>
+                <div className="oj-meta">{data(v.vendida_em)} · {v.modalidade}{v.cliente ? ` · ${v.cliente}` : ""}</div>
+              </div>
+              <span className={v.pago === false ? "oj-tag parada" : "oj-tag ok"}>{v.pago === false ? "a receber" : "pago"}</span>
+            </div>
+          )))}
+
+        {aba === "clientes" && ((dado.clientes || []).length === 0 ? vazio("Nenhuma cliente cadastrada.") :
+          dado.clientes.map((c) => (
+            <div className="oj-item" key={c.id} style={{ alignItems: "flex-start" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="oj-nome">{c.nome}</div>
+                <div className="oj-meta">{[c.telefone, c.cpf, c.endereco].filter(Boolean).join(" · ") || "sem contato"}</div>
+              </div>
+            </div>
+          )))}
+
+        {aba === "contas" && ((dado.despesas || []).length === 0 ? vazio("Nenhuma despesa lançada.") :
+          dado.despesas.map((x) => (
+            <div className="oj-item" key={x.id}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="oj-nome">{x.nome}</div>
+                <div className="oj-meta">{x.tipo} · {dia(x.competencia)}</div>
+              </div>
+              <b>{cent(x.valor_centavos)}</b>
+            </div>
+          )))}
+
+        {aba === "equipe" && ((dado.consultoras || []).length === 0 ? vazio("Sem equipe cadastrada.") :
+          dado.consultoras.map((c) => (
+            <div className="oj-item" key={c.id}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="oj-nome">{c.nome}{c.eh_dona ? " (dona)" : ""}</div>
+                <div className="oj-meta">{c.eh_dona ? "administra a loja" : `comissão ${c.comissao}% · ${c.usuario_id ? "já entrou no app" : "convite pendente"}`}</div>
+              </div>
+              {c.ativa === false && <span className="oj-tag parada">inativa</span>}
+            </div>
+          )))}
+
+        {aba === "romaneios" && ((dado.entradas || []).length === 0 ? vazio("Nenhum romaneio importado.") :
+          dado.entradas.map((x) => (
+            <div className="oj-item" key={x.id}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="oj-nome">{x.fornecedor || "Sem fornecedor"}</div>
+                <div className="oj-meta">{data(x.criada_em)} · {x.qtd_itens || 0} itens</div>
+              </div>
+              <b>{cent(x.total_centavos)}</b>
+            </div>
+          )))}
+      </div>
+    </>
+  );
+}
+
 function Admin({ d }) {
   // Painel fiel ao USO REAL: o que cada loja de fato cadastrou, vendeu e quando usou por último.
   const [uso, setUso] = useState(null);
   const [erroAdmin, setErroAdmin] = useState("");
   const [alvoSenha, setAlvoSenha] = useState("");
+  const [aberta, setAberta] = useState(null); // loja aberta em modo suporte
   useEffect(() => {
     let vivo = true;
     dados.carregarUsoLojas()
@@ -2874,6 +3070,18 @@ function Admin({ d }) {
 
   if (erroAdmin) return <div className="oj-erro">{erroAdmin}</div>;
   if (!uso) return <div className="oj-card"><div className="oj-meta">Carregando dados reais…</div></div>;
+  if (aberta)
+    return (
+      <LojaSuporte
+        loja={aberta}
+        voltar={() => setAberta(null)}
+        pedirSenha={(email) => {
+          setAberta(null);
+          setAlvoSenha(email);
+          setTimeout(() => document.getElementById("redefinir-senha")?.scrollIntoView({ behavior: "smooth" }), 250);
+        }}
+      />
+    );
 
   const r = uso.resumo || {};
   const lojas = uso.lojas || [];
@@ -2948,10 +3156,18 @@ function Admin({ d }) {
                     {quando(l.ultima_atividade)}
                     {l.situacao === "beta" && l.dias_restantes != null ? ` · restam ${l.dias_restantes} dia(s) de beta` : ""}
                   </div>
+                  <button
+                    className="oj-btn mini"
+                    style={{ marginTop: 8 }}
+                    onClick={() => setAberta(l)}
+                    aria-label={`Ver a loja ${l.nome || ""} e a atividade`}
+                  >
+                    Ver loja e atividade ›
+                  </button>
                   {l.dona_email && (
                     <button
                       className="oj-link-sutil"
-                      style={{ textAlign: "left", padding: "6px 0" }}
+                      style={{ textAlign: "left", padding: "6px 0", display: "block" }}
                       onClick={() => {
                         setAlvoSenha(l.dona_email);
                         document.getElementById("redefinir-senha")?.scrollIntoView({ behavior: "smooth" });
