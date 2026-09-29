@@ -103,6 +103,13 @@ export const auth = {
     if (error) throw new Error(traduzErro(error.message));
     return data.user;
   },
+  async alterarSenha(novaSenha) {
+    const senha = String(novaSenha || "");
+    if (senha.length < 6) throw new Error("A senha precisa ter ao menos 6 caracteres.");
+    const { error } = await sb.auth.updateUser({ password: senha });
+    if (error) throw new Error(traduzErro(error.message));
+    return true;
+  },
   async sair() {
     await sb.auth.signOut();
   },

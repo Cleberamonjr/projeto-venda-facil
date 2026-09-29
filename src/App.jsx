@@ -34,6 +34,20 @@ const CSS = `
   --roxo:#8A6E80;
   --roxo-cl:#F2EBEF;
 }
+.oj[data-theme="escuro"]{
+  --bege:#171316; --bege-2:#211A1D; --linha:#3B2D32;
+  --tinta:#F5E9EC; --tinta-cl:#BDAAB0; --rose-cl:#412A31;
+  --marinho-cl:#293445; --roxo-cl:#302632;
+  background:linear-gradient(to bottom,#171316,#211A1D);
+}
+.oj[data-theme="escuro"] .oj-card,
+.oj[data-theme="escuro"] .oj-metrica,
+.oj[data-theme="escuro"] .oj-modal,
+.oj[data-theme="escuro"] .oj-tour-card{background:#211A1D;color:var(--tinta)}
+.oj[data-theme="escuro"] .oj-in,
+.oj[data-theme="escuro"] .oj-chip{background:#2A2024;color:var(--tinta);border-color:var(--linha)}
+.oj[data-theme="escuro"] .oj-nav{background:rgba(23,19,22,.97)}
+.oj[data-theme="escuro"] .oj-metrica.destaque{background:linear-gradient(160deg,#211A1D,#302126)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .oj{
   font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -581,11 +595,11 @@ const MOTIVOS_SAIDA = ["Devolução", "Troca", "Defeito", "Garantia", "Cortesia"
 /* Plano de saída: quando o teste de 72h acaba e ela não assina, cai aqui. */
 const LIVRE = {
   id: "livre",
-  nome: "Livre",
+  nome: "Começo",
   preco: "0,00",
   valor: 0,
   limite: 10,
-  linha: "Continue usando o essencial, sem pagar nada.",
+  linha: "Comece no seu ritmo, com o essencial para organizar a loja.",
   itens: ["Até 10 códigos diferentes", "Estoque, vendas e lucro do mês"],
 };
 
@@ -594,30 +608,31 @@ const LIVRE = {
 const PLANOS = [
   {
     id: "inicio",
-    nome: "Essencial",
-    persona: "Estou começando a organizar",
-    maturidade: "Sai do caderno. Você registra, o app calcula.",
-    preco: "39,90",
-    valor: 39.9,
-    limite: 250,
+    nome: "Solo",
+    persona: "Eu cuido de tudo de perto",
+    maturidade: "Você registra uma vez e enxerga o negócio com clareza.",
+    preco: "69,90",
+    valor: 69.9,
+    limite: 1000,
     leituras: 0,
-    consultoras: 1,
+    consultoras: 0,
     selo: "",
-    linha: "O básico bem feito, sem pagar por nada que não usa.",
+    linha: "A tranquilidade de saber onde está cada peça e cada venda.",
     herda: null,
     itens: [
-      "Estoque, vendas e despesas",
-      "Lucro real do mês",
-      "Venda na confiança com lembrete de cobrança",
-      "Cadastro manual das peças",
+      "Até 1.000 códigos de peças",
+      "Estoque, vendas, despesas e lucro real",
+      "Lembretes para acompanhar quem ainda vai pagar",
+      "Catálogo pronto para compartilhar",
     ],
     extra: "Leitura de romaneio por foto: R$ 0,90 cada, avulso",
   },
   {
     id: "controle",
-    nome: "Revendedora",
-    persona: "Vivo disso, tenho estoque grande",
-    maturidade: "Ganha tempo. A foto do romaneio vira estoque.",
+    legado: true,
+    nome: "Solo (legado)",
+    persona: "Plano anterior preservado para contas existentes",
+    maturidade: "Mantido apenas para compatibilidade histórica.",
     preco: "69,90",
     valor: 69.9,
     limite: 700,
@@ -625,7 +640,7 @@ const PLANOS = [
     consultoras: 1,
     selo: "",
     linha: "Pare de cadastrar peça a peça.",
-    herda: "Essencial",
+    herda: "Solo",
     itens: [
       "30 romaneios lidos por foto, todo mês",
       "Alerta de peça parada há mais de 60 dias",
@@ -635,19 +650,20 @@ const PLANOS = [
   },
   {
     id: "crescimento",
-    nome: "Lojista",
-    persona: "Tenho consultoras vendendo pra mim",
-    maturidade: "Enxerga o time. Sabe o que está com quem.",
-    preco: "106,90",
-    valor: 106.9,
-    limite: 2000,
+    nome: "Equipe",
+    persona: "Meu negócio já tem pessoas vendendo comigo",
+    maturidade: "Você cuida do todo sem perder de vista cada pessoa.",
+    preco: "129,90",
+    valor: 129.9,
+    limite: 3000,
     leituras: 100,
     consultoras: 3,
-    selo: "Melhor escolha",
-    linha: "Seu dinheiro na rua deixa de ser um mistério.",
-    herda: "Revendedora",
+    selo: "Para crescer com clareza",
+    linha: "Quando o negócio cresce, a clareza devolve seu tempo.",
+    herda: "Solo",
     itens: [
-      "Maleta: o que está com cada consultora e até quando",
+      "Tudo do Solo, para até 3.000 códigos",
+      "Equipe: o que está com cada pessoa e até quando",
       "3 consultoras com comissão e vendas separadas",
       "Conselheiro de negócio com ações práticas",
       "Assistente de recompra",
@@ -657,7 +673,7 @@ const PLANOS = [
   {
     id: "joalheria",
     emBreve: true,
-    nome: "Operação",
+    nome: "Escala",
     persona: "Tenho rede de consultoras e mais de um ponto",
     maturidade: "Decide por dado. Compara pessoas, banhos e períodos.",
     preco: "179,90",
@@ -667,7 +683,7 @@ const PLANOS = [
     consultoras: 10,
     selo: "",
     linha: "Da intuição para o painel.",
-    herda: "Lojista",
+    herda: "Equipe",
     itens: [
       "10 consultoras e mais de uma loja",
       "Gráficos de giro por banho, modelo e período",
@@ -681,7 +697,7 @@ const PLANOS = [
   {
     id: "inteligencia",
     emBreve: true,
-    nome: "Inteligência",
+    nome: "Visão",
     persona: "Quero comprar pelo dado e integrar tudo",
     maturidade: "Antecipa. O sistema sugere antes de você perguntar.",
     preco: "397,00",
@@ -715,9 +731,9 @@ const PRECO_LEITURA_AVULSA = 0.9;
 const WHATSAPP_SUPORTE = "";
 
 const LINKS_PAGAMENTO = {
-  inicio: "",       // Essencial R$ 39,90
-  controle: "",     // Revendedora R$ 69,90
-  crescimento: "",  // Lojista R$ 106,90
+  inicio: "",       // Solo R$ 69,90
+  controle: "",     // legado: redirecionado para Solo
+  crescimento: "",  // Equipe R$ 129,90
   joalheria: "",    // Operação R$ 179,90
   inteligencia: "", // Inteligência R$ 397
 };
@@ -736,7 +752,9 @@ function validarCupom(codigo) {
   return CUPONS[c] ? { codigo: c, ...CUPONS[c] } : null;
 }
 
-const acharPlano = (pid) => PLANOS.find((x) => x.id === pid) || LIVRE;
+const PLANO_ALIASES = { controle: "inicio" };
+const PLANO_PUBLICOS = () => PLANOS.filter((x) => !x.legado && !x.emBreve);
+const acharPlano = (pid) => PLANOS.find((x) => x.id === (PLANO_ALIASES[pid] || pid)) || LIVRE;
 
 /* Teste grátis de 72 horas com tudo liberado */
 const TRIAL_MS = 72 * 3600 * 1000;
@@ -999,12 +1017,16 @@ export default function OrganizeJewelry() {
     const s = Number(localStorage.getItem("luxi:fescala"));
     return s >= 0.9 && s <= 1.6 ? s : 1;
   });
+  const [tema, setTema] = useState(() => localStorage.getItem("luxi:tema") || "claro");
   const [zoomAberto, setZoomAberto] = useState(false);
   // Aplica o zoom no documento inteiro — assim funciona em toda tela
   // (login, cadastro, app), não só na que declarar a variável.
   useEffect(() => {
     document.documentElement.style.zoom = String(fescala);
   }, [fescala]);
+  useEffect(() => {
+    localStorage.setItem("luxi:tema", tema);
+  }, [tema]);
   const mudarFonte = (delta) => {
     setFescala((f) => {
       const novo = Math.min(1.6, Math.max(0.9, Math.round((f + delta) * 100) / 100));
@@ -1549,7 +1571,7 @@ export default function OrganizeJewelry() {
         próprias vendas e sua maleta.
       </div>
     ) : (
-      <Painel d={d} dentro={dentro} />
+      <Painel d={d} dentro={dentro} irPara={irPara} />
     ),
     estoque: (
       <Estoque
@@ -1592,7 +1614,7 @@ export default function OrganizeJewelry() {
         administra. Você acompanha sua maleta, suas vendas e suas clientes.
       </div>
     ) : <Dashboards d={d} dentro={dentro} />,
-    perfil: <Perfil d={d} salvar={salvar} irPara={irPara} />,
+    perfil: <Perfil d={d} salvar={salvar} irPara={irPara} tema={tema} setTema={setTema} />,
     integracoes: ehConsultora ? (
       <div className="oj-vazio">
         <span className="oj-serif">Área da administradora</span>
@@ -1666,9 +1688,10 @@ export default function OrganizeJewelry() {
         ["vendas", "Vendas"],
         ["conselho", "Conselho"],
       ];
+  const temEquipe = !ehConsultora && ["crescimento", "joalheria", "inteligencia"].includes(planoAtivo(d.perfil).id);
 
   return (
-    <div className="oj">
+    <div className="oj" data-theme={tema}>
       <style>{CSS}</style>
 
       {!menu && (
@@ -1743,7 +1766,7 @@ export default function OrganizeJewelry() {
               // ["integracoes", "Integrações", "Trazer dados de outro sistema"], // oculto ate implementar
               ["perfil", "Minha conta", "Plano, logo e WhatsApp"],
             ]],
-          ]).map(([grupo, itens]) => (
+          ]).filter(([grupo]) => grupo !== "Equipe" || temEquipe).map(([grupo, itens]) => (
             <div key={grupo}>
               <div className="oj-grupo">{grupo}</div>
               {itens.map(([k, t, sub]) => (
@@ -2635,7 +2658,7 @@ function Vitrine({ voltar }) {
         Escolha seu plano
       </div>
 
-      {PLANOS.filter((x) => !x.emBreve).map((x) => (
+      {PLANO_PUBLICOS().map((x) => (
         <CartaoPlano
           key={x.id}
           p={x}
@@ -2671,11 +2694,10 @@ function Admin({ d }) {
 
   const total = Number(dadosAdmin.total || 0);
   const mrr = Number(dadosAdmin.mrr || 0);
-  const linhas = PLANOS.map((p) => ({
-    ...p,
-    qtd: Number(dadosAdmin[p.id] || 0),
-    receita: Number(dadosAdmin[p.id] || 0) * p.valor,
-  }));
+  const linhas = PLANO_PUBLICOS().map((p) => {
+    const qtd = Number(dadosAdmin[p.id] || 0) + (p.id === "inicio" ? Number(dadosAdmin.controle || 0) : 0);
+    return { ...p, qtd, receita: qtd * p.valor };
+  });
 
   return (
     <>
@@ -3128,7 +3150,7 @@ function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, a
     p === 1
       ? f.email && f.senha.length >= 6 && f.senha === f.senha2
       : f.loja.trim() && (!contaLogada || f.nome.trim());
-  const plano = PLANOS.find((x) => x.id === f.plano);
+  const plano = acharPlano(f.plano);
 
   if (p === 0)
     return (
@@ -3203,8 +3225,7 @@ function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, a
           cadastrou.
         </div>
 
-        {PLANOS.filter((x) => !x.emBreve).map((x) => (
-          <div
+        {PLANO_PUBLICOS().map((x) => (          <div
             key={x.id}
             className="oj-plano"
             data-on={f.plano === x.id ? "1" : "0"}
@@ -3637,7 +3658,7 @@ function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, a
 }
 
 /* ---------------- painel ---------------- */
-function Painel({ d, dentro }) {
+function Painel({ d, dentro, irPara }) {
   const vendas = d.vendas.filter((v) => dentro(v.data));
   const saidas = d.saidas.filter((s) => dentro(s.data));
   const desp = d.despesas.filter((x) => dentro(x.data));
@@ -3730,12 +3751,29 @@ function Painel({ d, dentro }) {
         <div className="oj-card" style={{ textAlign: "center", padding: "22px 18px" }}>
           <div style={{ fontSize: 26, marginBottom: 8, color: "var(--rose)" }}>◈</div>
           <div style={{ fontWeight: 700, fontSize: 17, color: "var(--tinta)", marginBottom: 4 }}>
-            Bora começar?
+            Vamos colocar sua loja para trabalhar?
           </div>
           <div style={{ color: "var(--tinta-cl)", fontSize: 13.5, lineHeight: 1.55 }}>
-            Fotografa a lista de peças que chegaram do fornecedor e o estoque se cadastra
-            sozinho. Em segundos seus números aparecem aqui.
+            Comece pelo estoque: cadastre a primeira peça ou fotografe o romaneio do fornecedor.
+            Em segundos seus números começam a aparecer aqui.
           </div>
+          <button className="oj-btn" style={{ marginTop: 14 }} onClick={() => irPara("estoque")}>
+            Cadastrar primeira peça
+          </button>
+        </div>
+      )}
+
+      {!semNada && d.estoque.length > 0 && !d.vendas.length && (
+        <div className="oj-card" style={{ textAlign: "center", padding: "18px" }}>
+          <div style={{ fontWeight: 700, fontSize: 16, color: "var(--tinta)", marginBottom: 4 }}>
+            Sua primeira novidade já chegou.
+          </div>
+          <div style={{ color: "var(--tinta-cl)", fontSize: 13.5, lineHeight: 1.55 }}>
+            Agora registre uma venda e veja a Luxi transformar movimento em clareza.
+          </div>
+          <button className="oj-btn sec" style={{ marginTop: 12 }} onClick={() => irPara("vendas")}>
+            Registrar primeira venda
+          </button>
         </div>
       )}
 
@@ -5758,7 +5796,7 @@ function Equipe({ d, salvar, dentro, criarConsultora, atualizarConsultora, remov
     return (
       <>
         <div className="oj-card">
-          <div className="oj-lbl">Disponível a partir do plano Lojista</div>
+          <div className="oj-lbl">Disponível no plano Equipe</div>
           <div className="oj-valor" style={{ fontSize: 26, marginTop: 8 }}>
             Sua equipe, organizada
           </div>
@@ -5773,14 +5811,13 @@ function Equipe({ d, salvar, dentro, criarConsultora, atualizarConsultora, remov
               style={{ marginTop: 14 }}
               onClick={() => irPara && irPara("perfil")}
             >
-              Assinar o Lojista · R$ 106,90
+              Conhecer o Equipe · R$ 129,90
             </button>
           ) : (
             <div className="oj-meta" style={{ marginTop: 14 }}>
               A assinatura abre em breve — assim que abrir, você é avisada por aqui.
             </div>
-          )}
-        </div>
+          )}        </div>
       </>
     );
 
@@ -6162,7 +6199,7 @@ function Integracoes({ d, salvar }) {
   if (!liberado)
     return (
       <div className="oj-card">
-        <div className="oj-lbl">Disponível a partir do plano Operação</div>
+        <div className="oj-lbl">Disponível a partir do plano Escala</div>
         <div className="oj-valor" style={{ fontSize: 25, marginTop: 8 }}>
           Traga seus dados de onde eles estão
         </div>
@@ -6172,9 +6209,8 @@ function Integracoes({ d, salvar }) {
           dentro — normalmente o que leva semanas passa a levar uma tarde.
         </div>
         <div className="oj-meta" style={{ marginTop: 14 }}>
-          Este recurso chega junto com o plano Operação, que ainda está em preparação.
-        </div>
-      </div>
+          Este recurso chega junto com o plano Escala, que ainda está em preparação.
+        </div>      </div>
     );
 
   const fontes = [
@@ -6247,7 +6283,7 @@ function Integracoes({ d, salvar }) {
 }
 
 /* ---------------- perfil e plano ---------------- */
-function Perfil({ d, salvar, irPara }) {
+function Perfil({ d, salvar, irPara, tema, setTema }) {
   const p = d.perfil;
   const plano = planoAtivo(p);
   const codigos = new Set(d.estoque.filter((x) => x.qtd > 0).map((x) => x.codigo)).size;
@@ -6255,6 +6291,27 @@ function Perfil({ d, salvar, irPara }) {
   const set = (campo, v) => salvar({ ...d, perfil: { ...p, [campo]: v } });
 
   const [pagando, setPagando] = useState(null); // plano em processo de pagamento
+  const [novaSenha, setNovaSenha] = useState("");
+  const [repetirSenha, setRepetirSenha] = useState("");
+  const [senhaMsg, setSenhaMsg] = useState("");
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
+
+  const alterarSenha = async () => {
+    setSenhaMsg("");
+    if (novaSenha.length < 6) return setSenhaMsg("A senha precisa ter ao menos 6 caracteres.");
+    if (novaSenha !== repetirSenha) return setSenhaMsg("As senhas não são iguais.");
+    setSalvandoSenha(true);
+    try {
+      await dados.auth.alterarSenha(novaSenha);
+      setNovaSenha("");
+      setRepetirSenha("");
+      setSenhaMsg("Senha atualizada com segurança.");
+    } catch (e) {
+      setSenhaMsg(e.message || "Não consegui atualizar sua senha.");
+    } finally {
+      setSalvandoSenha(false);
+    }
+  };
 
   const trocar = async (pid) => {
     const link = LINKS_PAGAMENTO[pid];
@@ -6353,6 +6410,26 @@ function Perfil({ d, salvar, irPara }) {
       </div>
 
       <div className="oj-card">
+        <div className="oj-lbl">Conforto e segurança</div>
+        <div className="oj-uso" style={{ marginTop: 10 }}>
+          <div>
+            <div className="oj-nome">Modo de uso</div>
+            <div className="oj-meta">Escolha a aparência mais confortável para o seu horário.</div>
+          </div>
+          <button className="oj-chip" data-on={tema === "escuro" ? "1" : "0"} onClick={() => setTema(tema === "escuro" ? "claro" : "escuro")}>
+            {tema === "escuro" ? "Escuro" : "Claro"}
+          </button>
+        </div>
+        <div className="oj-lbl" style={{ marginTop: 18 }}>Trocar senha</div>
+        <input className="oj-in" type="password" placeholder="Nova senha" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} autoComplete="new-password" />
+        <input className="oj-in" type="password" placeholder="Repita a nova senha" value={repetirSenha} onChange={(e) => setRepetirSenha(e.target.value)} autoComplete="new-password" />
+        {senhaMsg && <div className={senhaMsg.includes("atualizada") ? "oj-aviso" : "oj-erro"} style={{ marginTop: 8 }}>{senhaMsg}</div>}
+        <button className="oj-btn" style={{ marginTop: 10 }} onClick={alterarSenha} disabled={salvandoSenha}>
+          {salvandoSenha ? "Atualizando…" : "Atualizar senha"}
+        </button>
+      </div>
+
+      <div className="oj-card">
         <div className="oj-lbl">WhatsApp da loja</div>
         <div className="oj-meta" style={{ margin: "8px 0 2px", lineHeight: 1.55 }}>
           É por este número que o catálogo é enviado e que a cliente responde.
@@ -6374,7 +6451,7 @@ function Perfil({ d, salvar, irPara }) {
           }
         />
         <div className="oj-meta" style={{ marginTop: 6 }}>
-          Sua vitrine: <b>lumi.app/{p.slug || "minhaloja"}</b>
+          Sua vitrine: <b>luxi.app/{p.slug || "minhaloja"}</b>
         </div>
       </div>
 
@@ -6401,7 +6478,7 @@ function Perfil({ d, salvar, irPara }) {
 
       <div className="oj-sec">Mudar de plano</div>
       <div style={{ padding: "0 20px" }}>
-        {PLANOS.filter((x) => !x.emBreve).map((x) => (
+        {PLANO_PUBLICOS().map((x) => (
           <CartaoPlano
             key={x.id}
             p={x}
@@ -6423,7 +6500,7 @@ function Perfil({ d, salvar, irPara }) {
         <div className="oj-fundo" onClick={() => setPagando(null)}>
           <div className="oj-modal" onClick={(e) => e.stopPropagation()}>
             {(() => {
-              const pl = PLANOS.find((x) => x.id === pagando);
+              const pl = acharPlano(pagando);
               const temLink = !!LINKS_PAGAMENTO[pagando];
               return (
                 <>
@@ -7324,7 +7401,7 @@ function Catalogo({ d }) {
   const escolhidas = lista.filter((p) => sel.includes(p.id));
 
   const slug = d.perfil.slug || "minhaloja";
-  const link = `https://lumi.app/${slug}`;
+  const link = `https://luxi.app/${slug}`;
 
   const texto =
     `${d.perfil.loja}\n\n` +
@@ -7581,8 +7658,7 @@ function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda, 
           onClick={() => irPara && irPara("perfil")}
         >
           Ver planos e detalhes da assinatura ›
-        </button>
-      </div>
+        </button>      </div>
 
       <div className="oj-card">
         <div className="oj-lbl">Limite de inadimplência</div>
@@ -7689,7 +7765,7 @@ function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda, 
         </div>
       )}
 
-      <div className="oj-sec">Quem me deve</div>
+      <div className="oj-sec">Quem me deve?</div>
       {!receber.length ? (
         <div className="oj-vazio" style={{ padding: "26px 24px" }}>
           Ninguém devendo. Bom sinal.
