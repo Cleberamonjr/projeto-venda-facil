@@ -20,6 +20,7 @@ const CSS = `
   --rose-esc:#A56B77;
   --rose-cl:#F7EBEE;
   --rose-metal:#CE9AA0;
+  --rose-brand:#C48A94;
   /* valores em azul-marinho, para contraste de leitura */
   --dourado:#1E3358;
   --marinho:#1E3358;
@@ -35,19 +36,73 @@ const CSS = `
   --roxo-cl:#F2EBEF;
 }
 .oj[data-theme="escuro"]{
-  --bege:#171316; --bege-2:#211A1D; --linha:#3B2D32;
-  --tinta:#F5E9EC; --tinta-cl:#BDAAB0; --rose-cl:#412A31;
-  --marinho-cl:#293445; --roxo-cl:#302632;
-  background:linear-gradient(to bottom,#171316,#211A1D);
+  --bg-0:#170B0C; --bg-1:#221012; --bg-2:#301619; --bg-3:#3F1E22;
+  --border:#5A2C30; --card-bg:#3A1B1F; --card-border:#70383D;
+  --tx-hi:#F3E7E6; --tx-mid:#D9B9B8; --tx-lo:#B08D8C; --tx-dis:#7A5A59;
+  --rose:#BD535B; --rose-fill:#5A2226; --gold:#C7CDD1; --green:#6FAE85;
+  --rose-brand:#C48A94;
+  --bege:var(--bg-0); --bege-2:var(--bg-2); --linha:var(--border);
+  --tinta:var(--tx-hi); --tinta-cl:var(--tx-mid); --rose-cl:var(--rose-fill);
+  --rose-esc:var(--rose); --rose-metal:var(--rose-brand); --rose-btn:var(--rose); --rose-btn-h:#C8666E;
+  --dourado:var(--gold); --marinho:var(--gold); --marinho-cl:var(--bg-3);
+  --verde:var(--green); --alerta:var(--rose); --roxo:var(--tx-mid); --roxo-cl:var(--bg-3);
+  background:var(--bg-0);
 }
+.oj[data-theme="escuro"] .oj-top{background:var(--bg-0)}
+.oj[data-theme="escuro"] .oj-lateral{background:var(--bg-1)}
 .oj[data-theme="escuro"] .oj-card,
 .oj[data-theme="escuro"] .oj-metrica,
 .oj[data-theme="escuro"] .oj-modal,
-.oj[data-theme="escuro"] .oj-tour-card{background:#211A1D;color:var(--tinta)}
+.oj[data-theme="escuro"] .oj-tour-card,
+.oj[data-theme="escuro"] .oj-plano{background:var(--card-bg);border:1.5px solid var(--card-border);box-shadow:0 2px 6px rgba(0,0,0,.35);color:var(--tx-hi)}
+.oj[data-theme="escuro"] .oj-card.flat{background:var(--bg-2);border-color:var(--border)}
+.oj[data-theme="escuro"] .oj-metrica.destaque{background:var(--card-bg);border-color:var(--card-border)}
 .oj[data-theme="escuro"] .oj-in,
-.oj[data-theme="escuro"] .oj-chip{background:#2A2024;color:var(--tinta);border-color:var(--linha)}
-.oj[data-theme="escuro"] .oj-nav{background:rgba(23,19,22,.97)}
-.oj[data-theme="escuro"] .oj-metrica.destaque{background:linear-gradient(160deg,#211A1D,#302126)}
+.oj[data-theme="escuro"] .oj-chip{background:var(--bg-2);color:var(--tx-hi);border-color:var(--border)}
+.oj[data-theme="escuro"] .oj-chip[data-on="1"]{background:var(--rose-fill);border-color:var(--rose);color:var(--tx-hi)}
+.oj[data-theme="escuro"] .oj-nav{background:rgba(34,16,18,.97)}
+.oj[data-theme="escuro"] .oj-fonte-ctrl{background:var(--bg-1);border-color:var(--border)}
+.oj[data-theme="escuro"] .oj-fonte-ctrl button{color:var(--tx-mid)}
+.oj[data-theme="escuro"] .oj-metrica-lbl,
+.oj[data-theme="escuro"] .oj-lbl,
+.oj[data-theme="escuro"] .oj-grupo{color:var(--tx-mid);font-weight:700;font-size:11px}
+.oj[data-theme="escuro"] .oj-meta,
+.oj[data-theme="escuro"] .oj-metrica-sub{color:var(--tx-lo)}
+.oj[data-theme="escuro"] .oj-nome-marca{color:var(--rose-brand)!important}
+.oj[data-theme="escuro"] .oj-nome,
+.oj[data-theme="escuro"] .oj-h1,
+.oj[data-theme="escuro"] .oj-sub{color:var(--tx-hi)}
+.oj[data-theme="escuro"] .oj-sub{color:var(--tx-mid)}
+.oj[data-theme="escuro"] .oj-atalho{background:transparent;border-color:var(--border);color:var(--tx-mid)}
+.oj[data-theme="escuro"] .oj-atalho[data-on="1"]{background:var(--rose);border-color:var(--rose);color:var(--tx-hi)}
+.oj[data-theme="escuro"] .oj-menu button[data-ativo="1"]{background:var(--rose-fill);color:var(--tx-hi)}
+.oj[data-theme="escuro"] .oj-menu button:hover,
+.oj[data-theme="escuro"] .oj-menu button:focus-visible{background:var(--bg-3);color:var(--tx-hi)}
+.oj[data-theme="escuro"] .oj-menu small{color:var(--tx-lo)}
+.oj[data-theme="escuro"] .oj-btn,
+.oj[data-theme="escuro"] .oj-vender-btn{background:var(--rose);color:var(--tx-hi)}
+.oj[data-theme="escuro"] .oj-btn:hover,
+.oj[data-theme="escuro"] .oj-vender-btn:hover{background:var(--rose-btn-h)}
+.oj[data-theme="escuro"] .oj-btn.sec{background:transparent;color:var(--rose);border-color:var(--rose)}
+.oj[data-theme="escuro"] .oj-btn.sec:hover{background:var(--rose-fill)}
+.oj[data-theme="escuro"] .oj-valor.ouro,
+.oj[data-theme="escuro"] .oj-plano .preco,
+.oj[data-theme="escuro"] .oj-plano .capacidade b,
+.oj[data-theme="escuro"] .oj-barra i{color:var(--gold)}
+.oj[data-theme="escuro"] .oj-valor.ouro{color:var(--gold)}
+.oj[data-theme="escuro"] .oj-metrica-val.pos,
+.oj[data-theme="escuro"] .oj-tag.ok{color:var(--green)}
+.oj[data-theme="escuro"] .oj-aviso{background:var(--bg-2);border-left-color:var(--gold);color:var(--tx-hi)}
+.oj[data-theme="escuro"] .oj-erro{background:var(--bg-3);border-left-color:var(--rose);color:var(--tx-hi)}
+.oj[data-theme="escuro"] .oj-cod,
+.oj[data-theme="escuro"] .oj-var,
+.oj[data-theme="escuro"] .oj-plano .herda{background:var(--bg-2);color:var(--tx-mid)}
+.oj[data-theme="escuro"] .oj-tag.parada{background:var(--bg-3);color:var(--rose)}
+.oj[data-theme="escuro"] .oj-tag.estoque,
+.oj[data-theme="escuro"] .oj-tag.rev{background:var(--bg-3);color:var(--tx-mid)}
+.oj[data-theme="escuro"] .oj-vazio{color:var(--tx-lo)}
+.oj[data-theme="escuro"] .oj-vazio .oj-serif{color:var(--tx-hi)}
+.oj[data-theme="escuro"] .oj-theme-track{background:var(--bg-3);border-color:var(--border)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .oj{
   font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -2026,7 +2081,7 @@ function Marca({ size = 132, animar = true }) {
         cy="60"
         r="42"
         fill="none"
-        stroke="url(#rose)"
+        stroke="var(--rose-brand)"
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeDasharray="225 40"
@@ -2034,10 +2089,10 @@ function Marca({ size = 132, animar = true }) {
       />
 
       {/* folha à direita, na abertura do anel */}
-      <g className={a("mk-dia")} fill="url(#rose)">
+      <g className={a("mk-dia")} fill="var(--rose-brand)">
         <path d="M92 74 Q101 70 106 76 Q99 82 92 80 Q89 77 92 74 Z" opacity="0.92" />
         <path d="M95 82 Q104 80 108 87 Q100 91 94 88 Q92 85 95 82 Z" opacity="0.82" />
-        <path d="M90 72 Q94 80 96 89" stroke="url(#rose)" strokeWidth="1.2" fill="none" />
+        <path d="M90 72 Q94 80 96 89" stroke="var(--rose-brand)" strokeWidth="1.2" fill="none" />
       </g>
 
       {/* brilhos de quatro pontas */}
