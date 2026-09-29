@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import * as dados from "./dados.js";
 
 /* ============================================================
@@ -1702,6 +1703,7 @@ export default function OrganizeJewelry() {
         criarColecao={criarColecao}
         dentro={dentro}
         abrir={setModal}
+        tema={tema}
       />
     ),
     vendas: <Vendas d={d} dentro={dentro} quitarVenda={quitarVendaConfianca} />,
@@ -4157,7 +4159,7 @@ function Recompra({ d }) {
 /* ---------------- estoque ---------------- */
 /* Editor de peça: serve tanto para editar uma existente quanto para incluir
    uma nova manualmente. Permite trocar até 4 fotos. */
-function EditorPeca({ peca, onSalvar, onFechar, colecoes, criarColecao }) {
+function EditorPeca({ peca, onSalvar, onFechar, colecoes, criarColecao, tema = "claro" }) {
   const novo = !peca.id;
   const [f, setF] = useState({
     nome: peca.nome || "",
@@ -4233,8 +4235,9 @@ function EditorPeca({ peca, onSalvar, onFechar, colecoes, criarColecao }) {
 
   const BANHOS = ["Ouro 24k", "Ouro 18k", "Ouro 10k", "Ouro rosé", "Ródio branco", "Ródio negro", "Prata 925"];
 
-  return (
-    <div className="oj-fundo oj-fundo-editor" onClick={onFechar}>
+  return createPortal(
+    <div className="oj oj-portal-editor" data-theme={tema}>
+      <div className="oj-fundo oj-fundo-editor" onClick={onFechar}>
       <div className="oj-modal oj-editor-modal" onClick={(e) => e.stopPropagation()}>
         <div className="oj-editor-cabecalho">
           <h3>{novo ? "Incluir produto" : "Editar produto"}</h3>
@@ -4399,11 +4402,13 @@ function EditorPeca({ peca, onSalvar, onFechar, colecoes, criarColecao }) {
           <button className="oj-btn sec" onClick={onFechar} disabled={salvando}>Cancelar</button>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
-function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, criarColecao, dentro, abrir }) {
+function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, criarColecao, dentro, abrir, tema }) {
   // Consultora só pode VER o estoque e Vender — incluir, editar, excluir
   // e registrar saída são ações da dona (é assim que o banco protege
   // isso: essas escritas em `pecas` exigem pode_escrever, que só a dona
@@ -4769,6 +4774,7 @@ function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, cri
           onFechar={() => setEditando(null)}
           colecoes={d.colecoes}
           criarColecao={criarColecao}
+          tema={tema}
         />
       )}
 
