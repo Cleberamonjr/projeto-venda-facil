@@ -1,5 +1,6 @@
--- Suporte: a administradora abre a loja de uma cliente e vê o que ela tem e o que tem feito (SOMENTE LEITURA).
--- Cada abertura fica registrada em auditoria_admin (quem, qual loja, quando). Função NOVA: nada existente muda.
+-- Modo observação: a administradora abre a loja de uma cliente (SOMENTE LEITURA). A cliente NÃO é avisada e não há
+-- nada visível para ela. Cada abertura fica só no registro interno (auditoria_admin, que só o servidor lê).
+-- APLICADA em produção em 29/09/2026 e testada com lojas reais. Função NOVA: nada existente muda.
 create or replace function public.admin_ver_loja(p_loja uuid)
 returns jsonb language plpgsql volatile security definer set search_path = public as $$
 declare

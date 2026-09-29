@@ -2885,8 +2885,8 @@ function LojaSuporte({ loja, voltar, pedirSenha }) {
     <>
       <button className="oj-link-sutil" style={{ textAlign: "left", padding: "8px 0" }} onClick={voltar}>‹ Voltar às lojas</button>
       <div className="oj-aviso" role="note">
-        <b>Modo suporte · somente leitura.</b> Você está vendo os dados desta loja como administradora.
-        Este acesso fica registrado.
+        <b>Modo observação · somente leitura.</b> A cliente não vê nem é avisada de que você abriu a loja dela.
+        O acesso fica só no seu registro interno.
       </div>
     </>
   );
@@ -3412,6 +3412,9 @@ function Aviso({ d, irPara }) {
   const pagamentoAberto = Object.values(LINKS_PAGAMENTO).some(Boolean);
   const assinar = () => irPara && irPara("perfil");
   const tempoRestante = (h) => (h > 72 ? `${Math.ceil(h / 24)} dias` : `${h}h`);
+
+  // A administradora de verdade (painel com dados reais) não recebe o aviso de "loja de demonstração".
+  if (p.admin) return null;
 
   if (p.mestre)
     return (

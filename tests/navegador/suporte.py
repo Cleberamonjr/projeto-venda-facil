@@ -31,7 +31,7 @@ def rodar(fotos=False):
             pg = ctx.new_page(); erros = []; pg.on("pageerror", lambda e: erros.append(str(e)[:100]))
             pg.goto(srv.url); esperar_app(pg)
             pg.click(".oj-hamb"); pg.wait_for_timeout(300); pg.click("nav.oj-lateral >> text=Uso do Luxi"); pg.wait_for_selector("button[aria-label*='Atelie Andressa']")
-            pg.click("button[aria-label*='Atelie Andressa']"); pg.wait_for_selector("text=Modo suporte"); pg.wait_for_timeout(500)
+            pg.click("button[aria-label*='Atelie Andressa']"); pg.wait_for_selector("text=Modo observação"); pg.wait_for_timeout(500)
             if fotos: pg.screenshot(path=f"/tmp/shots/suporte-{w}x{h}.png", full_page=False)
             m = pg.evaluate("""() => ({ largura: document.documentElement.scrollWidth, janela: innerWidth,
                 aviso: !!document.querySelector('.oj-aviso'), abas: document.querySelectorAll('[role=tab]').length,
@@ -39,7 +39,7 @@ def rodar(fotos=False):
             ruim = []
             if m["largura"] > m["janela"] + 1: ruim.append(f"rolagem para o lado ({m['largura']}>{m['janela']})")
             if m["cortado"]: ruim.append(f"{m['cortado']} elemento(s) passam da borda da tela")
-            if not m["aviso"]: ruim.append("aviso de modo suporte não aparece")
+            if not m["aviso"]: ruim.append("aviso de modo observação não aparece")
             if m["abas"] != 7: ruim.append(f"abas: {m['abas']} (esperado 7)")
             if erros: ruim.append("erro de JS: " + erros[0])
             print(("✅" if not ruim else "❌"), f"suporte em {nome}: abas={m['abas']}", ("— " + "; ".join(ruim)) if ruim else ""); problemas += ruim

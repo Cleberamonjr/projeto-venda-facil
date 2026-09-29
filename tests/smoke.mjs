@@ -174,6 +174,7 @@ await teste('E. painel admin mostra o USO real por loja (só os planos públicos
   const esperado = ['Aguapé', 'teste encerrado', 'ainda não usou', 'Ninguém paga ainda', '0 usando nesta semana', 'restam 30 dia', 'Trocar minha senha', 'Solo', 'Equipe'];
   const faltou = esperado.filter((x) => !t.includes(x));
   const indevido = ['179,90', '397,00'].filter((x) => t.includes(x));
+  if (t.includes('Loja de demonstração')) indevido.push('aviso de "loja de demonstração" no painel real');
   return { ok: carregou && !faltou.length && !indevido.length, detalhe: [faltou.length && 'faltou: ' + faltou.join(' | '), indevido.length && 'plano em espera aparecendo: ' + indevido.join(',')].filter(Boolean).join(' ; ') };
 });
 
@@ -452,13 +453,13 @@ const abrirPainelAdmin = async (cfgExtra = {}) => {
   return a;
 };
 
-await teste('S. suporte: clica na loja e vê os dados e a atividade (somente leitura, 1 registro)', async () => {
+await teste('S. observação: clica na loja e vê os dados e a atividade (somente leitura, 1 registro)', async () => {
   const a = await abrirPainelAdmin();
   a.w.document.querySelector('button[aria-label*="Atelie Andressa"]').click();
-  const abriu = await esperarPor(() => a.texto().includes('Modo suporte'));
+  const abriu = await esperarPor(() => a.texto().includes('Modo observação'));
   await pausa(200);
   const t1 = a.texto();
-  const esperado1 = ['somente leitura', 'fica registrado', 'Atelie Andressa', 'and@x.com', 'restam 10 dia', 'Vendeu Anel solitário (1 un) por R$ 69,00 para Maria', 'Cadastrou a peça BR-2 — Brinco argola (2 un) · fornecedor Del Rey', 'Importou um romaneio de Prata Fina · 12 itens', 'Lançou a despesa Embalagens', 'R$ 49,00'];
+  const esperado1 = ['somente leitura', 'não vê nem é avisada', 'só no seu registro interno', 'Atelie Andressa', 'and@x.com', 'restam 10 dia', 'Vendeu Anel solitário (1 un) por R$ 69,00 para Maria', 'Cadastrou a peça BR-2 — Brinco argola (2 un) · fornecedor Del Rey', 'Importou um romaneio de Prata Fina · 12 itens', 'Lançou a despesa Embalagens', 'R$ 49,00'];
   a.clicar('Vendas', '[aria-label="Seções da loja"]'); await pausa(150);
   const tVendas = a.texto();
   a.clicar('Clientes', '[aria-label="Seções da loja"]'); await pausa(150);
@@ -473,7 +474,7 @@ await teste('S. suporte: clica na loja e vê os dados e a atividade (somente lei
     detalhe: [faltou.length && 'faltou: ' + faltou.join(' | '), gravou.length && 'GRAVOU NO BANCO: ' + gravou.join(','), `aberturas registradas=${aberturas}`].filter(Boolean).join(' ; ') };
 });
 
-await teste('S2. suporte: se o SQL ainda não foi rodado, explica e deixa voltar', async () => {
+await teste('S2. observação: se o SQL ainda não foi rodado, explica e deixa voltar', async () => {
   const a = await abrirPainelAdmin({ rotas: [[/rpc\/admin_ver_loja/, () => json({ code: 'PGRST202', message: 'Could not find the function public.admin_ver_loja(p_loja) in the schema cache' }, 404)]] });
   a.w.document.querySelector('button[aria-label*="Atelie Andressa"]').click();
   const explicou = await esperarPor(() => a.texto().includes('ainda não foi ativada'));

@@ -91,7 +91,7 @@ def rodar(politica, verbose=True):
         ctx, pg, _, er = novo(b, srv, rpc={"sou_admin_luxi": True, "uso_lojas_luxi": uso, "auditoria_admin_recente": [], "admin_ver_loja": suporte.LOJA})
         pg.goto(srv.url); esperar_app(pg); percorrer_menu(pg)
         garantir_menu(pg, True); pg.evaluate("[...document.querySelectorAll('nav.oj-lateral button')].find(b => b.textContent.includes('Uso do Luxi'))?.click()"); pg.wait_for_selector("button[aria-label*='Loja A']", timeout=8000)
-        pg.click("button[aria-label*='Loja A']"); pg.wait_for_selector("text=Modo suporte", timeout=8000); pg.wait_for_timeout(500)
+        pg.click("button[aria-label*='Loja A']"); pg.wait_for_selector("text=Modo observação", timeout=8000); pg.wait_for_timeout(500)
         resultado["administradora"] = (violacoes(pg), er); ctx.close()
 
         # 4) link de convite do beta (tema escuro também)
