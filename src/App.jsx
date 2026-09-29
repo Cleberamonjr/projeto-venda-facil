@@ -357,18 +357,19 @@ const CSS = `
 .oj-userbtn{background:none;border:none;padding:0;cursor:pointer;position:absolute;right:20px;top:22px}
 .oj-lateral{
   position:fixed;left:0;top:0;bottom:0;z-index:60;background:#fff;
-  width:min(292px,84vw);border-right:1px solid var(--linha);padding:22px 12px;
+  width:min(320px,92vw);border-right:1px solid var(--linha);padding:18px 14px 24px;
   box-shadow:0 0 40px rgba(61,46,69,.18);overflow-y:auto;
   transform:translateX(-100%);transition:transform .26s cubic-bezier(.3,.8,.3,1);
 }
 .oj-lateral.aberto{transform:translateX(0)}
-.oj-lateral .topo{display:flex;align-items:center;gap:10px;padding:0 10px 16px;border-bottom:1px solid var(--linha);margin-bottom:10px}
+.oj-lateral .topo{display:flex;align-items:center;gap:12px;padding:2px 10px 20px;border-bottom:1px solid var(--linha);margin-bottom:8px;min-height:70px}
+.oj-lateral .topo .oj-nome-marca{font-size:26px!important}
 .oj-veu{position:fixed;inset:0;z-index:55;background:rgba(61,46,69,.32);opacity:0;transition:opacity .26s}
 .oj-veu.aberto{opacity:1}
 .oj-menu{padding:0}
 .oj-menu button{
   display:flex;width:100%;align-items:center;gap:10px;background:none;border:none;
-  font-family:inherit;font-size:14.5px;color:var(--tinta);padding:11px 12px;border-radius:9px;
+  font-family:inherit;font-size:14px;color:var(--tinta);padding:10px 12px;min-height:46px;border-radius:9px;
   cursor:pointer;text-align:left;
 }
 .oj-menu button[data-ativo="1"]{background:var(--rose-cl);color:var(--rose-esc);font-weight:600}
@@ -404,7 +405,17 @@ img{max-width:100%;height:auto}
 .oj-grupo{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--tinta-cl);padding:14px 12px 6px;font-weight:600}
 .oj-menu button:hover,.oj-menu button:focus-visible{background:var(--rose-cl);color:var(--rose-esc)}
 .oj-menu .sep{height:1px;background:var(--linha);margin:5px 8px}
-.oj-menu small{display:block;font-size:11.5px;color:var(--tinta-cl)}
+.oj-menu small{display:block;font-size:11px;color:var(--tinta-cl);margin-top:2px;line-height:1.2}
+.oj-menu .oj-menu-tema{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px 12px;margin:0 0 3px;border-bottom:1px solid var(--linha)}
+.oj-menu .oj-menu-tema .oj-lbl{font-size:10px}
+.oj-theme-switch{display:inline-flex;align-items:center;gap:8px;border:0;background:none;padding:2px;cursor:pointer;color:var(--tinta);font-family:inherit}
+.oj-theme-switch:focus-visible{outline:2px solid var(--rose);outline-offset:3px;border-radius:9px}
+.oj-theme-track{position:relative;display:inline-flex;align-items:center;justify-content:space-between;width:58px;height:32px;padding:0 7px;border:1px solid var(--linha);border-radius:999px;background:var(--bege-2);color:var(--tinta-cl)}
+.oj-theme-track svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;position:relative;z-index:0}
+.oj-theme-thumb{position:absolute;left:3px;top:3px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff;color:var(--rose-esc);box-shadow:0 2px 6px rgba(61,46,69,.18);transition:transform .2s ease}
+.oj-theme-thumb svg{width:14px;height:14px}
+.oj-theme-track[data-on="1"] .oj-theme-thumb{transform:translateX(26px);background:var(--rose-esc);color:#fff}
+.oj-theme-label{font-size:11.5px;color:var(--tinta-cl);white-space:nowrap}
 .oj-top{position:sticky;top:0;z-index:20}
 .oja{animation:sobe .28s ease both}
 @keyframes sobe{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -939,6 +950,32 @@ function dadosDemoCliente() {
       tour: true, // dispara o tour guiado
     },
   };
+}
+
+function ChaveTema({ tema, setTema }) {
+  const escuro = tema === "escuro";
+  return (
+    <button
+      type="button"
+      className="oj-theme-switch"
+      aria-label={escuro ? "Mudar para o modo claro" : "Mudar para o modo escuro"}
+      aria-pressed={escuro}
+      onClick={() => setTema(escuro ? "claro" : "escuro")}
+    >
+      <span className="oj-theme-track" data-on={escuro ? "1" : "0"} aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
+        <svg viewBox="0 0 24 24"><path d="M20.5 15.4A8.5 8.5 0 0 1 8.6 3.5 8.5 8.5 0 1 0 20.5 15.4Z" /></svg>
+        <span className="oj-theme-thumb">
+          {escuro ? (
+            <svg viewBox="0 0 24 24"><path d="M20.5 15.4A8.5 8.5 0 0 1 8.6 3.5 8.5 8.5 0 1 0 20.5 15.4Z" /></svg>
+          ) : (
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
+          )}
+        </span>
+      </span>
+      <span className="oj-theme-label">{escuro ? "Escuro" : "Claro"}</span>
+    </button>
+  );
 }
 
 /* ---------------- app ---------------- */
@@ -1732,6 +1769,13 @@ export default function OrganizeJewelry() {
               </div>
               <div className="oj-loja">parceira de {d.perfil.loja}</div>
             </div>
+          </div>
+          <div className="oj-menu-tema">
+            <div>
+              <div className="oj-lbl">Aparência</div>
+              <small>Conforto para usar à noite</small>
+            </div>
+            <ChaveTema tema={tema} setTema={setTema} />
           </div>
 
           {(ehConsultora
@@ -6416,9 +6460,7 @@ function Perfil({ d, salvar, irPara, tema, setTema }) {
             <div className="oj-nome">Modo de uso</div>
             <div className="oj-meta">Escolha a aparência mais confortável para o seu horário.</div>
           </div>
-          <button className="oj-chip" data-on={tema === "escuro" ? "1" : "0"} onClick={() => setTema(tema === "escuro" ? "claro" : "escuro")}>
-            {tema === "escuro" ? "Escuro" : "Claro"}
-          </button>
+          <ChaveTema tema={tema} setTema={setTema} />
         </div>
         <div className="oj-lbl" style={{ marginTop: 18 }}>Trocar senha</div>
         <input className="oj-in" type="password" placeholder="Nova senha" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} autoComplete="new-password" />
