@@ -367,13 +367,19 @@ const CSS = `
   .oj-editor-modal{width:100%;max-height:100vh;border-radius:0;padding:22px 18px calc(28px + env(safe-area-inset-bottom))}
 }
 .oj-modal h3{font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:25px;margin:0 0 4px;font-weight:600}
-.oj-fundo-editor{align-items:flex-start;padding:20px}
-.oj-editor-modal{width:min(100%, 820px);max-width:820px;max-height:calc(100vh - 40px);padding:28px 30px 32px;overflow-y:auto}
-.oj-editor-modal h3{font-size:29px;margin-bottom:8px}
-.oj-editor-modal .oj-campo{margin-bottom:16px}
+.oj-fundo-editor{align-items:stretch;padding:0}
+.oj-editor-modal{width:100vw;max-width:none;height:100vh;max-height:none;border-radius:0;padding:0;overflow:hidden;display:flex;flex-direction:column;background:var(--bege)}
+.oj-editor-cabecalho{flex:0 0 auto;padding:28px clamp(20px, 6vw, 72px) 12px;border-bottom:1px solid var(--linha);background:var(--bege)}
+.oj-editor-cabecalho h3{font-size:29px;margin:0}
+.oj-editor-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px clamp(20px, 6vw, 72px) 28px}
+.oj-editor-scroll>.oj-campo{margin-bottom:16px}
+.oj-editor-acoes{flex:0 0 auto;display:flex;gap:10px;padding:14px clamp(20px, 6vw, 72px) calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--linha);background:var(--bege);box-shadow:0 -4px 14px rgba(59,43,46,.12)}
+.oj-editor-acoes .oj-btn{margin:0;flex:1}
 @media (max-width:560px){
   .oj-fundo-editor{padding:0;align-items:stretch}
-  .oj-editor-modal{width:100%;max-height:100vh;border-radius:0;padding:22px 18px calc(28px + env(safe-area-inset-bottom))}
+  .oj-editor-cabecalho{padding:22px 18px 12px}
+  .oj-editor-scroll{padding:18px 18px 24px}
+  .oj-editor-acoes{padding-left:18px;padding-right:18px}
 }
 
 .oj-barra{height:6px;background:var(--bege-2);border-radius:3px;overflow:hidden;margin-top:8px}
@@ -545,8 +551,8 @@ img{max-width:100%;height:auto}
 }
 
 @media (min-width:900px){
-  .oj-fundo-editor{align-items:flex-start;padding:20px}
-  .oj-editor-modal{max-width:820px;margin-bottom:0}
+  .oj-fundo-editor{align-items:stretch;padding:0}
+  .oj-editor-modal{max-width:none;margin-bottom:0}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -4230,7 +4236,10 @@ function EditorPeca({ peca, onSalvar, onFechar, colecoes, criarColecao }) {
   return (
     <div className="oj-fundo oj-fundo-editor" onClick={onFechar}>
       <div className="oj-modal oj-editor-modal" onClick={(e) => e.stopPropagation()}>
-        <h3>{novo ? "Incluir produto" : "Editar produto"}</h3>
+        <div className="oj-editor-cabecalho">
+          <h3>{novo ? "Incluir produto" : "Editar produto"}</h3>
+        </div>
+        <div className="oj-editor-scroll">
 
         {erro && <div className="oj-erro" style={{ margin: "8px 0" }}>{erro}</div>}
 
@@ -4382,10 +4391,13 @@ function EditorPeca({ peca, onSalvar, onFechar, colecoes, criarColecao }) {
           {erroColecao && <div className="oj-erro" style={{ margin: "8px 0 0" }}>{erroColecao}</div>}
         </div>
 
-        <button className="oj-btn" onClick={salvar} disabled={salvando}>
-          {salvando ? "Salvando…" : novo ? "Incluir no estoque" : "Salvar alterações"}
-        </button>
-        <button className="oj-btn sec" onClick={onFechar} disabled={salvando}>Cancelar</button>
+        </div>
+        <div className="oj-editor-acoes">
+          <button className="oj-btn" onClick={salvar} disabled={salvando}>
+            {salvando ? "Salvando…" : novo ? "Incluir no estoque" : "Salvar alterações"}
+          </button>
+          <button className="oj-btn sec" onClick={onFechar} disabled={salvando}>Cancelar</button>
+        </div>
       </div>
     </div>
   );
