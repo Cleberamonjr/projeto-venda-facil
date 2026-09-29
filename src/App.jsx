@@ -34,6 +34,8 @@ const CSS = `
   --alerta:#A8562F;
   --roxo:#8A6E80;
   --roxo-cl:#F2EBEF;
+  --chart-1:#1E3358; --chart-2:#7E5A93; --chart-3:#2E7D5B;
+  --chart-4:#C2601F; --chart-5:#2F6FA8; --chart-6:#B4879C;
 }
 .oj[data-theme="escuro"]{
   --bg-0:#170B0C; --bg-1:#221012; --bg-2:#301619; --bg-3:#3F1E22;
@@ -46,6 +48,8 @@ const CSS = `
   --rose-esc:var(--rose); --rose-metal:var(--rose-brand); --rose-btn:var(--rose); --rose-btn-h:#C8666E;
   --dourado:var(--gold); --marinho:var(--gold); --marinho-cl:var(--bg-3);
   --verde:var(--green); --alerta:var(--rose); --roxo:var(--tx-mid); --roxo-cl:var(--bg-3);
+  --chart-1:var(--rose); --chart-2:var(--gold); --chart-3:var(--green);
+  --chart-4:var(--rose-brand); --chart-5:var(--border); --chart-6:var(--tx-mid);
   background:var(--bg-0);
 }
 .oj[data-theme="escuro"] .oj-top{background:var(--bg-0)}
@@ -6706,7 +6710,7 @@ function Barras({ dados, titulo, sufixo = "", cor = "var(--dourado)" }) {
 
 function Rosca({ dados, titulo, mapaCores }) {
   const total = dados.reduce((s, d) => s + d.valor, 0) || 1;
-  const padrao = ["#1E3358", "#7E5A93", "#2E7D5B", "#C2601F", "#2F6FA8", "#B4879C"];
+  const padrao = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)"];
   const cor = (rotulo, i) => (mapaCores && mapaCores[rotulo]) || padrao[i % padrao.length];
   let acc = 0;
   const raio = 54, circ = 2 * Math.PI * raio;
