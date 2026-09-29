@@ -15,6 +15,10 @@ const REPO_SITE = process.env.DEPLOY_REPO || 'Cleberamonjr/organize-jewelry-app'
 const token = process.env.DEPLOY_TOKEN || '';
 const mensagem = process.argv.slice(2).join(' ').trim() || 'Atualização do Luxi';
 
+if (Number(process.versions.node.split('.')[0]) < 22) {
+  console.error(`\n⛔ Use o Node 22 ou mais novo (este é o ${process.versions.node}). Os testes usam um navegador simulado que não roda em versões antigas.\n   NADA foi publicado.`);
+  process.exit(1);
+}
 const passo = (t) => console.log('\n▶ ' + t);
 const falhar = (t) => { console.error('\n⛔ ' + t + '\n   NADA foi publicado.'); process.exit(1); };
 const rodar = (cmd, args, opts = {}) => spawnSync(cmd, args, { cwd: raiz, stdio: 'inherit', ...opts });

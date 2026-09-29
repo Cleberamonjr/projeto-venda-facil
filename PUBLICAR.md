@@ -1,5 +1,8 @@
 # Como publicar o Luxi sem quebrar quem está usando
 
+## Requisito
+Node 22 ou mais novo (o navegador simulado dos testes não roda em versões antigas; o `npm run publicar` avisa se for o caso).
+
 ## Regra única
 Toda publicação passa por **um comando**, que constrói, testa e só então envia:
 
