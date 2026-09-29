@@ -294,6 +294,8 @@ const CSS = `
 .oj-btn.mini{width:auto;padding:10px 16px;font-size:13px;border-radius:9px}
 .oj-btn.perigo{background:transparent;color:var(--alerta);border:1px solid var(--alerta)}
 .oj-btn.perigo:hover{background:#F7E9E2}
+.oj-estoque-acoes{display:flex;gap:8px;flex-wrap:wrap;padding:12px 20px 0}
+.oj-estoque-acoes .oj-btn{flex:1 1 150px;min-height:42px}
 
 .oj-in{
   width:100%;border:1px solid var(--linha);border-radius:10px;padding:12px;
@@ -361,8 +363,18 @@ const CSS = `
 @media (max-width:560px){
   .oj-fundo{padding:0;align-items:flex-end}
   .oj-modal{max-width:100%;max-height:94vh;border-radius:22px 22px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .oj-fundo-editor{padding:0;align-items:stretch}
+  .oj-editor-modal{width:100%;max-height:100vh;border-radius:0;padding:22px 18px calc(28px + env(safe-area-inset-bottom))}
 }
 .oj-modal h3{font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:25px;margin:0 0 4px;font-weight:600}
+.oj-fundo-editor{align-items:flex-start;padding:20px}
+.oj-editor-modal{width:min(100%, 820px);max-width:820px;max-height:calc(100vh - 40px);padding:28px 30px 32px;overflow-y:auto}
+.oj-editor-modal h3{font-size:29px;margin-bottom:8px}
+.oj-editor-modal .oj-campo{margin-bottom:16px}
+@media (max-width:560px){
+  .oj-fundo-editor{padding:0;align-items:stretch}
+  .oj-editor-modal{width:100%;max-height:100vh;border-radius:0;padding:22px 18px calc(28px + env(safe-area-inset-bottom))}
+}
 
 .oj-barra{height:6px;background:var(--bege-2);border-radius:3px;overflow:hidden;margin-top:8px}
 .oj-barra i{display:block;height:100%;background:var(--dourado)}
@@ -530,6 +542,11 @@ img{max-width:100%;height:auto}
   .oj-nav button{flex:0 0 auto;padding:14px 22px;flex-direction:row;gap:8px;font-size:13px}
   .oj-modal{border-radius:18px;max-width:620px;margin-bottom:5vh}
   .oj-fundo{align-items:center}
+}
+
+@media (min-width:900px){
+  .oj-fundo-editor{align-items:flex-start;padding:20px}
+  .oj-editor-modal{max-width:820px;margin-bottom:0}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -2022,18 +2039,6 @@ export default function OrganizeJewelry() {
         )}
         {trocando ? <Carregando texto={titulos[aba][0]} /> : telas[aba]}
       </div>
-
-      {aba === "estoque" && (
-        <div style={{ padding: "6px 20px 20px" }}>
-          <button
-            className="oj-btn"
-            disabled={somenteLeitura(d.perfil)}
-            onClick={() => setModal({ tipo: "romaneio" })}
-          >
-            {somenteLeitura(d.perfil) ? "Bloqueado — regularize o pagamento" : "Chegou peça nova? Cadastrar aqui"}
-          </button>
-        </div>
-      )}
 
       {modal?.tipo === "romaneio" && (
         <Romaneio
@@ -4223,8 +4228,8 @@ function EditorPeca({ peca, onSalvar, onFechar, colecoes, criarColecao }) {
   const BANHOS = ["Ouro 24k", "Ouro 18k", "Ouro 10k", "Ouro rosé", "Ródio branco", "Ródio negro", "Prata 925"];
 
   return (
-    <div className="oj-fundo" onClick={onFechar}>
-      <div className="oj-modal" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "88vh", overflowY: "auto" }}>
+    <div className="oj-fundo oj-fundo-editor" onClick={onFechar}>
+      <div className="oj-modal oj-editor-modal" onClick={(e) => e.stopPropagation()}>
         <h3>{novo ? "Incluir produto" : "Editar produto"}</h3>
 
         {erro && <div className="oj-erro" style={{ margin: "8px 0" }}>{erro}</div>}
@@ -4494,6 +4499,42 @@ function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, cri
     <>
       <Recompra d={d} />
 
+      <div className="oj-estoque-acoes">
+        {!ehConsultora && (
+          <button
+            className="oj-btn mini"
+            disabled={somenteLeitura(d.perfil)}
+            onClick={() =>
+              setEditando({
+                nome: "",
+                codigo: "",
+                qtd: 1,
+                custo: 0,
+                venda: 0,
+                banho: "",
+                pedra: "",
+                acabamento: "",
+                tamanho: "",
+                fotos: [],
+                colecaoId: "",
+              })
+            }
+          >
+            + Cadastrar produto
+          </button>
+        )}
+        <button
+          className="oj-btn sec mini"
+          disabled={somenteLeitura(d.perfil)}
+          onClick={() => abrir({ tipo: "romaneio" })}
+        >
+          Importar romaneio
+        </button>
+        <button className="oj-btn sec mini" onClick={() => abrir({ tipo: "historico" })}>
+          Histórico de entradas
+        </button>
+      </div>
+
       {erro && (
         <div className="oj-erro" style={{ margin: "12px 20px 0" }}>
           {erro}
@@ -4590,38 +4631,6 @@ function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, cri
           </button>
         </div>
       )}
-
-      <div style={{ display: "flex", gap: 8, padding: "12px 20px 0" }}>
-        {!ehConsultora && (
-          <button
-            className="oj-btn mini"
-            disabled={somenteLeitura(d.perfil)}
-            onClick={() =>
-              setEditando({
-                nome: "",
-                codigo: "",
-                qtd: 1,
-                custo: 0,
-                venda: 0,
-                banho: "",
-                pedra: "",
-                acabamento: "",
-                tamanho: "",
-                fotos: [],
-                colecaoId: "",
-              })
-            }
-          >
-            + Incluir produto
-          </button>
-        )}
-        <button
-          className="oj-btn sec mini"
-          onClick={() => abrir({ tipo: "historico" })}
-        >
-          Histórico de entradas
-        </button>
-      </div>
 
       {lista.length > 0 && (
         <div className="oj-card">
