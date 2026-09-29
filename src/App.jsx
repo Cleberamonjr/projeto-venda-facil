@@ -504,7 +504,7 @@ img{max-width:100%;height:auto}
   position:fixed;inset:0;z-index:90;background:var(--bege);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
 }
-.oj-splash.saindo{animation:apaga .8s ease forwards}
+.oj-splash.saindo{animation:apaga .5s ease forwards}
 @keyframes apaga{to{opacity:0;visibility:hidden}}
 .oj-wm{text-align:center;opacity:0;animation:sobeWm 1.1s 2.1s ease forwards}
 @keyframes sobeWm{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -1129,6 +1129,7 @@ export default function OrganizeJewelry() {
     };
   }, []);
   const [tela, setTela] = useState("login"); // login | app | vendas | cadastro
+  const [minimoAbertura, setMinimoAbertura] = useState(false);
   const [aba, setAba] = useState("painel");
   const [fescala, setFescala] = useState(() => {
     const s = Number(localStorage.getItem("luxi:fescala"));
@@ -1266,14 +1267,23 @@ export default function OrganizeJewelry() {
       clearTimeout(travaSeguranca);
       setCarregando(false);
     })();
-    const t1 = setTimeout(() => setSaindo(true), 3900);
-    const t2 = setTimeout(() => setAbertura(false), 4700);
+    // A animação da marca aparece por pouco tempo e sai assim que o app está pronto.
+    // (Antes ela rodava 4,7 s fixos, mesmo com tudo carregado.) O teto de 12 s garante que nunca prende.
+    const tMinimo = setTimeout(() => setMinimoAbertura(true), 1000);
+    const tTeto = setTimeout(() => setAbertura(false), 12000);
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
+      clearTimeout(tMinimo);
+      clearTimeout(tTeto);
       clearTimeout(travaSeguranca);
     };
   }, []);
+
+  useEffect(() => {
+    if (!minimoAbertura || carregando) return;
+    setSaindo(true);
+    const t = setTimeout(() => setAbertura(false), 500);
+    return () => clearTimeout(t);
+  }, [minimoAbertura, carregando]);
 
   const irPara = (k) => {
     if (k === aba) return;
@@ -2608,7 +2618,13 @@ function AceitarConvite({ criarConta, entrarConta, aceitar, cancelar, erroInicia
       }
     } catch (e) {
       setProcessando(false);
-      setErro(e.message || "Não consegui criar sua conta. Tente de novo.");
+      const msg = e.message || "Não consegui criar sua conta. Tente de novo.";
+      setErro(msg);
+      if (msg.includes("já tem uma conta")) {
+        setModo("entrar"); // já existe conta com esse e-mail: leva direto para o login
+        setSenha("");
+        setSenha2("");
+      }
     }
   };
 

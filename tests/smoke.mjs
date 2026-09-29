@@ -138,6 +138,15 @@ await teste('D. internet travada com sessão salva: não fica preso na abertura'
   return { ok };
 });
 
+// ---------- N. abrir o link leva ao login logo, sem ficar parado numa animação ----------
+await teste('N. abrir o link do app: o login aparece em poucos segundos', async () => {
+  const t0 = Date.now();
+  const a = await abrir({});
+  const chegou = await esperarPor(() => a.texto().includes('Entrar') && a.texto().includes('Senha'), 12000);
+  const ms = Date.now() - t0; a.fechar();
+  return { ok: chegou && ms <= 4200, detalhe: `login apareceu em ${(ms / 1000).toFixed(1)} s (limite 4,2 s)` };
+});
+
 // ---------- E + F. painel admin e troca de senha ----------
 const USO = { resumo: { lojas: 3, usando_7d: 0, usando_30d: 2, pecas: 19, vendas_30d: 1, valor_vendas_30d: 100, romaneios_30d: 2, beta: 2, pagantes: 0 },
   lojas: [
@@ -280,7 +289,8 @@ await teste('J2. link de e-mail que JÁ tem conta: explica em vez de fingir que 
   await preencherECriar(a);
   const explicou = await esperarPor(() => a.texto().includes('já tem uma conta no Luxi'));
   const t = a.texto(); a.fechar();
-  return { ok: explicou && !EMAIL_PEDIDO.test(t) };
+  const foiParaEntrar = !t.includes('Criar conta e entrar');
+  return { ok: explicou && !EMAIL_PEDIDO.test(t) && foiParaEntrar, detalhe: `levada ao modo Entrar=${foiParaEntrar}` };
 });
 
 await teste('J3. função fora do ar: cai no caminho direto e ainda assim entra sem confirmar', async () => {
