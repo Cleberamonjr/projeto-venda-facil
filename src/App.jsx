@@ -377,6 +377,19 @@ const CSS = `
 .oj-editor-scroll>.oj-campo{margin-bottom:16px}
 .oj-editor-acoes{flex:0 0 auto;display:flex;gap:10px;padding:14px clamp(20px, 6vw, 72px) calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--linha);background:var(--bege);box-shadow:0 -4px 14px rgba(59,43,46,.12)}
 .oj-editor-acoes .oj-btn{margin:0;flex:1}
+/* Editor de produto — cabe SEMPRE na janela. Duas classes = vence os blocos repetidos mais abaixo
+   (antes, em notebook, o topo saía ~19px para fora da tela e o título aparecia cortado). */
+.oj-fundo.oj-fundo-editor{align-items:center;justify-content:center;padding:16px;overflow:hidden}
+.oj-modal.oj-editor-modal{width:min(640px,100%);max-width:640px;height:calc(100vh - 32px);height:calc(100dvh - 32px);max-height:none;margin:0;border-radius:18px}
+@media (max-width:560px),(max-height:520px){
+  .oj-fundo.oj-fundo-editor{padding:0;align-items:stretch}
+  .oj-modal.oj-editor-modal{width:100%;max-width:none;height:100vh;height:100dvh;border-radius:0}
+}
+/* barra de rolagem sempre visível no formulário (no Mac ela some sozinha e a pessoa não percebe que há mais campos) */
+.oj-editor-scroll{scrollbar-width:auto;scrollbar-color:var(--rose) var(--bege-2)}
+.oj-editor-scroll::-webkit-scrollbar{width:12px}
+.oj-editor-scroll::-webkit-scrollbar-track{background:var(--bege-2)}
+.oj-editor-scroll::-webkit-scrollbar-thumb{background:var(--rose);border-radius:8px;border:3px solid var(--bege-2)}
 @media (max-width:560px){
   .oj-fundo-editor{padding:0;align-items:stretch}
   .oj-editor-cabecalho{padding:22px 18px 12px}
