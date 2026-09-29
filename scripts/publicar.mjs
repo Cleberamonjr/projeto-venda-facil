@@ -32,6 +32,15 @@ for (const f of fs.readdirSync(path.join(raiz, 'tests')).filter((x) => /^funcao-
 }
 if (rodar('node', ['tests/smoke.mjs']).status !== 0) falhar('Algum teste falhou — corrija antes de publicar.');
 
+// Testes em navegador REAL (Chromium): layout do cadastro de produto e política de segurança.
+// Só rodam se o Playwright estiver instalado neste computador — e dizem claramente quando são pulados.
+const temNavegador = spawnSync('python3', ['-c', "import os; from playwright.sync_api import sync_playwright as s; p = s().start(); ok = os.path.exists(p.chromium.executable_path); p.stop(); raise SystemExit(0 if ok else 1)"], { cwd: raiz, stdio: 'ignore' }).status === 0;
+if (temNavegador) {
+  if (rodar('python3', ['tests/navegador/todos.py']).status !== 0) falhar('Um teste em navegador real falhou (cadastro de produto ou política de segurança).');
+} else {
+  console.log('\n(testes em navegador real PULADOS: Playwright/Chromium não estão instalados aqui — o teste do GitHub cobre)');
+}
+
 const dist = path.join(raiz, 'dist');
 if (!fs.existsSync(path.join(dist, 'index.html'))) falhar('dist/index.html não existe.');
 

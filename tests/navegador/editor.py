@@ -40,6 +40,7 @@ def medir(pg):
 
 def rodar(salvar_fotos=True):
     srv = Servidor(); falhas = []
+    if salvar_fotos: Path('/tmp/shots').mkdir(exist_ok=True)
     with sync_playwright() as p:
         b = p.chromium.launch()
         for nome, w, h in TELAS:

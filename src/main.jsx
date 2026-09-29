@@ -108,6 +108,19 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+/* Sinal de vida da política de segurança: 1x por dia por aparelho, o app tenta carregar uma imagem que a
+   política NÃO permite, de propósito. O relatório que chega ao servidor prova que o canal de relatórios funciona
+   (sem isso, "nenhum relatório" não diria se está tudo certo ou se o canal quebrou). */
+try {
+  const hoje = new Date().toISOString().slice(0, 10);
+  if (localStorage.getItem("luxi:csp-sinal") !== hoje) {
+    localStorage.setItem("luxi:csp-sinal", hoje);
+    new Image().src = "https://csp-sinal.invalid/sinal.gif";
+  }
+} catch (e) {
+  /* sem armazenamento local: sem sinal, e mais nada muda */
+}
+
 createRoot(document.getElementById("root")).render(
   <ErroBoundary><App/></ErroBoundary>
 );

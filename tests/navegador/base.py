@@ -64,9 +64,9 @@ def loja_padrao(n_pecas=0):
         "pecas": pecas,
     }
 
-def preparar_contexto(browser, viewport, tabelas=None, rpc=None, logado=True, capturas=None, **kw):
+def preparar_contexto(browser, viewport, tabelas=None, rpc=None, logado=True, capturas=None, sw="block", **kw):
     """Cria um contexto de navegador com o Supabase simulado. `capturas` (lista) recebe as gravações."""
-    ctx = browser.new_context(viewport=viewport, service_workers="block", **kw)
+    ctx = browser.new_context(viewport=viewport, service_workers=sw, **kw)
     rpc = {"sou_admin_luxi": False, "meu_acesso_beta": None, **(rpc or {})}
     tabelas = tabelas or {}
     capturas = capturas if capturas is not None else []
