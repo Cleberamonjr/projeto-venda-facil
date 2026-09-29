@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
+import { linkSuporte } from "./contato.js";
 
 class ErroBoundary extends React.Component {
   constructor(p){ super(p); this.state = { erro: null, info: null }; }
@@ -25,20 +26,87 @@ class ErroBoundary extends React.Component {
         React.createElement("button", {
           onClick: () => { try{ if('caches' in window){ caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))); } }catch(_){} window.location.reload(); },
           style:{ background:"#A0606D", color:"#fff", border:"none", borderRadius:12, padding:"14px 28px", fontSize:15, cursor:"pointer", fontFamily:"inherit", display:"block", margin:"0 auto" }
-        }, "Recarregar")
+        }, "Recarregar"),
+        React.createElement("a", {
+          href: linkSuporte("Oi! O Luxi travou aqui. Pode me ajudar?"), target: "_blank", rel: "noopener",
+          style:{ display:"block", textAlign:"center", marginTop:14, color:"#8B505C", fontSize:14 }
+        }, "Falar com a gente no WhatsApp")
       );
     }
     return this.props.children;
   }
 }
 
-if ("serviceWorker" in navigator) { window.addEventListener("load", async () => { try {
-  const reg = await navigator.serviceWorker.register("./sw.js");
-  const c=()=>reg.update().catch(()=>{}); c(); setInterval(c,30000);
-  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")c();});
-  reg.addEventListener("updatefound",()=>{const n=reg.installing;if(!n)return;n.addEventListener("statechange",()=>{if(n.state==="installed"&&navigator.serviceWorker.controller){n.postMessage({type:"SKIP_WAITING"});}});});
-  let r=false; navigator.serviceWorker.addEventListener("controllerchange",()=>{if(r)return;r=true;window.location.reload();});
-} catch(e){} }); }
+/* ---------- Atualização segura ----------
+   A versão nova NÃO troca sozinha no meio do uso: ela baixa em silêncio e espera.
+   A pessoa escolhe "Atualizar" (ou simplesmente fecha e abre o app). Assim uma
+   publicação com defeito não derruba quem está usando, e ninguém perde o que
+   estava digitando. A faixa é feita fora do React de propósito: aparece até
+   se o app quebrar. */
+let swEsperando = null;
+let aceitouAtualizar = false;
+
+function atualizarAgora() {
+  aceitouAtualizar = true;
+  if (swEsperando) swEsperando.postMessage({ type: "SKIP_WAITING" });
+  else window.location.reload();
+}
+
+function avisarNovaVersao() {
+  if (document.getElementById("luxi-nova-versao")) return;
+  const barra = document.createElement("div");
+  barra.id = "luxi-nova-versao";
+  barra.setAttribute("role", "status");
+  barra.style.cssText =
+    "position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483000;" +
+    "background:#3A2F35;color:#fff;border-radius:14px;padding:10px 12px 10px 16px;display:flex;gap:8px;" +
+    "align-items:center;font:14px 'Helvetica Neue',Arial,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.3);max-width:520px;margin:0 auto";
+  const texto = document.createElement("span");
+  texto.style.flex = "1";
+  texto.textContent = "Tem uma versão nova do Luxi.";
+  const depois = document.createElement("button");
+  depois.textContent = "Depois";
+  depois.style.cssText = "background:none;border:none;color:#ddd;font:inherit;padding:10px 8px;cursor:pointer;min-height:40px";
+  depois.onclick = () => barra.remove();
+  const atualizar = document.createElement("button");
+  atualizar.id = "luxi-atualizar";
+  atualizar.textContent = "Atualizar";
+  atualizar.style.cssText = "background:#A0606D;border:none;color:#fff;font:inherit;font-weight:600;padding:10px 16px;border-radius:10px;cursor:pointer;min-height:40px";
+  atualizar.onclick = atualizarAgora;
+  barra.append(texto, depois, atualizar);
+  document.body.appendChild(barra);
+}
+window.addEventListener("luxi:nova-versao", avisarNovaVersao);
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("./sw.js");
+      const checar = () => reg.update().catch(() => {});
+      setInterval(checar, 10 * 60 * 1000);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") checar();
+      });
+      const quandoEsperar = (w) => {
+        swEsperando = w;
+        window.dispatchEvent(new Event("luxi:nova-versao"));
+      };
+      if (reg.waiting && navigator.serviceWorker.controller) quandoEsperar(reg.waiting);
+      reg.addEventListener("updatefound", () => {
+        const n = reg.installing;
+        if (!n) return;
+        n.addEventListener("statechange", () => {
+          if (n.state === "installed" && navigator.serviceWorker.controller) quandoEsperar(n);
+        });
+      });
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (aceitouAtualizar) window.location.reload();
+      });
+    } catch (e) {
+      /* sem service worker o app funciona normalmente, só não guarda offline */
+    }
+  });
+}
 
 createRoot(document.getElementById("root")).render(
   <ErroBoundary><App/></ErroBoundary>

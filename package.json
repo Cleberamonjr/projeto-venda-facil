@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "vite build"
+    "build": "vite build",
+    "verificar": "vite build && node tests/funcao-conta.mjs && node tests/smoke.mjs",
+    "publicar": "node scripts/publicar.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
@@ -16,6 +18,9 @@
     "terser": "^5.31.0",
     "vite": "^5.4.0",
     "vite-plugin-pwa": "^0.20.0",
-    "jsdom": "^30.1.0"
+    "jsdom": "^30.1.0",
+    "esbuild": "^0.21.5",
+    "@babel/parser": "^7.24.0",
+    "@babel/traverse": "^7.24.0"
   }
 }
