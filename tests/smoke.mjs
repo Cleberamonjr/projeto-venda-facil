@@ -147,6 +147,15 @@ await teste('N. abrir o link do app: o login aparece em poucos segundos', async 
   return { ok: chegou && ms <= 4200, detalhe: `login apareceu em ${(ms / 1000).toFixed(1)} s (limite 4,2 s)` };
 });
 
+// ---------- O. quem já criou a conta mas não terminou de abrir a loja volta direto para abrir a loja ----------
+await teste('O. conta criada e loja ainda não aberta: ao voltar, vai direto para abrir a loja (não para o login)', async () => {
+  const em30 = new Date(Date.now() + 30 * 864e5).toISOString();
+  const a = await abrir({ sessao: usuario('cliente@teste.com', 'c1'), cfg: { rpc: { sou_admin_luxi: false, meu_acesso_beta: { dias: 30, expira_em: em30 } } } });
+  const foiParaLoja = await esperarPor(() => a.texto().includes('Começar meu beta'), 12000);
+  const t = a.texto(); a.fechar();
+  return { ok: foiParaLoja && !t.includes('Ainda não tenho conta'), detalhe: foiParaLoja ? '' : 'ficou na tela de login mesmo estando logada' };
+});
+
 // ---------- E + F. painel admin e troca de senha ----------
 const USO = { resumo: { lojas: 3, usando_7d: 0, usando_30d: 2, pecas: 19, vendas_30d: 1, valor_vendas_30d: 100, romaneios_30d: 2, beta: 2, pagantes: 0 },
   lojas: [

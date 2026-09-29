@@ -1232,7 +1232,11 @@ export default function OrganizeJewelry() {
           if (est) {
             setTela("app");
           } else if (betaToken) {
-            await dados.auth.consumirConviteBeta(betaToken);
+            try {
+              await dados.auth.consumirConviteBeta(betaToken);
+            } catch (e) {
+              /* convite já usado por esta mesma conta: segue para abrir a loja do mesmo jeito */
+            }
             limparBeta();
             setTela("cadastro");
           } else if (convite) {
@@ -1248,6 +1252,10 @@ export default function OrganizeJewelry() {
               setConviteErro(e.message || "Convite inválido ou já utilizado.");
               setTela("convite");
             }
+          } else {
+            // Está logada mas ainda não abriu a loja (criou a conta e não terminou):
+            // leva direto para abrir a loja, em vez de mostrar o login de novo.
+            setTela("cadastro");
           }
         } else if (betaToken) {
           try {
