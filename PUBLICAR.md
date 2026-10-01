@@ -50,3 +50,14 @@ Cada abertura é gravada em `auditoria_admin` (quem, qual loja, quando). A funç
 administradora e não devolve o código de convite das consultoras. Regra: **rode o SQL antes** de publicar o app que o usa
 (`supabase/migrations/20260930_admin_ver_loja.sql`); sem ele, a tela avisa em vez de quebrar.
 Alterações nos dados da cliente (correções) NÃO estão incluídas de propósito: exigem função própria, motivo e registro.
+
+## Excluir clientes e acessos (somente administradora — IRREVERSÍVEL)
+No modo observação (rodapé: "Excluir esta cliente e os dados dela…") ou em **Contas sem loja** → "Excluir…".
+Segurança: o e-mail da conta precisa ser digitado e é conferido NO SERVIDOR; administradoras e a própria conta não podem ser
+alvo; assinatura ativa exige confirmação extra; máx. 10 exclusões/hora; tudo grava no registro interno (o quê, quando, motivo).
+Ordem: 1) banco numa transação só (ou apaga tudo ou nada) → 2) fotos/romaneios → 3) a conta de login. Se 2 ou 3 falharem,
+os dados já saíram e a pessoa aparece em "Contas sem loja": basta excluir de novo.
+NÃO são apagados: registros financeiros (obrigação fiscal), `pedidos-pdf` e o próprio registro interno de auditoria.
+Antes de excluir há o botão "Baixar cópia dos dados" (arquivo JSON com dados pessoais: guardar com cuidado).
+Peças que ficam na tela (janelas, botões flutuantes) devem ser desenhadas com `NoCorpo` (portal): o contêiner animado `.oja`
+prende `position:fixed` e esconde a peça fora da janela.

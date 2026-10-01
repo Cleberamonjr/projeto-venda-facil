@@ -942,3 +942,52 @@ export async function verLojaSuporte(lojaId) {
   }
   return data;
 }
+
+/* ---------- painel admin: excluir contas e dados (somente administradora, irreversível) ---------- */
+export async function preverExclusao(userId) {
+  const { data, error } = await sb.rpc("admin_prever_exclusao", { p_user: userId });
+  if (error) throw new Error(/negado/i.test(error.message || "") ? "Só a administradora pode ver isso." : "Não consegui conferir o que seria apagado. Tente de novo.");
+  return data;
+}
+
+export async function excluirUsuario({ userId, confirmarEmail, motivo, forcar }) {
+  const { data, error } = await sb.functions.invoke("admin-excluir-usuario", {
+    body: { user_id: userId, confirmar_email: confirmarEmail, motivo: motivo || "", forcar: forcar === true },
+  });
+  if (error) {
+    let codigo = "";
+    try { codigo = (await error.context.json())?.erro || ""; } catch (e) { /* sem corpo */ }
+    const mensagens = {
+      confirmacao_incorreta: "O e-mail digitado não confere com o da conta.",
+      assinatura_ativa: "Esta cliente tem assinatura ativa. Marque a confirmação extra para excluir.",
+      conta_de_administracao: "Contas de administração não podem ser excluídas por aqui.",
+      muitas_exclusoes: "Muitas exclusões na última hora. Espere um pouco.",
+      conta_nao_encontrada: "Essa conta já não existe.",
+      acesso_negado: "Só a administradora pode fazer isso.",
+      nao_autenticado: "Sua sessão expirou. Entre de novo.",
+      falha_no_banco: "Não consegui apagar e NADA foi apagado. Tente de novo.",
+    };
+    throw new Error(mensagens[codigo] || "Não consegui excluir agora. Tente de novo.");
+  }
+  return data;
+}
+
+export async function exportarLoja(lojaId) {
+  const { data, error } = await sb.rpc("admin_exportar_loja", { p_loja: lojaId });
+  if (error) throw new Error("Não consegui gerar a cópia dos dados. Tente de novo.");
+  return data;
+}
+
+export async function contasSemLoja() {
+  const { data, error } = await sb.rpc("admin_contas_sem_loja");
+  if (error) return [];
+  return data || [];
+}
+
+export async function removerAcessoBeta(email) {
+  const { error } = await sb.rpc("admin_remover_acesso_beta", { p_email: email });
+  if (error) {
+    if (error.code === "LX409") throw new Error("Esta pessoa já tem conta: exclua a conta pela lista de lojas ou de contas sem loja.");
+    throw new Error("Não consegui remover esse acesso.");
+  }
+}

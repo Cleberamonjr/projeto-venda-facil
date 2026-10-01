@@ -390,6 +390,17 @@ const CSS = `
 .oj-editor-scroll::-webkit-scrollbar{width:12px}
 .oj-editor-scroll::-webkit-scrollbar-track{background:var(--bege-2)}
 .oj-editor-scroll::-webkit-scrollbar-thumb{background:var(--rose);border-radius:8px;border:3px solid var(--bege-2)}
+/* botão discreto para sair do modo observação: pequeno, quase transparente, fixo no canto */
+.oj-sair-espiao{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:120;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--linha);background:var(--bege);color:var(--tinta-cl);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.35;transition:opacity .2s}
+.oj-sair-espiao:hover,.oj-sair-espiao:focus-visible{opacity:1}
+.oj-sair-espiao svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+/* casca leve para o que é desenhado direto no corpo da página (só carrega o tema; não ocupa espaço) */
+.oj.oj-portal-leve{min-height:0;height:0;padding:0;margin:0;max-width:none;background:none;overflow:visible}
+/* ações destrutivas */
+.oj-btn.oj-btn-perigo{background:#B3402F}
+.oj-btn.oj-btn-perigo:hover:not(:disabled){background:#962F20}
+.oj-btn.oj-btn-perigo:disabled{background:#B3402F;opacity:.4;cursor:not-allowed}
 @media (max-width:560px){
   .oj-fundo-editor{padding:0;align-items:stretch}
   .oj-editor-cabecalho{padding:22px 18px 12px}
@@ -2860,10 +2871,190 @@ function Vitrine({ voltar }) {
 
 /* ---------------- painel do administrador ---------------- */
 /* ---------------- suporte: a administradora vê a loja de uma cliente (somente leitura) ---------------- */
-function LojaSuporte({ loja, voltar, pedirSenha }) {
+/* Desenha direto no corpo da página. O contêiner animado das telas (.oja) mantém uma "transformação" ativa e o navegador
+   passa a tratar tudo que é position:fixed lá dentro como preso a esse contêiner (e não à janela): janelas e botões
+   flutuantes ficavam centrados na página inteira, muito acima do que se vê. O editor de produto já faz o mesmo. */
+function NoCorpo({ children }) {
+  const tema = document.querySelector(".oj[data-theme]")?.getAttribute("data-theme") || "claro";
+  return createPortal(<div className="oj oj-portal-leve" data-theme={tema}>{children}</div>, document.body);
+}
+
+/* ---------------- excluir uma conta e os dados dela (somente administradora, IRREVERSÍVEL) ---------------- */
+function ExcluirConta({ alvo, aoFechar, aoConcluir }) {
+  const [previa, setPrevia] = useState(null);
+  const [erro, setErro] = useState("");
+  const [email, setEmail] = useState("");
+  const [motivo, setMotivo] = useState("");
+  const [ciente, setCiente] = useState(false);
+  const [forcar, setForcar] = useState(false);
+  const [fase, setFase] = useState("conferir"); // conferir | apagando | pronto
+  const [resultado, setResultado] = useState(null);
+  const [baixando, setBaixando] = useState(false);
+  const [copia, setCopia] = useState(false);
+
+  useEffect(() => {
+    let vivo = true;
+    dados.preverExclusao(alvo.id)
+      .then((x) => { if (vivo) setPrevia(x); })
+      .catch((e) => { if (vivo) setErro(e.message); });
+    return () => { vivo = false; };
+  }, [alvo.id]);
+
+  const c = previa?.contagens || {};
+  const loja = previa?.lojas?.[0];
+  const ativa = previa?.assinatura_status === "ativa";
+  const bloqueada = !!(previa?.e_admin || previa?.sou_eu);
+  const emailCerto = !!previa && email.trim().toLowerCase() === String(previa.email || "").toLowerCase();
+  const pode = fase === "conferir" && !!previa && !bloqueada && emailCerto && ciente && (!ativa || forcar);
+
+  const baixarCopia = async () => {
+    setBaixando(true); setErro("");
+    try {
+      const arquivo = await dados.exportarLoja(loja.id);
+      const blob = new Blob([JSON.stringify(arquivo, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `luxi-copia-${String(loja.nome || "loja").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      setCopia(true);
+    } catch (e) { setErro(e.message); }
+    finally { setBaixando(false); }
+  };
+
+  const excluir = async () => {
+    setErro(""); setFase("apagando");
+    try {
+      const r = await dados.excluirUsuario({ userId: alvo.id, confirmarEmail: email, motivo, forcar });
+      setResultado(r); setFase("pronto");
+    } catch (e) { setErro(e.message); setFase("conferir"); }
+  };
+
+  const linhas = [];
+  if (loja) {
+    linhas.push(`Loja “${loja.nome || "sem nome"}”: ${c.pecas || 0} peça(s), ${c.vendas || 0} venda(s), ${c.clientes || 0} cliente(s) cadastrada(s), ${c.despesas || 0} despesa(s), ${c.romaneios || 0} romaneio(s), ${c.baixas || 0} baixa(s), ${c.colecoes || 0} coleção(ões), ${c.maletas || 0} maleta(s)`);
+    if (c.arquivos) linhas.push(`${c.arquivos} arquivo(s) guardado(s): fotos e romaneios`);
+    if (c.consultoras) linhas.push(`${c.consultoras} consultora(s) da loja${c.consultoras_com_conta ? ` — ${c.consultoras_com_conta} com conta própria: a conta continua, mas perde o acesso a esta loja` : ""}`);
+  }
+  linhas.push("A conta de acesso (login) e o acesso beta");
+
+  return (
+    <NoCorpo>
+    <div className="oj-fundo" onClick={fase === "apagando" ? undefined : aoFechar}>
+      <div className="oj-modal" role="dialog" aria-modal="true" aria-label="Excluir conta" onClick={(e) => e.stopPropagation()}>
+        {fase === "pronto" ? (
+          <>
+            <h3>Exclusão concluída</h3>
+            <div className="oj-meta" style={{ margin: "6px 0 12px", wordBreak: "break-all" }}>{resultado?.email}</div>
+            <div className="oj-aviso" style={{ margin: "0 0 12px" }}>
+              Apagado: {Object.entries(resultado?.apagado || {}).filter(([k, v]) => v > 0 && k !== "registros_financeiros").map(([k, v]) => `${v} ${k.replace("_", " ")}`).join(" · ") || "a conta"}.
+              {resultado?.arquivos_removidos ? ` ${resultado.arquivos_removidos} arquivo(s) removido(s).` : ""}
+            </div>
+            {(resultado?.pendencias || []).length > 0 && (
+              <div className="oj-erro" style={{ margin: "0 0 12px" }}>
+                Os dados da loja já foram apagados, mas falta remover: {resultado.pendencias.map((p) => (p === "arquivos" ? "alguns arquivos" : "a conta de acesso")).join(" e ")}.
+                A pessoa aparece em “Contas sem loja”: exclua de novo para terminar.
+              </div>
+            )}
+            {(resultado?.apagado?.registros_financeiros || 0) > 0 && (
+              <div className="oj-meta" style={{ marginBottom: 12 }}>
+                {resultado.apagado.registros_financeiros} registro(s) financeiro(s) foram mantidos (obrigação fiscal).
+              </div>
+            )}
+            <button className="oj-btn" onClick={() => aoConcluir(resultado)}>Concluir</button>
+          </>
+        ) : (
+          <>
+            <h3 style={{ color: "var(--alerta)" }}>{loja ? "Excluir cliente e todos os dados" : "Excluir conta"}</h3>
+            <div className="oj-meta" style={{ margin: "6px 0 12px", wordBreak: "break-all" }}>{alvo.email}</div>
+
+            {erro && <div className="oj-erro" style={{ margin: "0 0 12px" }} role="alert">{erro}</div>}
+            {!previa && !erro && <div className="oj-meta">Conferindo o que seria apagado…</div>}
+
+            {bloqueada && (
+              <div className="oj-erro" style={{ margin: "0 0 12px" }}>Contas de administração não podem ser excluídas por aqui.</div>
+            )}
+
+            {previa && !bloqueada && (
+              <>
+                <div className="oj-aviso" style={{ margin: "0 0 12px", lineHeight: 1.55 }}>
+                  <b>Será apagado de forma permanente:</b>
+                  <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                    {linhas.map((l) => <li key={l}>{l}</li>)}
+                  </ul>
+                </div>
+                {(previa.e_consultora_de || []).length > 0 && (
+                  <div className="oj-meta" style={{ marginBottom: 10 }}>
+                    Esta pessoa também é consultora de: {previa.e_consultora_de.join(", ")}. O histórico de vendas dessas lojas continua.
+                  </div>
+                )}
+                {(c.registros_financeiros || 0) > 0 && (
+                  <div className="oj-meta" style={{ marginBottom: 10 }}>
+                    {c.registros_financeiros} registro(s) financeiro(s) serão mantidos (obrigação fiscal).
+                  </div>
+                )}
+
+                {loja && (
+                  <div style={{ marginBottom: 12 }}>
+                    <button className="oj-btn sec mini" onClick={baixarCopia} disabled={baixando || fase !== "conferir"}>
+                      {baixando ? "Gerando cópia…" : copia ? "✓ Cópia baixada — baixar de novo" : "Baixar cópia dos dados antes (recomendado)"}
+                    </button>
+                    <div className="oj-meta" style={{ marginTop: 6 }}>
+                      Depois de excluir, não há como recuperar. A cópia contém dados pessoais: guarde com cuidado.
+                    </div>
+                  </div>
+                )}
+
+                {ativa && (
+                  <label style={{ display: "flex", gap: 8, alignItems: "flex-start", margin: "0 0 12px", fontSize: 14, lineHeight: 1.45 }}>
+                    <input type="checkbox" checked={forcar} onChange={(e) => setForcar(e.target.checked)} style={{ marginTop: 3 }} />
+                    <span><b>Esta cliente tem assinatura ATIVA.</b> Confirmo que a cobrança já foi cancelada ou tratada.</span>
+                  </label>
+                )}
+
+                <div className="oj-campo">
+                  <label>Para confirmar, digite o e-mail desta conta</label>
+                  <input
+                    className="oj-in" value={email} onChange={(e) => setEmail(e.target.value)}
+                    placeholder={previa.email} autoComplete="off" autoCapitalize="off" spellCheck={false}
+                    disabled={fase !== "conferir"}
+                  />
+                </div>
+                <div className="oj-campo">
+                  <label>Motivo (opcional — fica só no seu registro interno)</label>
+                  <input className="oj-in" value={motivo} maxLength={500} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex.: pedido da cliente por e-mail" disabled={fase !== "conferir"} />
+                </div>
+                <label style={{ display: "flex", gap: 8, alignItems: "flex-start", margin: "0 0 14px", fontSize: 14, lineHeight: 1.45 }}>
+                  <input type="checkbox" checked={ciente} onChange={(e) => setCiente(e.target.checked)} style={{ marginTop: 3 }} disabled={fase !== "conferir"} />
+                  <span>Entendo que isto é <b>permanente</b> e não pode ser desfeito.</span>
+                </label>
+              </>
+            )}
+
+            <button className="oj-btn oj-btn-perigo" onClick={excluir} disabled={!pode}>
+              {fase === "apagando" ? "Apagando… não feche esta janela" : "Excluir definitivamente"}
+            </button>
+            <button className="oj-btn sec" style={{ marginTop: 8 }} onClick={aoFechar} disabled={fase === "apagando"}>Cancelar</button>
+          </>
+        )}
+      </div>
+    </div>
+    </NoCorpo>
+  );
+}
+
+function LojaSuporte({ loja, voltar, pedirSenha, aoExcluida }) {
   const [dado, setDado] = useState(null);
   const [erro, setErro] = useState("");
   const [aba, setAba] = useState("atividade");
+  const [excluindo, setExcluindo] = useState(false);
+  // Esc sai do modo observação (a menos que haja uma janela aberta — aí o Esc fecha a janela)
+  useEffect(() => {
+    const tecla = (e) => { if (e.key === "Escape" && !document.querySelector(".oj-fundo")) voltar(); };
+    document.addEventListener("keydown", tecla);
+    return () => document.removeEventListener("keydown", tecla);
+  }, [voltar]);
   useEffect(() => {
     let vivo = true;
     dados.verLojaSuporte(loja.id)
@@ -2884,6 +3075,15 @@ function LojaSuporte({ loja, voltar, pedirSenha }) {
   const topo = (
     <>
       <button className="oj-link-sutil" style={{ textAlign: "left", padding: "8px 0" }} onClick={voltar}>‹ Voltar às lojas</button>
+      {/* saída discreta: pequena, quase transparente, sempre no canto da tela (Esc também sai) */}
+      <NoCorpo>
+        <button type="button" className="oj-sair-espiao" onClick={voltar} aria-label="Sair do modo observação" title="Sair (Esc)">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+            <line x1="1" y1="1" x2="23" y2="23" />
+          </svg>
+        </button>
+      </NoCorpo>
       <div className="oj-aviso" role="note">
         <b>Modo observação · somente leitura.</b> A cliente não vê nem é avisada de que você abriu a loja dela.
         O acesso fica só no seu registro interno.
@@ -3050,6 +3250,19 @@ function LojaSuporte({ loja, voltar, pedirSenha }) {
             </div>
           )))}
       </div>
+
+      <div style={{ margin: "26px 20px 90px", textAlign: "center" }}>
+        <button className="oj-link-sutil" style={{ color: "var(--alerta)", fontSize: 12.5 }} onClick={() => setExcluindo(true)}>
+          Excluir esta cliente e os dados dela…
+        </button>
+      </div>
+      {excluindo && (
+        <ExcluirConta
+          alvo={{ id: l.dona_id, email: dona.email || "" }}
+          aoFechar={() => setExcluindo(false)}
+          aoConcluir={() => { setExcluindo(false); if (aoExcluida) aoExcluida(); }}
+        />
+      )}
     </>
   );
 }
@@ -3060,13 +3273,17 @@ function Admin({ d }) {
   const [erroAdmin, setErroAdmin] = useState("");
   const [alvoSenha, setAlvoSenha] = useState("");
   const [aberta, setAberta] = useState(null); // loja aberta em modo suporte
+  const [contas, setContas] = useState([]); // contas que existem mas não têm loja
+  const [excluirConta, setExcluirConta] = useState(null);
+  const [versao, setVersao] = useState(0); // sobe depois de uma exclusão, para recarregar as listas
   useEffect(() => {
     let vivo = true;
     dados.carregarUsoLojas()
       .then((x) => { if (vivo) setUso(x); })
       .catch((err) => { if (vivo) setErroAdmin(err.message || "Não consegui carregar o painel."); });
+    dados.contasSemLoja().then((x) => { if (vivo) setContas(x); });
     return () => { vivo = false; };
-  }, []);
+  }, [versao]);
 
   if (erroAdmin) return <div className="oj-erro">{erroAdmin}</div>;
   if (!uso) return <div className="oj-card"><div className="oj-meta">Carregando dados reais…</div></div>;
@@ -3075,6 +3292,7 @@ function Admin({ d }) {
       <LojaSuporte
         loja={aberta}
         voltar={() => setAberta(null)}
+        aoExcluida={() => { setAberta(null); setVersao((v) => v + 1); }}
         pedirSenha={(email) => {
           setAberta(null);
           setAlvoSenha(email);
@@ -3189,6 +3407,39 @@ function Admin({ d }) {
         )}
       </div>
 
+      {contas.length > 0 && (
+        <>
+          <div className="oj-sec">Contas sem loja ({contas.length})</div>
+          <div className="oj-card">
+            <div className="oj-meta" style={{ marginBottom: 8, lineHeight: 1.5 }}>
+              Pessoas que criaram o acesso mas ainda não abriram a loja (ou que ficaram sem loja).
+            </div>
+            {contas.map((c) => (
+              <div className="oj-item" key={c.id} style={{ alignItems: "flex-start" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="oj-nome" style={{ wordBreak: "break-all" }}>{c.email}</div>
+                  <div className="oj-meta">
+                    criada em {new Date(c.criada_em).toLocaleDateString("pt-BR")}
+                    {c.ultimo_login ? ` · último login ${new Date(c.ultimo_login).toLocaleDateString("pt-BR")}` : " · nunca entrou"}
+                    {c.beta ? " · acesso beta ativo" : ""}{c.consultora_de ? ` · consultora de ${c.consultora_de}` : ""}
+                  </div>
+                </div>
+                <button className="oj-link-sutil" style={{ color: "var(--alerta)", padding: "6px 0" }} onClick={() => setExcluirConta(c)} aria-label={`Excluir a conta de ${c.email}`}>
+                  Excluir…
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      {excluirConta && (
+        <ExcluirConta
+          alvo={{ id: excluirConta.id, email: excluirConta.email }}
+          aoFechar={() => setExcluirConta(null)}
+          aoConcluir={() => { setExcluirConta(null); setVersao((v) => v + 1); }}
+        />
+      )}
+
       <div className="oj-sec">Assinaturas pagas por plano</div>
       <div className="oj-card">
         {planosAtivos.map((pl) => {
@@ -3252,6 +3503,15 @@ function GestaoBeta() {
     }
   };
 
+  const removerDaLista = async (em) => {
+    if (!window.confirm(`Remover ${em} da lista de acessos?\n\nIsso apaga o registro do acesso beta (não mexe em conta nenhuma).`)) return;
+    try {
+      await dados.removerAcessoBeta(em);
+      await recarregar();
+    } catch (e) {
+      setMsg("Erro: " + (e.message || "não consegui remover"));
+    }
+  };
   const revogar = async (em) => {
     if (!window.confirm(`Revogar o acesso de ${em}?\n\nA loja dela volta para o plano Livre — os dados ficam guardados.`)) return;
     try {
@@ -3388,6 +3648,16 @@ function GestaoBeta() {
                     aria-label="Revogar acesso"
                   >
                     ×
+                  </button>
+                )}
+                {!ativa && (
+                  <button
+                    className="oj-link-sutil"
+                    style={{ color: "var(--alerta)", marginLeft: 6, padding: "6px 0", fontSize: 12.5 }}
+                    onClick={() => removerDaLista(a.email)}
+                    aria-label={`Remover ${a.email} da lista`}
+                  >
+                    remover
                   </button>
                 )}
               </div>

@@ -88,10 +88,14 @@ def rodar(politica, verbose=True):
         # 3) administradora
         uso = {"resumo": {"lojas": 1, "usando_7d": 0, "pecas": 0, "vendas_30d": 0, "valor_vendas_30d": 0, "romaneios_30d": 0, "beta": 0, "pagantes": 0},
                "lojas": [{"id": "l1", "nome": "Loja A", "dona_email": "a@a.com", "situacao": "beta", "plano": "crescimento", "pecas": 1, "vendas_total": 0, "vendas_30d": 0, "romaneios_30d": 0, "consultoras": 0, "dias_restantes": 20, "ultima_atividade": None}]}
-        ctx, pg, _, er = novo(b, srv, rpc={"sou_admin_luxi": True, "uso_lojas_luxi": uso, "auditoria_admin_recente": [], "admin_ver_loja": suporte.LOJA})
+        ctx, pg, _, er = novo(b, srv, rpc={"sou_admin_luxi": True, "uso_lojas_luxi": uso, "auditoria_admin_recente": [], "admin_ver_loja": suporte.LOJA, "admin_prever_exclusao": suporte.PREVIA, "admin_exportar_loja": suporte.COPIA, "admin_contas_sem_loja": []})
         pg.goto(srv.url); esperar_app(pg); percorrer_menu(pg)
         garantir_menu(pg, True); pg.evaluate("[...document.querySelectorAll('nav.oj-lateral button')].find(b => b.textContent.includes('Uso do Luxi'))?.click()"); pg.wait_for_selector("button[aria-label*='Loja A']", timeout=8000)
         pg.click("button[aria-label*='Loja A']"); pg.wait_for_selector("text=Modo observação", timeout=8000); pg.wait_for_timeout(500)
+        pg.click("text=Excluir esta cliente e os dados dela"); pg.wait_for_selector("text=Será apagado de forma permanente", timeout=8000)
+        with pg.expect_download(timeout=8000) as _dl:
+            pg.click("text=Baixar cópia dos dados antes")
+        pg.wait_for_timeout(300)
         resultado["administradora"] = (violacoes(pg), er); ctx.close()
 
         # 4) link de convite do beta (tema escuro também)

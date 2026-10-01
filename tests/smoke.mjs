@@ -428,7 +428,7 @@ await teste('Q2. cliente comum (sem redefinição) entra no app normalmente', as
 // ---------- P. suporte: a administradora abre a loja de uma cliente ----------
 const em10 = new Date(Date.now() + 10 * 864e5).toISOString(), ontem = new Date(Date.now() - 864e5).toISOString();
 const LOJA_SUPORTE = {
-  loja: { id: 'l2', nome: 'Atelie Andressa', whatsapp: '5511999990001' },
+  loja: { id: 'l2', nome: 'Atelie Andressa', whatsapp: '5511999990001', dona_id: 'u-dona' },
   dona: { email: 'and@x.com', ultimo_login: ontem, conta_criada: '2026-09-12T00:00:00Z' },
   assinatura: { plano: 'crescimento', status: 'trial', trial_ate: em10 },
   resumo: { pecas: 2, unidades: 5, vendas_total: 2, vendas_30d: 2, valor_30d: 11800, a_receber: 4900, clientes: 1, consultoras: 1, romaneios: 1, ultima_atividade: ontem },
@@ -445,7 +445,7 @@ const LOJA_SUPORTE = {
   consultoras: [{ id: 'k1', nome: 'Bia', eh_dona: false, ativa: true, comissao: 20, usuario_id: null }],
   entradas: [{ id: 'e1', fornecedor: 'Prata Fina', criada_em: ontem, qtd_itens: 12, total_centavos: 90000 }] };
 const abrirPainelAdmin = async (cfgExtra = {}) => {
-  const a = await abrir({ sessao: admin, cfg: { rpc: { sou_admin_luxi: true, uso_lojas_luxi: USO, admin_ver_loja: LOJA_SUPORTE }, ...cfgExtra } });
+  const a = await abrir({ sessao: admin, cfg: { ...cfgExtra, rpc: { sou_admin_luxi: true, uso_lojas_luxi: USO, admin_ver_loja: LOJA_SUPORTE, ...(cfgExtra.rpc || {}) } } });
   await esperarPor(() => a.w.document.querySelector('.oj-hamb'));
   a.w.document.querySelector('.oj-hamb').click(); await pausa(300);
   a.clicar('Uso do Luxi', 'nav');
@@ -482,6 +482,151 @@ await teste('S2. observação: se o SQL ainda não foi rodado, explica e deixa v
   const voltou = await esperarPor(() => a.texto().includes('Lojas e uso'));
   a.fechar();
   return { ok: explicou && voltou, detalhe: `explicou=${explicou}; voltou à lista=${voltou}` };
+});
+
+// ---------- B. botão discreto de sair do modo observação ----------
+await teste('S3. observação: botão discreto (e a tecla Esc) voltam ao painel', async () => {
+  const a = await abrirPainelAdmin();
+  a.w.document.querySelector('button[aria-label*="Atelie Andressa"]').click();
+  await esperarPor(() => a.texto().includes('Modo observação'));
+  const botao = a.w.document.querySelector('button[aria-label="Sair do modo observação"]');
+  const existe = !!botao && !botao.textContent.trim();                       // só ícone, sem texto chamativo
+  botao.click();
+  const voltou1 = await esperarPor(() => a.texto().includes('Lojas e uso') && !a.texto().includes('Modo observação'));
+  a.w.document.querySelector('button[aria-label*="Atelie Andressa"]').click();
+  await esperarPor(() => a.texto().includes('Modo observação'));
+  a.w.document.dispatchEvent(new a.w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  const voltou2 = await esperarPor(() => a.texto().includes('Lojas e uso') && !a.texto().includes('Modo observação'));
+  a.fechar();
+  return { ok: existe && voltou1 && voltou2, detalhe: `botão só-ícone=${existe}; botão volta=${voltou1}; Esc volta=${voltou2}` };
+});
+
+// ---------- X. excluir clientes e acessos ----------
+const PREVIA = (extra = {}) => ({ user_id: 'u-dona', email: 'and@x.com', e_admin: false, sou_eu: false, lojas: [{ id: 'l2', nome: 'Atelie Andressa' }], assinatura_status: 'trial', e_consultora_de: [], tem_acesso_beta: true,
+  contagens: { pecas: 3, vendas: 1, clientes: 1, despesas: 1, romaneios: 1, baixas: 0, colecoes: 0, maletas: 0, consultoras: 1, consultoras_com_conta: 1, arquivos: 2, registros_financeiros: 0 }, ...extra });
+const FN_EXCLUIR = /functions\/v1\/admin-excluir-usuario/;
+const preparar = async ({ previa = PREVIA(), resposta = { ok: true, email: 'and@x.com', apagado: { pecas: 3, vendas: 1 }, arquivos_removidos: 2, conta_removida: true, pendencias: [] }, contas = [], tabelas = {} } = {}) => {
+  const pedidos = [];
+  const a = await abrirPainelAdmin({ rpc: { admin_prever_exclusao: previa, admin_contas_sem_loja: contas }, tabelas,
+    rotas: [[FN_EXCLUIR, (init) => { pedidos.push(JSON.parse(init.body)); return json(resposta); }]] });
+  return { a, pedidos };
+};
+const abrirModalDaLoja = async (a) => {
+  a.w.document.querySelector('button[aria-label*="Atelie Andressa"]').click();
+  await esperarPor(() => a.texto().includes('Excluir esta cliente e os dados dela'));
+  a.clicar('Excluir esta cliente e os dados dela');
+  await esperarPor(() => a.texto().includes('Será apagado de forma permanente'));
+};
+const botaoExcluir = (a) => [...a.w.document.querySelectorAll('.oj-modal button')].find((b) => /Excluir definitivamente|Apagando/.test(b.textContent));
+const campoEmail = (a) => a.w.document.querySelector('.oj-modal input[placeholder="and@x.com"]');
+const marcar = (a, rotulo) => { const l = [...a.w.document.querySelectorAll('.oj-modal label')].find((x) => x.textContent.includes(rotulo)); const i = l.querySelector('input'); i.click(); };
+
+await teste('X1. excluir cliente: mostra o que será apagado, exige o e-mail certo e só então chama a função', async () => {
+  const { a, pedidos } = await preparar();
+  await abrirModalDaLoja(a);
+  const t = a.texto();
+  const mostrou = ['Loja “Atelie Andressa”: 3 peça(s), 1 venda(s)', '2 arquivo(s) guardado(s)', '1 com conta própria', 'A conta de acesso (login) e o acesso beta', 'Baixar cópia dos dados antes'].filter((x) => !t.includes(x));
+  const desabilitadoInicio = botaoExcluir(a).disabled;
+  a.digitar(campoEmail(a), 'outra@pessoa.com'); await pausa(150); marcar(a, 'permanente'); await pausa(150);
+  const desabilitadoErrado = botaoExcluir(a).disabled;
+  a.digitar(campoEmail(a), '  AND@x.com '); await pausa(150);
+  const habilitado = !botaoExcluir(a).disabled;
+  const antes = pedidos.length;
+  const motivo = [...a.w.document.querySelectorAll('.oj-modal input')].find((i) => /pedido da cliente/.test(i.placeholder || ''));
+  a.digitar(motivo, 'pedido dela por e-mail'); await pausa(100);
+  botaoExcluir(a).click();
+  const concluiu = await esperarPor(() => a.texto().includes('Exclusão concluída'));
+  const pedido = pedidos[0] || {};
+  a.clicar('Concluir', '.oj-modal');
+  const voltou = await esperarPor(() => a.texto().includes('Lojas e uso') && !a.texto().includes('Exclusão concluída'));
+  const recarregou = a.log.filter((l) => l.includes('uso_lojas_luxi')).length >= 2;
+  a.fechar();
+  return { ok: !mostrou.length && desabilitadoInicio && desabilitadoErrado && habilitado && antes === 0 && concluiu && pedidos.length === 1
+      && pedido.user_id === 'u-dona' && pedido.confirmar_email === '  AND@x.com ' && pedido.motivo === 'pedido dela por e-mail' && pedido.forcar === false && voltou && recarregou,
+    detalhe: [mostrou.length && 'faltou na prévia: ' + mostrou.join(' | '), `botão travado no início=${desabilitadoInicio}, com e-mail errado=${desabilitadoErrado}, liberado com o certo=${habilitado}`, `chamadas antes de confirmar=${antes}`, `pedido=${JSON.stringify(pedido)}`, `voltou à lista=${voltou}, recarregou=${recarregou}`].filter(Boolean).join(' ; ') };
+});
+
+await teste('X2. cancelar não chama nada', async () => {
+  const { a, pedidos } = await preparar();
+  await abrirModalDaLoja(a);
+  a.digitar(campoEmail(a), 'and@x.com'); await pausa(100); marcar(a, 'permanente'); await pausa(100);
+  a.clicar('Cancelar', '.oj-modal'); await pausa(300);
+  const fechou = !a.texto().includes('Será apagado de forma permanente');
+  a.fechar();
+  return { ok: fechou && pedidos.length === 0 && !a.log.some((l) => FN_EXCLUIR.test(l)) };
+});
+
+await teste('X3. conta sem loja: aparece numa lista própria e pode ser excluída (sem "baixar cópia")', async () => {
+  const conta = { id: 'u-sem-loja', email: 'sem.loja@x.com', criada_em: '2026-09-29T03:40:00Z', ultimo_login: null, beta: true, consultora_de: null };
+  const { a, pedidos } = await preparar({ contas: [conta], previa: PREVIA({ user_id: 'u-sem-loja', email: 'sem.loja@x.com', lojas: [], contagens: {} }) });
+  await esperarPor(() => a.texto().includes('Contas sem loja (1)'));
+  const lista = a.texto().includes('sem.loja@x.com') && a.texto().includes('nunca entrou') && a.texto().includes('acesso beta ativo');
+  a.w.document.querySelector('button[aria-label="Excluir a conta de sem.loja@x.com"]').click();
+  await esperarPor(() => a.texto().includes('Será apagado de forma permanente'));
+  const t = a.texto();
+  const semCopia = !t.includes('Baixar cópia');
+  a.digitar(a.w.document.querySelector('.oj-modal input[placeholder="sem.loja@x.com"]'), 'sem.loja@x.com'); await pausa(100); marcar(a, 'permanente'); await pausa(100);
+  botaoExcluir(a).click();
+  const concluiu = await esperarPor(() => a.texto().includes('Exclusão concluída'));
+  a.fechar();
+  return { ok: lista && semCopia && t.includes('Excluir conta') && concluiu && pedidos[0]?.user_id === 'u-sem-loja', detalhe: `lista=${lista}; sem cópia=${semCopia}; pedido=${JSON.stringify(pedidos[0])}` };
+});
+
+await teste('X4. assinatura ativa exige a confirmação extra e a envia', async () => {
+  const { a, pedidos } = await preparar({ previa: PREVIA({ assinatura_status: 'ativa' }) });
+  await abrirModalDaLoja(a);
+  a.digitar(campoEmail(a), 'and@x.com'); await pausa(100); marcar(a, 'permanente'); await pausa(100);
+  const travadoSemExtra = botaoExcluir(a).disabled;
+  marcar(a, 'assinatura ATIVA'); await pausa(100);
+  const liberado = !botaoExcluir(a).disabled;
+  botaoExcluir(a).click();
+  await esperarPor(() => pedidos.length === 1);
+  a.fechar();
+  return { ok: travadoSemExtra && liberado && pedidos[0]?.forcar === true, detalhe: `travado sem a confirmação extra=${travadoSemExtra}; liberado com ela=${liberado}; forcar enviado=${pedidos[0]?.forcar}` };
+});
+
+await teste('X5. conta de administração: avisa e não deixa excluir', async () => {
+  const { a, pedidos } = await preparar({ previa: PREVIA({ e_admin: true }) });
+  await abrirModalDaLoja(a);
+  await esperarPor(() => a.texto().includes('Contas de administração não podem ser excluídas'));
+  const sem = !a.texto().includes('Será apagado de forma permanente');
+  const travado = botaoExcluir(a).disabled;
+  a.fechar();
+  return { ok: sem && travado && pedidos.length === 0 };
+});
+
+await teste('X6. se a conta ou os arquivos ficarem pendentes, avisa com clareza', async () => {
+  const { a } = await preparar({ resposta: { ok: true, email: 'and@x.com', apagado: { pecas: 3 }, arquivos_removidos: 0, conta_removida: false, pendencias: ['conta', 'arquivos'] } });
+  await abrirModalDaLoja(a);
+  a.digitar(campoEmail(a), 'and@x.com'); await pausa(100); marcar(a, 'permanente'); await pausa(100);
+  botaoExcluir(a).click();
+  await esperarPor(() => a.texto().includes('Exclusão concluída'));
+  const t = a.texto(); a.fechar();
+  return { ok: t.includes('já foram apagados, mas falta remover') && t.includes('alguns arquivos') && t.includes('a conta de acesso') && t.includes('Contas sem loja') };
+});
+
+await teste('X7. erro do servidor (e-mail não confere) aparece e não fecha a janela', async () => {
+  const a = await abrirPainelAdmin({ rpc: { admin_prever_exclusao: PREVIA() }, rotas: [[FN_EXCLUIR, () => json({ erro: 'confirmacao_incorreta' }, 400)]] });
+  await abrirModalDaLoja(a);
+  a.digitar(campoEmail(a), 'and@x.com'); await pausa(100); marcar(a, 'permanente'); await pausa(100);
+  botaoExcluir(a).click();
+  const erro = await esperarPor(() => a.texto().includes('O e-mail digitado não confere com o da conta'));
+  const aindaAberta = a.texto().includes('Será apagado de forma permanente');
+  const liberouDeNovo = !botaoExcluir(a).disabled;
+  a.fechar();
+  return { ok: erro && aindaAberta && liberouDeNovo };
+});
+
+await teste('X8. acessos beta vencidos podem ser removidos da lista (com confirmação)', async () => {
+  const velho = { id: 'b1', email: 'velho@x.com', ativo: false, expira_em: new Date(Date.now() - 864e5).toISOString(), obs: '', convite_token: null };
+  const a = await abrirPainelAdmin({ tabelas: { acessos_beta: [velho] }, rpc: { admin_remover_acesso_beta: null } });
+  a.w.confirm = () => true;
+  await esperarPor(() => a.texto().includes('velho@x.com'));
+  a.w.document.querySelector('button[aria-label="Remover velho@x.com da lista"]').click();
+  await esperarPor(() => a.log.some((l) => l.includes('admin_remover_acesso_beta')));
+  const chamou = a.log.some((l) => l.includes('admin_remover_acesso_beta'));
+  a.fechar();
+  return { ok: chamou };
 });
 
 const todos = resultados.every(Boolean);
