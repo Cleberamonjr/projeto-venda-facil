@@ -397,6 +397,89 @@ const CSS = `
 .oj-sair-espiao svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
 /* casca leve para o que é desenhado direto no corpo da página (só carrega o tema; não ocupa espaço) */
 .oj.oj-portal-leve{min-height:0;height:0;padding:0;margin:0;max-width:none;background:none;overflow:visible}
+
+/* ===== painel da administradora (mobile primeiro) ===== */
+/* cores de perigo próprias de cada tema: o vermelho do tema escuro (--alerta) tem só ~3,4:1 de contraste sobre o cartão */
+.oj{--perigo-tx:#9A2F1F;--perigo-bg:#B3402F;--perigo-bg-h:#962F20;--perigo-fundo:#FBEDE9}
+.oj[data-theme="escuro"]{--perigo-tx:#FF9C9C;--perigo-bg:#B23A3A;--perigo-bg-h:#C24848;--perigo-fundo:#3F1B1D}
+/* seções do painel (controle segmentado) */
+.oj-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:12px 20px;padding:4px;background:var(--bege-2);border:1px solid var(--linha);border-radius:14px}
+.oj-seg button{min-height:44px;border:0;border-radius:10px;background:transparent;color:var(--tinta-cl);font:600 14px/1.1 'Helvetica Neue',Helvetica,Arial,sans-serif;cursor:pointer;padding:0 6px}
+.oj-seg button[aria-selected="true"]{background:var(--rose-btn);color:#fff}
+.oj-seg button:focus-visible{outline:2px solid var(--rose-esc);outline-offset:2px}
+/* linha de lista em COLUNA: nada é espremido ao lado de um botão */
+.oj-linha{padding:14px 0;border-bottom:1px solid var(--linha)}
+.oj-linha:last-child{border-bottom:0;padding-bottom:4px}
+.oj-linha:first-child{padding-top:2px}
+.oj-linha-topo{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:flex-start;justify-content:space-between}
+.oj-linha-topo>.oj-quebra{flex:1 1 150px}
+.oj-quebra{min-width:0;overflow-wrap:anywhere}
+.oj-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.oj-acoes>.oj-bt{flex:1 1 140px}
+/* botões do painel: alvo mínimo de 44 px, rótulo claro, foco visível */
+.oj-bt{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:10px 14px;border-radius:12px;border:1px solid var(--rose);background:transparent;color:var(--tinta);font:600 13.5px/1.2 'Helvetica Neue',Helvetica,Arial,sans-serif;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent}
+.oj-bt:hover:not(:disabled){background:var(--rose-cl)}
+.oj-bt:focus-visible{outline:2px solid var(--rose-esc);outline-offset:2px}
+.oj-bt:disabled{opacity:.45;cursor:not-allowed}
+.oj-bt{text-wrap:balance}
+.oj-bt.forte{background:var(--rose-btn);border-color:var(--rose-btn);color:#fff}
+.oj-bt.forte:hover:not(:disabled){background:var(--rose-btn-h);border-color:var(--rose-btn-h)}
+.oj-bt.perigo{border-color:var(--perigo-bg);color:var(--perigo-tx)}
+.oj-bt.perigo:hover:not(:disabled){background:var(--perigo-fundo)}
+.oj-bt.perigo-cheio{background:var(--perigo-bg);border-color:var(--perigo-bg);color:#fff}
+.oj-bt.perigo-cheio:hover:not(:disabled){background:var(--perigo-bg-h);border-color:var(--perigo-bg-h)}
+/* etiqueta de estado com contraste nos dois temas */
+.oj-estado{display:inline-block;flex:none;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap}
+.oj-estado.ativo{background:#E6EFE8;color:#2F5A3D}
+.oj-estado.vencido{background:#F0E4E4;color:#6B4A4A}
+.oj[data-theme="escuro"] .oj-estado.ativo{background:#1F3A2A;color:#A9E0BC}
+.oj[data-theme="escuro"] .oj-estado.vencido{background:#4A2428;color:#F0CFCD}
+.oj-estado.beta{background:#F2EBEF;color:#5E4757}
+.oj-estado.neutro{background:#EFE9EA;color:#5A4C50}
+.oj[data-theme="escuro"] .oj-estado.beta{background:#4A2A38;color:#EBD3E0}
+.oj[data-theme="escuro"] .oj-estado.neutro{background:#301619;color:#D9B9B8}
+/* link do convite: campo + botão na mesma linha */
+.oj-link-bloco{margin-top:10px}
+.oj-link-linha{display:flex;gap:8px;align-items:stretch;margin-top:5px}
+.oj-link-linha .oj-in{flex:1;min-width:0;margin:0}
+.oj-link-linha .oj-bt{flex:none}
+/* zona de risco no fim da loja observada */
+.oj-zona-risco{margin:26px 20px 96px;padding:16px;border:1px dashed var(--perigo-bg);border-radius:14px}
+/* janela de exclusão: cabeçalho fixo, miolo rolável, rodapé fixo com os botões sempre à vista */
+.oj-modal.oj-excl{padding:0;display:flex;flex-direction:column;max-height:92vh;max-height:92dvh;overflow:hidden}
+.oj-excl-topo{display:flex;gap:12px;align-items:flex-start;padding:18px 18px 12px;border-bottom:1px solid var(--linha)}
+.oj-excl-topo h3{margin:0;font-size:18px;line-height:1.25;color:var(--perigo-tx)}
+.oj-excl-icone{flex:none;width:36px;height:36px;border-radius:50%;background:var(--perigo-fundo);color:var(--perigo-tx);display:grid;place-items:center;font-weight:800;font-size:18px}
+.oj-excl-x{flex:none;width:44px;height:44px;margin:-6px -8px 0 0;border:0;background:transparent;color:var(--tinta-cl);font-size:26px;line-height:1;cursor:pointer;border-radius:12px}
+.oj-excl-x:focus-visible{outline:2px solid var(--rose-esc)}
+.oj-excl-corpo{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 18px 8px}
+.oj-excl-rodape{display:flex;gap:10px;padding:12px 18px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--linha);background:inherit}
+.oj-excl-rodape>.oj-bt{flex:1;min-height:48px}
+.oj-excl-bloco{margin:0 0 18px}
+.oj-excl-tit{font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--tinta);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.oj-excl-tit small{font-weight:500;color:var(--tinta-cl);font-size:12px}
+.oj-passo{width:22px;height:22px;border-radius:50%;background:var(--rose-btn);color:#fff;font-size:12px;display:inline-grid;place-items:center;flex:none}
+.oj-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}
+.oj-stat{background:var(--bege-2);border:1px solid var(--linha);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.oj-stat b{font-size:20px;line-height:1.1;color:var(--tinta)}
+.oj-stat span{font-size:12px;color:var(--tinta-cl)}
+.oj-excl-lista{margin:10px 0 0;padding-left:18px;font-size:13.5px;line-height:1.5;color:var(--tinta)}
+.oj-nota{background:var(--bege-2);border:1px solid var(--linha);border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.5;color:var(--tinta-cl);margin:0 0 14px}
+.oj-nota.perigo{background:var(--perigo-fundo);border-color:var(--perigo-bg);color:var(--perigo-tx)}
+.oj-check{display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;font-size:14px;line-height:1.45;color:var(--tinta)}
+.oj-check input{flex:none;width:22px;height:22px;margin:0;accent-color:var(--rose-btn)}
+.oj-email-alvo{font-size:13px;font-weight:600;background:var(--bege-2);border:1px dashed var(--linha);border-radius:10px;padding:8px 10px;margin:6px 0 8px;color:var(--tinta)}
+.oj-confere{font-size:12.5px;margin-top:6px;font-weight:600}
+.oj-confere.sim{color:var(--verde)}
+.oj-confere.nao{color:var(--tinta-cl)}
+.oj-excl .oj-in{font-size:16px}
+.oj-grid-adm>*{min-width:0}
+.oj-grid-adm .oj-valor{font-size:clamp(19px,6.4vw,28px);overflow-wrap:anywhere}
+/* botão secundário e link discreto DENTRO DO PAINEL: o tom global não chega a 4,5:1 (4,2 no claro, 3,4 no escuro) */
+.oj-adm .oj-btn.sec{color:#8B505C}
+.oj-adm .oj-link-sutil{color:#7A4450}
+.oj[data-theme="escuro"] .oj-adm .oj-btn.sec,
+.oj[data-theme="escuro"] .oj-adm .oj-link-sutil{color:#E8A6AA} /* 16 px evita o zoom automático do iPhone ao tocar no campo */
 /* ações destrutivas */
 .oj-btn.oj-btn-perigo{background:#B3402F}
 .oj-btn.oj-btn-perigo:hover:not(:disabled){background:#962F20}
@@ -2101,14 +2184,16 @@ export default function OrganizeJewelry() {
 
         <h1 className="oj-h1 oj-serif">{titulos[aba][0]}</h1>
         <div className="oj-sub">{titulos[aba][1]}</div>
-        <Filtro
-          periodo={periodo}
-          setPeriodo={setPeriodo}
-          de={de}
-          ate={ate}
-          setDe={setDe}
-          setAte={setAte}
-        />
+        {aba !== "admin" && (
+          <Filtro
+            periodo={periodo}
+            setPeriodo={setPeriodo}
+            de={de}
+            ate={ate}
+            setDe={setDe}
+            setAte={setAte}
+          />
+        )}
       </div>
 
       <Aviso d={d} irPara={irPara} />
@@ -2904,6 +2989,7 @@ function ExcluirConta({ alvo, aoFechar, aoConcluir }) {
   const loja = previa?.lojas?.[0];
   const ativa = previa?.assinatura_status === "ativa";
   const bloqueada = !!(previa?.e_admin || previa?.sou_eu);
+  const digitou = email.trim().length > 0;
   const emailCerto = !!previa && email.trim().toLowerCase() === String(previa.email || "").toLowerCase();
   const pode = fase === "conferir" && !!previa && !bloqueada && emailCerto && ciente && (!ativa || forcar);
 
@@ -2931,115 +3017,147 @@ function ExcluirConta({ alvo, aoFechar, aoConcluir }) {
     } catch (e) { setErro(e.message); setFase("conferir"); }
   };
 
-  const linhas = [];
-  if (loja) {
-    linhas.push(`Loja “${loja.nome || "sem nome"}”: ${c.pecas || 0} peça(s), ${c.vendas || 0} venda(s), ${c.clientes || 0} cliente(s) cadastrada(s), ${c.despesas || 0} despesa(s), ${c.romaneios || 0} romaneio(s), ${c.baixas || 0} baixa(s), ${c.colecoes || 0} coleção(ões), ${c.maletas || 0} maleta(s)`);
-    if (c.arquivos) linhas.push(`${c.arquivos} arquivo(s) guardado(s): fotos e romaneios`);
-    if (c.consultoras) linhas.push(`${c.consultoras} consultora(s) da loja${c.consultoras_com_conta ? ` — ${c.consultoras_com_conta} com conta própria: a conta continua, mas perde o acesso a esta loja` : ""}`);
-  }
-  linhas.push("A conta de acesso (login) e o acesso beta");
+  const blocos = [["Peças", c.pecas], ["Vendas", c.vendas], ["Clientes", c.clientes], ["Despesas", c.despesas], ["Romaneios", c.romaneios], ["Arquivos", c.arquivos]].filter(([, n]) => n > 0);
+  const outros = [[c.baixas, "baixa(s)"], [c.colecoes, "coleção(ões)"], [c.maletas, "maleta(s)"]].filter(([n]) => n > 0).map(([n, t]) => `${n} ${t}`);
+  const passoConfirmar = loja ? 2 : 1;
+  const apagado = Object.entries(resultado?.apagado || {}).filter(([k, v]) => v > 0 && k !== "registros_financeiros");
 
   return (
     <NoCorpo>
-    <div className="oj-fundo" onClick={fase === "apagando" ? undefined : aoFechar}>
-      <div className="oj-modal" role="dialog" aria-modal="true" aria-label="Excluir conta" onClick={(e) => e.stopPropagation()}>
-        {fase === "pronto" ? (
-          <>
-            <h3>Exclusão concluída</h3>
-            <div className="oj-meta" style={{ margin: "6px 0 12px", wordBreak: "break-all" }}>{resultado?.email}</div>
-            <div className="oj-aviso" style={{ margin: "0 0 12px" }}>
-              Apagado: {Object.entries(resultado?.apagado || {}).filter(([k, v]) => v > 0 && k !== "registros_financeiros").map(([k, v]) => `${v} ${k.replace("_", " ")}`).join(" · ") || "a conta"}.
-              {resultado?.arquivos_removidos ? ` ${resultado.arquivos_removidos} arquivo(s) removido(s).` : ""}
+      <div className="oj-fundo" onClick={fase === "apagando" ? undefined : aoFechar}>
+        <div className="oj-modal oj-excl" role="dialog" aria-modal="true" aria-label="Excluir conta" onClick={(e) => e.stopPropagation()}>
+          <div className="oj-excl-topo">
+            <span className="oj-excl-icone" aria-hidden="true">{fase === "pronto" ? "✓" : "!"}</span>
+            <div className="oj-quebra" style={{ flex: 1 }}>
+              <h3>{fase === "pronto" ? "Exclusão concluída" : loja ? "Excluir cliente e todos os dados" : "Excluir conta"}</h3>
+              <div className="oj-meta oj-quebra" style={{ marginTop: 2 }}>{fase === "pronto" ? resultado?.email : alvo.email}</div>
             </div>
-            {(resultado?.pendencias || []).length > 0 && (
-              <div className="oj-erro" style={{ margin: "0 0 12px" }}>
-                Os dados da loja já foram apagados, mas falta remover: {resultado.pendencias.map((p) => (p === "arquivos" ? "alguns arquivos" : "a conta de acesso")).join(" e ")}.
-                A pessoa aparece em “Contas sem loja”: exclua de novo para terminar.
-              </div>
+            {fase !== "pronto" && (
+              <button className="oj-excl-x" aria-label="Fechar" onClick={aoFechar} disabled={fase === "apagando"}>×</button>
             )}
-            {(resultado?.apagado?.registros_financeiros || 0) > 0 && (
-              <div className="oj-meta" style={{ marginBottom: 12 }}>
-                {resultado.apagado.registros_financeiros} registro(s) financeiro(s) foram mantidos (obrigação fiscal).
-              </div>
-            )}
-            <button className="oj-btn" onClick={() => aoConcluir(resultado)}>Concluir</button>
-          </>
-        ) : (
-          <>
-            <h3 style={{ color: "var(--alerta)" }}>{loja ? "Excluir cliente e todos os dados" : "Excluir conta"}</h3>
-            <div className="oj-meta" style={{ margin: "6px 0 12px", wordBreak: "break-all" }}>{alvo.email}</div>
+          </div>
 
-            {erro && <div className="oj-erro" style={{ margin: "0 0 12px" }} role="alert">{erro}</div>}
-            {!previa && !erro && <div className="oj-meta">Conferindo o que seria apagado…</div>}
-
-            {bloqueada && (
-              <div className="oj-erro" style={{ margin: "0 0 12px" }}>Contas de administração não podem ser excluídas por aqui.</div>
-            )}
-
-            {previa && !bloqueada && (
+          <div className="oj-excl-corpo">
+            {fase === "pronto" ? (
               <>
-                <div className="oj-aviso" style={{ margin: "0 0 12px", lineHeight: 1.55 }}>
-                  <b>Será apagado de forma permanente:</b>
-                  <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
-                    {linhas.map((l) => <li key={l}>{l}</li>)}
-                  </ul>
+                <div className="oj-nota">
+                  Apagado: {apagado.map(([k, v]) => `${v} ${k.replace("_", " ")}`).join(" · ") || "a conta"}.
+                  {resultado?.arquivos_removidos ? ` ${resultado.arquivos_removidos} arquivo(s) removido(s).` : ""}
                 </div>
-                {(previa.e_consultora_de || []).length > 0 && (
-                  <div className="oj-meta" style={{ marginBottom: 10 }}>
-                    Esta pessoa também é consultora de: {previa.e_consultora_de.join(", ")}. O histórico de vendas dessas lojas continua.
+                {(resultado?.pendencias || []).length > 0 && (
+                  <div className="oj-nota perigo">
+                    Os dados da loja já foram apagados, mas falta remover: {resultado.pendencias.map((p) => (p === "arquivos" ? "alguns arquivos" : "a conta de acesso")).join(" e ")}.
+                    A pessoa aparece em “Contas sem loja”: exclua de novo para terminar.
                   </div>
                 )}
-                {(c.registros_financeiros || 0) > 0 && (
-                  <div className="oj-meta" style={{ marginBottom: 10 }}>
-                    {c.registros_financeiros} registro(s) financeiro(s) serão mantidos (obrigação fiscal).
-                  </div>
+                {(resultado?.apagado?.registros_financeiros || 0) > 0 && (
+                  <div className="oj-nota">{resultado.apagado.registros_financeiros} registro(s) financeiro(s) foram mantidos (obrigação fiscal).</div>
                 )}
+              </>
+            ) : (
+              <>
+                {erro && <div className="oj-nota perigo" role="alert">{erro}</div>}
+                {!previa && !erro && <div className="oj-meta">Conferindo o que seria apagado…</div>}
+                {bloqueada && <div className="oj-nota perigo">Contas de administração não podem ser excluídas por aqui.</div>}
 
-                {loja && (
-                  <div style={{ marginBottom: 12 }}>
-                    <button className="oj-btn sec mini" onClick={baixarCopia} disabled={baixando || fase !== "conferir"}>
-                      {baixando ? "Gerando cópia…" : copia ? "✓ Cópia baixada — baixar de novo" : "Baixar cópia dos dados antes (recomendado)"}
-                    </button>
-                    <div className="oj-meta" style={{ marginTop: 6 }}>
-                      Depois de excluir, não há como recuperar. A cópia contém dados pessoais: guarde com cuidado.
-                    </div>
-                  </div>
+                {previa && !bloqueada && (
+                  <>
+                    <section className="oj-excl-bloco">
+                      <div className="oj-excl-tit">Será apagado de forma permanente</div>
+                      {loja && <div className="oj-meta oj-quebra" style={{ marginBottom: 8 }}>Loja “{loja.nome || "sem nome"}”</div>}
+                      {blocos.length > 0 ? (
+                        <div className="oj-stats">
+                          {blocos.map(([t, n]) => (
+                            <div className="oj-stat" key={t}><b>{n}</b><span>{t}</span></div>
+                          ))}
+                        </div>
+                      ) : loja ? (
+                        <div className="oj-meta">A loja ainda está vazia.</div>
+                      ) : null}
+                      {outros.length > 0 && <div className="oj-meta" style={{ marginTop: 8 }}>Também: {outros.join(", ")}.</div>}
+                      <ul className="oj-excl-lista">
+                        {c.consultoras > 0 && (
+                          <li>
+                            {c.consultoras} consultora(s) da loja
+                            {c.consultoras_com_conta ? ` — ${c.consultoras_com_conta} com conta própria: a conta continua, mas perde o acesso a esta loja` : ""}
+                          </li>
+                        )}
+                        <li>A conta de acesso (login) e o acesso beta</li>
+                      </ul>
+                    </section>
+
+                    {(previa.e_consultora_de || []).length > 0 && (
+                      <div className="oj-nota">
+                        Esta pessoa também é consultora de: {previa.e_consultora_de.join(", ")}. O histórico de vendas dessas lojas continua.
+                      </div>
+                    )}
+                    {(c.registros_financeiros || 0) > 0 && (
+                      <div className="oj-nota">{c.registros_financeiros} registro(s) financeiro(s) serão mantidos (obrigação fiscal).</div>
+                    )}
+
+                    {loja && (
+                      <section className="oj-excl-bloco">
+                        <div className="oj-excl-tit"><span className="oj-passo">1</span> Guarde uma cópia <small>recomendado</small></div>
+                        <button className="oj-bt" style={{ width: "100%" }} onClick={baixarCopia} disabled={baixando || fase !== "conferir"}>
+                          {baixando ? "Gerando cópia…" : copia ? "✓ Cópia baixada — baixar de novo" : "Baixar cópia dos dados antes (recomendado)"}
+                        </button>
+                        <div className="oj-meta" style={{ marginTop: 8, lineHeight: 1.5 }}>
+                          Depois de excluir, não há como recuperar. A cópia contém dados pessoais: guarde com cuidado.
+                        </div>
+                      </section>
+                    )}
+
+                    <section className="oj-excl-bloco">
+                      <div className="oj-excl-tit"><span className="oj-passo">{passoConfirmar}</span> Confirme</div>
+                      {ativa && (
+                        <label className="oj-check">
+                          <input type="checkbox" checked={forcar} onChange={(e) => setForcar(e.target.checked)} />
+                          <span><b>Esta cliente tem assinatura ATIVA.</b> Confirmo que a cobrança já foi cancelada ou tratada.</span>
+                        </label>
+                      )}
+                      <div className="oj-campo">
+                        <label>Para confirmar, digite o e-mail desta conta</label>
+                        <div className="oj-email-alvo oj-quebra">{previa.email}</div>
+                        <input
+                          className="oj-in" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                          placeholder={previa.email} autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                          disabled={fase !== "conferir"}
+                        />
+                        {digitou && (
+                          <div className={"oj-confere " + (emailCerto ? "sim" : "nao")} role="status">
+                            {emailCerto ? "✓ O e-mail confere" : "Ainda não confere"}
+                          </div>
+                        )}
+                      </div>
+                      <div className="oj-campo">
+                        <label>Motivo (opcional — fica só no seu registro interno)</label>
+                        <input className="oj-in" value={motivo} maxLength={500} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex.: pedido da cliente por e-mail" disabled={fase !== "conferir"} />
+                      </div>
+                      <label className="oj-check">
+                        <input type="checkbox" checked={ciente} onChange={(e) => setCiente(e.target.checked)} disabled={fase !== "conferir"} />
+                        <span>Entendo que isto é <b>permanente</b> e não pode ser desfeito.</span>
+                      </label>
+                    </section>
+                  </>
                 )}
-
-                {ativa && (
-                  <label style={{ display: "flex", gap: 8, alignItems: "flex-start", margin: "0 0 12px", fontSize: 14, lineHeight: 1.45 }}>
-                    <input type="checkbox" checked={forcar} onChange={(e) => setForcar(e.target.checked)} style={{ marginTop: 3 }} />
-                    <span><b>Esta cliente tem assinatura ATIVA.</b> Confirmo que a cobrança já foi cancelada ou tratada.</span>
-                  </label>
-                )}
-
-                <div className="oj-campo">
-                  <label>Para confirmar, digite o e-mail desta conta</label>
-                  <input
-                    className="oj-in" value={email} onChange={(e) => setEmail(e.target.value)}
-                    placeholder={previa.email} autoComplete="off" autoCapitalize="off" spellCheck={false}
-                    disabled={fase !== "conferir"}
-                  />
-                </div>
-                <div className="oj-campo">
-                  <label>Motivo (opcional — fica só no seu registro interno)</label>
-                  <input className="oj-in" value={motivo} maxLength={500} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex.: pedido da cliente por e-mail" disabled={fase !== "conferir"} />
-                </div>
-                <label style={{ display: "flex", gap: 8, alignItems: "flex-start", margin: "0 0 14px", fontSize: 14, lineHeight: 1.45 }}>
-                  <input type="checkbox" checked={ciente} onChange={(e) => setCiente(e.target.checked)} style={{ marginTop: 3 }} disabled={fase !== "conferir"} />
-                  <span>Entendo que isto é <b>permanente</b> e não pode ser desfeito.</span>
-                </label>
               </>
             )}
+          </div>
 
-            <button className="oj-btn oj-btn-perigo" onClick={excluir} disabled={!pode}>
-              {fase === "apagando" ? "Apagando… não feche esta janela" : "Excluir definitivamente"}
-            </button>
-            <button className="oj-btn sec" style={{ marginTop: 8 }} onClick={aoFechar} disabled={fase === "apagando"}>Cancelar</button>
-          </>
-        )}
+          <div className="oj-excl-rodape">
+            {fase === "pronto" ? (
+              <button className="oj-bt forte" onClick={() => aoConcluir(resultado)}>Concluir</button>
+            ) : (
+              <>
+                <button className="oj-bt" onClick={aoFechar} disabled={fase === "apagando"}>Cancelar</button>
+                <button className="oj-bt perigo-cheio" onClick={excluir} disabled={!pode}>
+                  {fase === "apagando" ? "Apagando… não feche" : "Excluir definitivamente"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
     </NoCorpo>
   );
 }
@@ -3097,9 +3215,9 @@ function LojaSuporte({ loja, voltar, pedirSenha, aoExcluida }) {
   const ate = a.trial_ate ? new Date(a.trial_ate) : null;
   const restam = ate ? Math.ceil((ate.getTime() - Date.now()) / 864e5) : null;
   const situacao =
-    a.status === "ativa" ? ["assinatura paga", "oj-tag ok"]
-    : a.status === "trial" && restam > 0 ? [`teste/beta · restam ${restam} dia(s)`, "oj-tag estoque"]
-    : a.status ? ["teste encerrado", "oj-tag parada"] : ["sem assinatura", "oj-tag"];
+    a.status === "ativa" ? ["assinatura paga", "oj-estado ativo"]
+    : a.status === "trial" && restam > 0 ? [`teste/beta · restam ${restam} dia(s)`, "oj-estado beta"]
+    : a.status ? ["teste encerrado", "oj-estado vencido"] : ["sem assinatura", "oj-estado neutro"];
   const zap = String(l.whatsapp || "").replace(/\D/g, "");
   const dias = dado.dias || [];
   const maxDia = Math.max(1, ...dias.map((x) => x.n || 0));
@@ -3127,19 +3245,19 @@ function LojaSuporte({ loja, voltar, pedirSenha, aoExcluida }) {
         <div className="oj-meta" style={{ lineHeight: 1.6 }}>
           Conta criada em {dia(dona.conta_criada)} · último login {ha(dona.ultimo_login)}
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+        <div className="oj-acoes">
           {zap && (
-            <button className="oj-btn mini" onClick={() => window.open(`https://wa.me/${zap}`, "_blank", "noopener")}>
+            <button className="oj-bt forte" onClick={() => window.open(`https://wa.me/${zap}`, "_blank", "noopener")}>
               Chamar no WhatsApp
             </button>
           )}
           {dona.email && (
-            <button className="oj-btn sec mini" onClick={() => pedirSenha(dona.email)}>Redefinir a senha dela</button>
+            <button className="oj-bt" onClick={() => pedirSenha(dona.email)}>Redefinir a senha dela</button>
           )}
         </div>
       </div>
 
-      <div className="oj-grid2">
+      <div className="oj-grid2 oj-grid-adm">
         <div className="oj-card flat"><div className="oj-lbl">Peças</div><div className="oj-valor">{r.pecas || 0}</div><div className="oj-meta">{r.unidades || 0} unidades</div></div>
         <div className="oj-card flat"><div className="oj-lbl">Vendas em 30 dias</div><div className="oj-valor">{r.vendas_30d || 0}</div><div className="oj-meta">{cent(r.valor_30d)}</div></div>
         <div className="oj-card flat"><div className="oj-lbl">A receber</div><div className="oj-valor">{cent(r.a_receber)}</div><div className="oj-meta">vendas ainda não pagas</div></div>
@@ -3251,8 +3369,12 @@ function LojaSuporte({ loja, voltar, pedirSenha, aoExcluida }) {
           )))}
       </div>
 
-      <div style={{ margin: "26px 20px 90px", textAlign: "center" }}>
-        <button className="oj-link-sutil" style={{ color: "var(--alerta)", fontSize: 12.5 }} onClick={() => setExcluindo(true)}>
+      <div className="oj-zona-risco">
+        <div className="oj-excl-tit" style={{ color: "var(--perigo-tx)", marginBottom: 6 }}>Zona de risco</div>
+        <div className="oj-meta" style={{ lineHeight: 1.5, marginBottom: 12 }}>
+          Apaga a loja, os dados e o acesso desta cliente. Antes de confirmar você poderá baixar uma cópia. Não dá para desfazer.
+        </div>
+        <button className="oj-bt perigo" style={{ width: "100%" }} onClick={() => setExcluindo(true)}>
           Excluir esta cliente e os dados dela…
         </button>
       </div>
@@ -3276,6 +3398,7 @@ function Admin({ d }) {
   const [contas, setContas] = useState([]); // contas que existem mas não têm loja
   const [excluirConta, setExcluirConta] = useState(null);
   const [versao, setVersao] = useState(0); // sobe depois de uma exclusão, para recarregar as listas
+  const [secao, setSecao] = useState("lojas"); // lojas | acessos | suporte
   useEffect(() => {
     let vivo = true;
     dados.carregarUsoLojas()
@@ -3296,6 +3419,7 @@ function Admin({ d }) {
         pedirSenha={(email) => {
           setAberta(null);
           setAlvoSenha(email);
+          setSecao("suporte");
           setTimeout(() => document.getElementById("redefinir-senha")?.scrollIntoView({ behavior: "smooth" }), 250);
         }}
       />
@@ -3313,15 +3437,28 @@ function Admin({ d }) {
     return dias <= 0 ? "usou hoje" : dias === 1 ? "usou ontem" : `usou há ${dias} dias`;
   };
   const etiqueta = {
-    beta: ["beta", "oj-tag estoque"],
-    pagante: ["paga", "oj-tag ok"],
-    encerrado: ["teste encerrado", "oj-tag parada"],
-    livre: ["plano livre", "oj-tag"],
+    beta: ["beta", "oj-estado beta"],
+    pagante: ["paga", "oj-estado ativo"],
+    encerrado: ["teste encerrado", "oj-estado vencido"],
+    livre: ["plano livre", "oj-estado neutro"],
   };
 
+  // quem tem loja / quem tem só a conta, para mostrar a ação certa em cada acesso beta
+  const indexar = (lista, chave) => Object.fromEntries(lista.filter((x) => chave(x)).map((x) => [String(chave(x)).toLowerCase(), x]));
+  const lojasPorEmail = indexar(lojas, (l) => l.dona_email);
+  const contasPorEmail = indexar(contas, (c) => c.email);
+
   return (
-    <>
-      <div className="oj-grid2">
+    <div className="oj-adm">
+      <div className="oj-seg" role="tablist" aria-label="Seções do painel">
+        {[["lojas", "Lojas"], ["acessos", "Acessos"], ["suporte", "Suporte"]].map(([k, t]) => (
+          <button key={k} role="tab" aria-selected={secao === k} onClick={() => setSecao(k)}>{t}</button>
+        ))}
+      </div>
+
+      {secao === "lojas" && (
+      <>
+      <div className="oj-grid2 oj-grid-adm">
         <div className="oj-card flat">
           <div className="oj-lbl">Lojas</div>
           <div className="oj-valor">{r.lojas || 0}</div>
@@ -3362,45 +3499,44 @@ function Admin({ d }) {
           lojas.map((l) => {
             const [rotulo, classe] = etiqueta[l.situacao] || etiqueta.livre;
             return (
-              <div className="oj-item" key={l.id} style={{ alignItems: "flex-start" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="oj-nome">{l.nome || "Loja sem nome"}</div>
-                  <div className="oj-meta" style={{ wordBreak: "break-all" }}>{l.dona_email || "—"}</div>
-                  <div className="oj-meta" style={{ marginTop: 4, lineHeight: 1.55 }}>
-                    {l.pecas} peça(s) · {l.vendas_total} venda(s) · {l.romaneios_30d} romaneio(s) lido(s)
-                    {l.consultoras > 0 ? ` · ${l.consultoras} consultora(s)` : ""}
+              <div className="oj-linha" key={l.id}>
+                <div className="oj-linha-topo">
+                  <div className="oj-quebra">
+                    <div className="oj-nome">{l.nome || "Loja sem nome"}</div>
+                    <div className="oj-meta oj-quebra">{l.dona_email || "—"}</div>
                   </div>
-                  <div className="oj-meta">
-                    {quando(l.ultima_atividade)}
-                    {l.situacao === "beta" && l.dias_restantes != null ? ` · restam ${l.dias_restantes} dia(s) de beta` : ""}
+                  <span className={classe}>{rotulo}</span>
+                </div>
+                <div className="oj-meta" style={{ marginTop: 6, lineHeight: 1.55 }}>
+                  {l.pecas} peça(s) · {l.vendas_total} venda(s) · {l.romaneios_30d} romaneio(s) lido(s)
+                  {l.consultoras > 0 ? ` · ${l.consultoras} consultora(s)` : ""}
+                </div>
+                <div className="oj-meta">
+                  {quando(l.ultima_atividade)}
+                  {l.situacao === "beta" && l.dias_restantes != null ? ` · restam ${l.dias_restantes} dia(s) de beta` : ""}
+                </div>
+                {l.situacao === "encerrado" && (
+                  <div className="oj-meta" style={{ color: "var(--perigo-tx)", marginTop: 4 }}>
+                    O teste acabou. Para ela voltar, libere o e-mail dela na seção Acessos.
                   </div>
-                  <button
-                    className="oj-btn mini"
-                    style={{ marginTop: 8 }}
-                    onClick={() => setAberta(l)}
-                    aria-label={`Ver a loja ${l.nome || ""} e a atividade`}
-                  >
-                    Ver loja e atividade ›
+                )}
+                <div className="oj-acoes">
+                  <button className="oj-bt forte" onClick={() => setAberta(l)} aria-label={`Ver a loja ${l.nome || ""} e a atividade`}>
+                    Ver loja e atividade&nbsp;›
                   </button>
                   {l.dona_email && (
                     <button
-                      className="oj-link-sutil"
-                      style={{ textAlign: "left", padding: "6px 0", display: "block" }}
+                      className="oj-bt"
                       onClick={() => {
                         setAlvoSenha(l.dona_email);
-                        document.getElementById("redefinir-senha")?.scrollIntoView({ behavior: "smooth" });
+                        setSecao("suporte");
+                        setTimeout(() => document.getElementById("redefinir-senha")?.scrollIntoView({ behavior: "smooth" }), 250);
                       }}
                     >
                       Redefinir senha dela
                     </button>
                   )}
-                  {l.situacao === "encerrado" && (
-                    <div className="oj-meta" style={{ color: "var(--alerta)", marginTop: 2 }}>
-                      O teste acabou. Para ela voltar, libere o e-mail dela no beta abaixo.
-                    </div>
-                  )}
                 </div>
-                <span className={classe}>{rotulo}</span>
               </div>
             );
           })
@@ -3411,35 +3547,32 @@ function Admin({ d }) {
         <>
           <div className="oj-sec">Contas sem loja ({contas.length})</div>
           <div className="oj-card">
-            <div className="oj-meta" style={{ marginBottom: 8, lineHeight: 1.5 }}>
-              Pessoas que criaram o acesso mas ainda não abriram a loja (ou que ficaram sem loja).
+            <div className="oj-meta" style={{ marginBottom: 4, lineHeight: 1.5 }}>
+              Criaram o acesso mas ainda não abriram a loja (ou ficaram sem loja).
             </div>
             {contas.map((c) => (
-              <div className="oj-item" key={c.id} style={{ alignItems: "flex-start" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="oj-nome" style={{ wordBreak: "break-all" }}>{c.email}</div>
-                  <div className="oj-meta">
-                    criada em {new Date(c.criada_em).toLocaleDateString("pt-BR")}
-                    {c.ultimo_login ? ` · último login ${new Date(c.ultimo_login).toLocaleDateString("pt-BR")}` : " · nunca entrou"}
-                    {c.beta ? " · acesso beta ativo" : ""}{c.consultora_de ? ` · consultora de ${c.consultora_de}` : ""}
+              <div className="oj-linha" key={c.id}>
+                <div className="oj-linha-topo">
+                  <div className="oj-quebra">
+                    <div className="oj-nome">{c.email}</div>
+                    <div className="oj-meta" style={{ lineHeight: 1.55 }}>
+                      criada em {new Date(c.criada_em).toLocaleDateString("pt-BR")}
+                      {c.ultimo_login ? ` · último login ${new Date(c.ultimo_login).toLocaleDateString("pt-BR")}` : " · nunca entrou"}
+                      {c.consultora_de ? ` · consultora de ${c.consultora_de}` : ""}
+                    </div>
                   </div>
+                  {c.beta && <span className="oj-estado ativo">beta ativo</span>}
                 </div>
-                <button className="oj-link-sutil" style={{ color: "var(--alerta)", padding: "6px 0" }} onClick={() => setExcluirConta(c)} aria-label={`Excluir a conta de ${c.email}`}>
-                  Excluir…
-                </button>
+                <div className="oj-acoes">
+                  <button className="oj-bt perigo" onClick={() => setExcluirConta(c)} aria-label={`Excluir a conta de ${c.email}`}>
+                    Excluir conta…
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         </>
       )}
-      {excluirConta && (
-        <ExcluirConta
-          alvo={{ id: excluirConta.id, email: excluirConta.email }}
-          aoFechar={() => setExcluirConta(null)}
-          aoConcluir={() => { setExcluirConta(null); setVersao((v) => v + 1); }}
-        />
-      )}
-
       <div className="oj-sec">Assinaturas pagas por plano</div>
       <div className="oj-card">
         {planosAtivos.map((pl) => {
@@ -3453,16 +3586,37 @@ function Admin({ d }) {
         })}
       </div>
 
-      <GestaoBeta />
+      </>
+      )}
 
-      <RedefinirSenha emailInicial={alvoSenha} />
+      {secao === "acessos" && (
+        <GestaoBeta
+          lojasPorEmail={lojasPorEmail}
+          contasPorEmail={contasPorEmail}
+          abrirLoja={(l) => { setSecao("lojas"); setAberta(l); }}
+          excluirConta={(c) => setExcluirConta(c)}
+        />
+      )}
 
-      <TrocarSenha />
-    </>
+      {secao === "suporte" && (
+        <>
+          <RedefinirSenha emailInicial={alvoSenha} />
+          <TrocarSenha />
+        </>
+      )}
+
+      {excluirConta && (
+        <ExcluirConta
+          alvo={{ id: excluirConta.id, email: excluirConta.email }}
+          aoFechar={() => setExcluirConta(null)}
+          aoConcluir={() => { setExcluirConta(null); setVersao((v) => v + 1); }}
+        />
+      )}
+    </div>
   );
 }
 /* ---------------- gestão de acessos beta (beta fechado) ---------------- */
-function GestaoBeta() {
+function GestaoBeta({ lojasPorEmail = {}, contasPorEmail = {}, abrirLoja = () => {}, excluirConta = () => {} }) {
   const [email, setEmail] = useState("");
   const [dias, setDias] = useState("30");
   const [criando, setCriando] = useState(false);
@@ -3513,6 +3667,7 @@ function GestaoBeta() {
     }
   };
   const revogar = async (em) => {
+    if (!window.confirm(`Revogar o acesso de ${em}?\n\nEla deixa de conseguir entrar no beta.`)) return;
     if (!window.confirm(`Revogar o acesso de ${em}?\n\nA loja dela volta para o plano Livre — os dados ficam guardados.`)) return;
     try {
       await dados.revogarBeta(em);
@@ -3598,18 +3753,21 @@ function GestaoBeta() {
           lista.map((a) => {
             const ativa = a.ativo && new Date(a.expira_em) > new Date();
             return (
-              <div key={a.id || a.email} className="oj-item" style={{ alignItems: "flex-start" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="oj-nome">{a.email}</div>
-                  <div className="oj-meta">
-                    {a.obs ? a.obs + " · " : ""}
-                    expira {new Date(a.expira_em).toLocaleDateString("pt-BR")}
+              <div key={a.id || a.email} className="oj-linha">
+                <div className="oj-linha-topo">
+                  <div className="oj-quebra">
+                    <div className="oj-nome">{a.email}</div>
+                    <div className="oj-meta">
+                      {a.obs ? a.obs + " · " : ""}
+                      expira {new Date(a.expira_em).toLocaleDateString("pt-BR")}
+                    </div>
                   </div>
-                  {linkDoAcesso(a) ? (
-                    <div style={{ marginTop: 9 }}>
-                      <div className="oj-meta" style={{ marginBottom: 5, fontWeight: 600 }}>
-                        Link individual do Beta
-                      </div>
+                  <span className={"oj-estado " + (ativa ? "ativo" : "vencido")}>{ativa ? "ativa" : "expirada"}</span>
+                </div>
+                {linkDoAcesso(a) ? (
+                  <div className="oj-link-bloco">
+                    <div className="oj-meta" style={{ fontWeight: 600 }}>Link individual do Beta</div>
+                    <div className="oj-link-linha">
                       <input
                         className="oj-in"
                         value={linkDoAcesso(a)}
@@ -3617,48 +3775,37 @@ function GestaoBeta() {
                         onFocus={(e) => e.target.select()}
                         aria-label={`Link Beta de ${a.email}`}
                       />
-                      <button
-                        className="oj-btn sec mini"
-                        style={{ marginTop: 6 }}
-                        onClick={() => copiarLink(linkDoAcesso(a))}
-                      >
-                        Copiar link para reenviar
+                      <button className="oj-bt" onClick={() => copiarLink(linkDoAcesso(a))} aria-label={`Copiar o link de ${a.email}`}>
+                        Copiar
                       </button>
                     </div>
-                  ) : (
-                    <div className="oj-meta" style={{ marginTop: 8 }}>
-                      Link ainda não disponível. Libere novamente para gerar um.
-                    </div>
-                  )}
-                </div>
-                <div
-                  className="oj-tag"
-                  style={{
-                    background: ativa ? "#E6EFE8" : "#F0E4E4",
-                    color: ativa ? "var(--verde)" : "var(--tinta-cl)",
-                  }}
-                >
-                  {ativa ? "ativa" : "expirada"}
-                </div>
-                {ativa && (
-                  <button
-                    className="oj-senha-olho"
-                    style={{ position: "static", color: "var(--alerta)", marginLeft: 6 }}
-                    onClick={() => revogar(a.email)}
-                    aria-label="Revogar acesso"
-                  >
-                    ×
-                  </button>
+                  </div>
+                ) : (
+                  <div className="oj-meta" style={{ marginTop: 8 }}>
+                    Link ainda não disponível. Libere novamente para gerar um.
+                  </div>
                 )}
-                {!ativa && (
-                  <button
-                    className="oj-link-sutil"
-                    style={{ color: "var(--alerta)", marginLeft: 6, padding: "6px 0", fontSize: 12.5 }}
-                    onClick={() => removerDaLista(a.email)}
-                    aria-label={`Remover ${a.email} da lista`}
-                  >
-                    remover
-                  </button>
+                {(
+                  <div className="oj-acoes">
+                    {ativa && (
+                      <button className="oj-bt perigo" onClick={() => revogar(a.email)} aria-label="Revogar acesso">
+                        Revogar acesso
+                      </button>
+                    )}
+                    {lojasPorEmail[String(a.email).toLowerCase()] ? (
+                      <button className="oj-bt" onClick={() => abrirLoja(lojasPorEmail[String(a.email).toLowerCase()])}>
+                        Abrir a loja ›
+                      </button>
+                    ) : contasPorEmail[String(a.email).toLowerCase()] ? (
+                      <button className="oj-bt perigo" onClick={() => excluirConta(contasPorEmail[String(a.email).toLowerCase()])} aria-label={`Excluir a conta de ${a.email}`}>
+                        Excluir conta…
+                      </button>
+                    ) : !ativa ? (
+                      <button className="oj-bt perigo" onClick={() => removerDaLista(a.email)} aria-label={`Remover ${a.email} da lista`}>
+                        Remover da lista
+                      </button>
+                    ) : null}
+                  </div>
                 )}
               </div>
             );

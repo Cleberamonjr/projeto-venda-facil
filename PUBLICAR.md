@@ -61,3 +61,12 @@ NÃO são apagados: registros financeiros (obrigação fiscal), `pedidos-pdf` e 
 Antes de excluir há o botão "Baixar cópia dos dados" (arquivo JSON com dados pessoais: guardar com cuidado).
 Peças que ficam na tela (janelas, botões flutuantes) devem ser desenhadas com `NoCorpo` (portal): o contêiner animado `.oja`
 prende `position:fixed` e esconde a peça fora da janela.
+
+## Regras de desenho do painel (lições de um defeito real no iPhone)
+- Lista com ação = cartão em COLUNA (`.oj-linha` + `.oj-linha-topo` + `.oj-acoes`). NUNCA ponha `.oj-link-sutil` (largura 100%) ao lado
+  de uma coluna flexível: a coluna colapsa (e-mail com 0 px de largura em 18 linhas). Texto longo usa `.oj-quebra` (overflow-wrap:anywhere), não `break-all`.
+- Botões do painel: `.oj-bt` (mín. 44 px, foco visível). Perigo = `.oj-bt.perigo` / `.perigo-cheio`. Estado = `.oj-estado`. Cores de perigo por tema em `--perigo-*`.
+- Tudo que fica fixo na tela (janelas, botões flutuantes) usa `NoCorpo` (portal). Campos com 16 px (senão o iPhone dá zoom).
+- `tests/navegador/painel_celular.py` mede por código: borda, texto espremido, toque >= 44 px, contraste >= 4,5:1, rodapé da janela à vista
+  (320/360/390/430 px x claro/escuro x 7 telas) e tem um AUTO-TESTE que injeta o defeito original e exige que seja acusado.
+- Seções do painel: Lojas · Acessos · Suporte. O filtro de período não aparece no painel (ele não o usa).

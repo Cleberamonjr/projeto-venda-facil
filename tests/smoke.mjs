@@ -170,11 +170,13 @@ await teste('E. painel admin mostra o USO real por loja (só os planos públicos
   await pausa(300);
   a.clicar('Uso do Luxi', 'nav');
   const carregou = await esperarPor(() => a.texto().includes('Atelie Andressa'));
-  const t = a.texto(); a.fechar();
-  const esperado = ['Aguapé', 'teste encerrado', 'ainda não usou', 'Ninguém paga ainda', '0 usando nesta semana', 'restam 30 dia', 'Trocar minha senha', 'Solo', 'Equipe'];
+  const t = a.texto();
+  a.clicar('Suporte', '[aria-label="Seções do painel"]'); const suporteOk = await esperarPor(() => a.texto().includes('Trocar minha senha')); a.fechar();
+  const esperado = ['Aguapé', 'teste encerrado', 'ainda não usou', 'Ninguém paga ainda', '0 usando nesta semana', 'restam 30 dia', 'Solo', 'Equipe'];
   const faltou = esperado.filter((x) => !t.includes(x));
   const indevido = ['179,90', '397,00'].filter((x) => t.includes(x));
   if (t.includes('Loja de demonstração')) indevido.push('aviso de "loja de demonstração" no painel real');
+  if (!suporteOk) faltou.push('Trocar minha senha (na seção Suporte)');
   return { ok: carregou && !faltou.length && !indevido.length, detalhe: [faltou.length && 'faltou: ' + faltou.join(' | '), indevido.length && 'plano em espera aparecendo: ' + indevido.join(',')].filter(Boolean).join(' ; ') };
 });
 
@@ -186,6 +188,8 @@ await teste('F. trocar senha: recusa senha atual errada e aceita a certa', async
   await esperarPor(() => a.w.document.querySelector('.oj-hamb'));
   a.w.document.querySelector('.oj-hamb').click(); await pausa(300);
   a.clicar('Uso do Luxi', 'nav');
+  await esperarPor(() => a.w.document.querySelector('[aria-label="Seções do painel"]'));
+  a.clicar('Suporte', '[aria-label="Seções do painel"]');
   await esperarPor(() => a.texto().includes('Trocar minha senha'));
   a.clicar('Trocar minha senha');
   await esperarPor(() => a.w.document.querySelectorAll('input[type=password]').length === 3);
@@ -368,6 +372,8 @@ await teste('P. admin gera senha temporária: aparece uma vez, com o token dela,
   await esperarPor(() => a.w.document.querySelector('.oj-hamb'));
   a.w.document.querySelector('.oj-hamb').click(); await pausa(300);
   a.clicar('Uso do Luxi', 'nav');
+  await esperarPor(() => a.w.document.querySelector('[aria-label="Seções do painel"]'));
+  a.clicar('Suporte', '[aria-label="Seções do painel"]');
   if (!(await esperarPor(() => a.texto().includes('Ajudar uma cliente a entrar')))) return { ok: false, detalhe: 'cartão não apareceu' };
   const campo = a.w.document.querySelector('input[aria-label="E-mail da cliente"]');
   a.digitar(campo, 'vini@x.com'); await pausa(200);
@@ -525,7 +531,9 @@ await teste('X1. excluir cliente: mostra o que será apagado, exige o e-mail cer
   const { a, pedidos } = await preparar();
   await abrirModalDaLoja(a);
   const t = a.texto();
-  const mostrou = ['Loja “Atelie Andressa”: 3 peça(s), 1 venda(s)', '2 arquivo(s) guardado(s)', '1 com conta própria', 'A conta de acesso (login) e o acesso beta', 'Baixar cópia dos dados antes'].filter((x) => !t.includes(x));
+  const blocos = [...a.w.document.querySelectorAll('.oj-stat')].map((e) => e.textContent);
+  const mostrou = ['Loja “Atelie Andressa”', '1 com conta própria', 'A conta de acesso (login) e o acesso beta', 'Baixar cópia dos dados antes'].filter((x) => !t.includes(x));
+  for (const [n, r] of [[3, 'Peças'], [1, 'Vendas'], [1, 'Clientes'], [2, 'Arquivos']]) if (!blocos.includes(`${n}${r}`)) mostrou.push(`bloco ${r}=${n}`);
   const desabilitadoInicio = botaoExcluir(a).disabled;
   a.digitar(campoEmail(a), 'outra@pessoa.com'); await pausa(150); marcar(a, 'permanente'); await pausa(150);
   const desabilitadoErrado = botaoExcluir(a).disabled;
@@ -542,7 +550,7 @@ await teste('X1. excluir cliente: mostra o que será apagado, exige o e-mail cer
   const recarregou = a.log.filter((l) => l.includes('uso_lojas_luxi')).length >= 2;
   a.fechar();
   return { ok: !mostrou.length && desabilitadoInicio && desabilitadoErrado && habilitado && antes === 0 && concluiu && pedidos.length === 1
-      && pedido.user_id === 'u-dona' && pedido.confirmar_email === '  AND@x.com ' && pedido.motivo === 'pedido dela por e-mail' && pedido.forcar === false && voltou && recarregou,
+      && pedido.user_id === 'u-dona' && pedido.confirmar_email === 'AND@x.com' && pedido.motivo === 'pedido dela por e-mail' && pedido.forcar === false && voltou && recarregou,
     detalhe: [mostrou.length && 'faltou na prévia: ' + mostrou.join(' | '), `botão travado no início=${desabilitadoInicio}, com e-mail errado=${desabilitadoErrado}, liberado com o certo=${habilitado}`, `chamadas antes de confirmar=${antes}`, `pedido=${JSON.stringify(pedido)}`, `voltou à lista=${voltou}, recarregou=${recarregou}`].filter(Boolean).join(' ; ') };
 });
 
@@ -560,7 +568,7 @@ await teste('X3. conta sem loja: aparece numa lista própria e pode ser excluíd
   const conta = { id: 'u-sem-loja', email: 'sem.loja@x.com', criada_em: '2026-09-29T03:40:00Z', ultimo_login: null, beta: true, consultora_de: null };
   const { a, pedidos } = await preparar({ contas: [conta], previa: PREVIA({ user_id: 'u-sem-loja', email: 'sem.loja@x.com', lojas: [], contagens: {} }) });
   await esperarPor(() => a.texto().includes('Contas sem loja (1)'));
-  const lista = a.texto().includes('sem.loja@x.com') && a.texto().includes('nunca entrou') && a.texto().includes('acesso beta ativo');
+  const lista = a.texto().includes('sem.loja@x.com') && a.texto().includes('nunca entrou') && a.texto().includes('beta ativo');
   a.w.document.querySelector('button[aria-label="Excluir a conta de sem.loja@x.com"]').click();
   await esperarPor(() => a.texto().includes('Será apagado de forma permanente'));
   const t = a.texto();
@@ -621,12 +629,62 @@ await teste('X8. acessos beta vencidos podem ser removidos da lista (com confirm
   const velho = { id: 'b1', email: 'velho@x.com', ativo: false, expira_em: new Date(Date.now() - 864e5).toISOString(), obs: '', convite_token: null };
   const a = await abrirPainelAdmin({ tabelas: { acessos_beta: [velho] }, rpc: { admin_remover_acesso_beta: null } });
   a.w.confirm = () => true;
+  await esperarPor(() => a.w.document.querySelector('[aria-label="Seções do painel"]'));
+  a.clicar('Acessos', '[aria-label="Seções do painel"]');
   await esperarPor(() => a.texto().includes('velho@x.com'));
   a.w.document.querySelector('button[aria-label="Remover velho@x.com da lista"]').click();
   await esperarPor(() => a.log.some((l) => l.includes('admin_remover_acesso_beta')));
   const chamou = a.log.some((l) => l.includes('admin_remover_acesso_beta'));
   a.fechar();
   return { ok: chamou };
+});
+
+// ---------- T. painel em seções e ação certa para cada situação ----------
+await teste('T1. painel em seções: Lojas, Acessos e Suporte mostram só o que é delas', async () => {
+  const a = await abrirPainelAdmin();
+  const tabs = '[aria-label="Seções do painel"]';
+  const selecionada = () => a.w.document.querySelector(`${tabs} [aria-selected="true"]`)?.textContent;
+  const t0 = a.texto();
+  const lojas = selecionada() === 'Lojas' && t0.includes('Lojas e uso') && !t0.includes('Clientes liberadas') && !t0.includes('Ajudar uma cliente a entrar');
+  a.clicar('Acessos', tabs); await esperarPor(() => a.texto().includes('Clientes liberadas'));
+  const t1 = a.texto();
+  const acessos = selecionada() === 'Acessos' && !t1.includes('Lojas e uso') && !t1.includes('Ajudar uma cliente a entrar');
+  a.clicar('Suporte', tabs); await esperarPor(() => a.texto().includes('Ajudar uma cliente a entrar'));
+  const t2 = a.texto();
+  const suporte = selecionada() === 'Suporte' && t2.includes('Trocar minha senha') && !t2.includes('Clientes liberadas') && !t2.includes('Lojas e uso');
+  const semFiltroDePeriodo = !t0.includes('Escolher datas');
+  a.fechar();
+  return { ok: lojas && acessos && suporte && semFiltroDePeriodo, detalhe: `lojas=${lojas}; acessos=${acessos}; suporte=${suporte}; sem filtro de período no painel=${semFiltroDePeriodo}` };
+});
+
+await teste('T2. cada acesso beta mostra a ação certa para a situação da pessoa', async () => {
+  const futuro = new Date(Date.now() + 20 * 864e5).toISOString(), passado = new Date(Date.now() - 864e5).toISOString();
+  const linha = (email, ativo) => ({ id: 'id-' + email, email, ativo, expira_em: ativo ? futuro : passado, obs: '', convite_token: null });
+  const conta = { id: 'u-sem', email: 'sem.loja@x.com', criada_em: passado, ultimo_login: null, beta: false, consultora_de: null };
+  const a = await abrirPainelAdmin({ tabelas: { acessos_beta: [linha('and@x.com', false), linha('sem.loja@x.com', false), linha('ninguem@x.com', false), linha('nova@x.com', true)] },
+    rpc: { admin_contas_sem_loja: [conta], revogar_beta: null, admin_remover_acesso_beta: null } });
+  a.w.confirm = () => true;
+  const tabs = '[aria-label="Seções do painel"]';
+  a.clicar('Acessos', tabs); await esperarPor(() => a.texto().includes('nova@x.com'));
+  const q = (sel) => a.w.document.querySelector(sel);
+  const linhaDe = (email) => [...a.w.document.querySelectorAll('.oj-linha')].find((l) => l.textContent.includes(email));
+  const temBotao = (email, rotulo) => !![...linhaDe(email).querySelectorAll('.oj-acoes button')].find((b) => b.textContent.includes(rotulo));
+  const regras = {
+    'quem tem loja → "Abrir a loja", e não "Remover"': temBotao('and@x.com', 'Abrir a loja') && !temBotao('and@x.com', 'Remover'),
+    'conta sem loja → "Excluir conta"': temBotao('sem.loja@x.com', 'Excluir conta') && !temBotao('sem.loja@x.com', 'Remover'),
+    'sem conta e vencido → "Remover da lista"': temBotao('ninguem@x.com', 'Remover da lista'),
+    'ativo sem conta → "Revogar acesso" (e não remover)': temBotao('nova@x.com', 'Revogar acesso') && !temBotao('nova@x.com', 'Remover'),
+  };
+  // "Revogar" pede confirmação e chama o servidor
+  [...linhaDe('nova@x.com').querySelectorAll('.oj-acoes button')].find((b) => b.textContent.includes('Revogar')).click();
+  await esperarPor(() => a.log.some((l) => l.includes('revogar_beta')));
+  const revogou = a.log.some((l) => l.includes('revogar_beta'));
+  // "Abrir a loja" leva à loja observada
+  [...linhaDe('and@x.com').querySelectorAll('.oj-acoes button')].find((b) => b.textContent.includes('Abrir a loja')).click();
+  const abriu = await esperarPor(() => a.texto().includes('Modo observação'));
+  a.fechar();
+  const erradas = Object.entries(regras).filter(([, v]) => !v).map(([k]) => k);
+  return { ok: !erradas.length && revogou && abriu, detalhe: [erradas.length && 'falhou: ' + erradas.join(' | '), `revogou=${revogou}; abriu a loja=${abriu}`].filter(Boolean).join(' ; ') };
 });
 
 const todos = resultados.every(Boolean);
