@@ -200,7 +200,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   if(etapa===0) return (
     <div className="ob-overlay"><EstilosOnboarding />
       <div className="ob-sheet">
-        <div className="ob-step">4 de 7</div>
+        <div className="ob-step">1 de 4</div>
         <h2>Vamos trazer seus produtos para a Luxi.</h2>
         <p>Você não precisa cadastrar tudo novamente.</p>
         <div className="ob-progress"><i style={{width:"57%"}} /></div>
@@ -214,7 +214,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   if(etapa===1) return (
     <div className="ob-overlay"><EstilosOnboarding />
       <div className="ob-sheet">
-        <div className="ob-step">5 de 7</div>
+        <div className="ob-step">2 de 4</div>
         <h2>Seus produtos já estão aqui.</h2>
         <p>{produtos.length ? produtos.length+" "+(produtos.length===1?"produto chegou":"produtos chegaram")+" à sua Luxi." : "Você pode começar adicionando suas primeiras peças."}</p>
         <div className="ob-photo-grid">
@@ -230,7 +230,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   if(etapa===2) return (
     <div className="ob-overlay"><EstilosOnboarding />
       <div className="ob-sheet">
-        <div className="ob-step">6 de 7</div>
+        <div className="ob-step">3 de 4</div>
         <h2>💡 A Luxi também observa seu negócio.</h2>
         <p>Conforme você registrar produtos, clientes e vendas, ela vai ajudar você a perceber o que merece sua atenção.</p>
         <div className="ob-advice"><b>Uma ideia da Luxi</b><span>Vou mostrar uma próxima ação útil quando houver algo que mereça sua atenção.</span></div>
@@ -242,7 +242,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   return (
     <div className="ob-overlay"><EstilosOnboarding />
       <div className="ob-sheet">
-        <div className="ob-step">7 de 7</div>
+        <div className="ob-step">4 de 4</div>
         <h2>💗 Sua Luxi está pronta.</h2>
         <p>Você já começou a organizar seu negócio.</p>
         <div className="ob-next"><span>Próximo passo</span><b>{proximo.title}</b><small>A Luxi vai continuar guiando você por aqui.</small></div>
