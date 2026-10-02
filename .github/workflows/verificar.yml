@@ -27,3 +27,9 @@ jobs:
           VITE_SUPABASE_ANON_KEY: sb_publishable_n4NDtzQFfOU3f2p2RFUvVQ_ZLqtFmsx
       - run: pip install playwright pillow && playwright install --with-deps chromium
       - run: python3 tests/navegador/todos.py
+      - name: Guardar build validado
+        uses: actions/upload-artifact@v4
+        with:
+          name: luxi-dist
+          path: dist/
+          if-no-files-found: error
