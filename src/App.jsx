@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import * as dados from "./dados.js";
 import { WHATSAPP_SUPORTE, linkSuporte } from "./contato.js";
-import { Cadastro as CadastroNovo, OnboardingOperacional } from "./OnboardingLuxi.jsx";
+import { Cadastro as CadastroNovo, OnboardingOperacional, ProximoPasso } from "./OnboardingLuxi.jsx";
 
 /* ============================================================
    ORGANIZE JEWELRY — v1
@@ -2220,6 +2220,10 @@ export default function OrganizeJewelry() {
             setOnboardingOperacional(false);
           }}
         />
+      )}
+
+      {!onboardingOperacional && !somenteLeitura(d.perfil) && !d.perfil?.mestre && (
+        <ProximoPasso d={d} irPara={irPara} />
       )}
 
       <div className="oja" key={aba}>
