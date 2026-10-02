@@ -194,7 +194,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   );
 
   if(etapa===1) return (
-    <div className="ob-overlay">
+    <div className="ob-overlay"><EstilosOnboarding />
       <div className="ob-sheet">
         <div className="ob-step">5 de 7</div>
         <h2>Seus produtos já estão aqui.</h2>
@@ -210,7 +210,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   );
 
   if(etapa===2) return (
-    <div className="ob-overlay">
+    <div className="ob-overlay"><EstilosOnboarding />
       <div className="ob-sheet">
         <div className="ob-step">6 de 7</div>
         <h2>💡 A Luxi também observa seu negócio.</h2>
@@ -222,7 +222,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   );
 
   return (
-    <div className="ob-overlay">
+    <div className="ob-overlay"><EstilosOnboarding />
       <div className="ob-sheet">
         <div className="ob-step">7 de 7</div>
         <h2>💗 Sua Luxi está pronta.</h2>
