@@ -151,6 +151,22 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
   );
 }
 
+export function ProximoPasso({ d, irPara }) {
+  const produtos = Array.isArray(d?.estoque) ? d.estoque : [];
+  const semFoto = produtos.filter(p => !p.capa && !p.foto && !p.imagem).length;
+  let acao = { type:"produtos", title:"Cadastre seus primeiros produtos", description:"Comece trazendo suas peças para a Luxi.", cta:"Adicionar produtos", aba:"estoque" };
+  if (produtos.length && semFoto > 0) acao = { type:"fotos", title:"Adicione fotos aos seus produtos", description:"Comece pelas peças que você quer destacar.", cta:"Adicionar fotos", aba:"estoque" };
+  else if (produtos.length && !d?.perfil?.catalogoPronto && !d?.catalogoPronto) acao = { type:"catalogo", title:"Seu catálogo está quase pronto", description:"Prepare uma vitrine para compartilhar com suas clientes.", cta:"Preparar catálogo", aba:"catalogo" };
+  else if (produtos.length && (!Array.isArray(d?.vendas) || d.vendas.length === 0)) acao = { type:"venda", title:"Vamos registrar sua primeira venda", description:"A primeira venda começa a transformar seus dados em informação útil.", cta:"Registrar venda", aba:"vendas" };
+  else if (produtos.length) acao = { type:"analise", title:"Veja o que suas vendas estão mostrando", description:"Continue registrando suas vendas para encontrar padrões reais.", cta:"Ver análise", aba:"conselho" };
+  return (
+    <div className="ob-next ob-next-dashboard">
+      <div className="ob-next-copy"><span>Próximo passo</span><b>{acao.title}</b><small>{acao.description}</small></div>
+      <button type="button" className="oj-btn mini" onClick={() => irPara(acao.aba)}>{acao.cta} →</button>
+    </div>
+  );
+}
+
 export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   const [etapa,setEtapa]=useState(0);
   const produtos=Array.isArray(d?.estoque)?d.estoque:[];
@@ -171,7 +187,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
         <p>Você não precisa cadastrar tudo novamente.</p>
         <div className="ob-progress"><i style={{width:"57%"}} /></div>
         <Botao onClick={()=>{onImportar();setEtapa(1)}}>📥 Importar meus produtos</Botao>
-        <button type="button" className="oj-link-sutil" onClick={()=>setEtapa(1)}>Prefiro adicionar manualmente</button>
+        <button type="button" className="oj-link-sutil" onClick={()=>onConcluir()}>Prefiro adicionar manualmente</button>
         <div className="ob-note">A importação usa a função real de romaneio da Luxi. Não criamos dados fictícios.</div>
       </div>
     </div>
@@ -187,8 +203,8 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
           {produtos.slice(0,3).map(p=><div key={p.id} className="ob-photo-card">{p.capa||p.foto||p.imagem ? <img src={p.capa||p.foto||p.imagem} alt="" />:<span>＋ Foto</span>}<small>{p.nome||p.codigo||"Produto"}</small></div>)}
         </div>
         <p className="ob-copy">Agora você pode adicionar fotos às peças que quiser. Não precisa fazer tudo agora.</p>
-        <Botao onClick={()=>{setEtapa(2);irPara("estoque")}}>Adicionar fotos</Botao>
-        <button type="button" className="oj-link-sutil" onClick={()=>setEtapa(2)}>Fazer depois</button>
+        <Botao onClick={()=>{onConcluir();irPara("estoque")}}>Adicionar fotos</Botao>
+        <button type="button" className="oj-link-sutil" onClick={()=>onConcluir()}>Fazer depois</button>
       </div>
     </div>
   );
@@ -232,4 +248,4 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
 .ob-advice{padding:14px;border:1px solid var(--linha);background:var(--rose-cl);border-radius:14px;margin:16px 0}.ob-advice b{display:block;color:var(--rose-btn);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}.ob-advice span{display:block;font-size:13px;line-height:1.5;color:var(--tinta)}
 .ob-next{padding:15px;border:1px solid var(--rose);background:var(--rose-cl);border-radius:14px;margin:16px 0}.ob-next span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--rose-btn);font-weight:700}.ob-next b{display:block;font-size:16px;line-height:1.35;margin-top:5px;color:var(--tinta)}.ob-next small{display:block;font-size:11.5px;line-height:1.45;color:var(--tinta-cl);margin-top:4px}
 @media(max-width:400px){.luxi-onboarding{padding-left:16px;padding-right:16px}.luxi-onboarding .ob-title{font-size:29px}.ob-sheet{padding-left:16px;padding-right:16px}}
-@media(prefers-reduced-motion:reduce){.ob-progress i,.ob-sheet{transition:none;animation:none}}
+@media(prefers-reduced-motion:reduce){.ob-progress i,.ob-sheet{transition:none;animation:none}}\n.ob-next-dashboard{margin:12px 20px 18px;display:flex;align-items:center;gap:12px;justify-content:space-between}.ob-next-dashboard .ob-next-copy{flex:1;min-width:0}.ob-next-dashboard .oj-btn{flex:0 0 auto;width:auto;margin:0}.ob-next-dashboard b{font-size:15px}.ob-next-dashboard small{max-width:520px}
