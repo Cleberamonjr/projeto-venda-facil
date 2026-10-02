@@ -77,7 +77,7 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
   const voltar = () => { setErro(""); setEtapa(v => Math.max(0, v-1)); };
 
   if (etapa === 0) return (
-    <div className="luxi-onboarding">
+    <div className="luxi-onboarding"><EstilosOnboarding />
       <div className="luxi-ob-logo">💗</div>
       <div className="oj-marca"><b>Luxi</b></div>
       <h1 className="oj-h1 oj-serif ob-title">Bem-vinda à Luxi</h1>
@@ -180,7 +180,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   },[produtos.length,semFoto,d?.perfil?.catalogoPronto,d?.catalogoPronto,d?.vendas?.length]);
 
   if(etapa===0) return (
-    <div className="ob-overlay">
+    <div className="ob-overlay"><EstilosOnboarding />
       <div className="ob-sheet">
         <div className="ob-step">4 de 7</div>
         <h2>Vamos trazer seus produtos para a Luxi.</h2>
@@ -234,7 +234,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   );
 }
 
-/* ===== onboarding Luxi v2.3 ===== */
+const ONBOARDING_CSS = String.raw`/* ===== onboarding Luxi v2.3 ===== */
 .luxi-onboarding{min-height:100vh;max-width:520px;margin:0 auto;padding:48px 24px 40px;background:linear-gradient(to bottom,#FBF8F9,#F5EEF0);display:flex;flex-direction:column;justify-content:center}
 .luxi-onboarding .oj-btn{margin-top:18px}.luxi-onboarding .oj-campo{margin-bottom:13px}.luxi-onboarding .oj-in{background:#fff}.luxi-onboarding .oj-marca{text-align:center;font-size:32px}
 .luxi-onboarding .ob-title{font-size:34px;margin-top:18px}.ob-lead{font-size:19px;color:var(--rose-esc);line-height:1.4;margin-top:10px}.ob-copy{font-size:14px;line-height:1.6;color:var(--tinta-cl);margin:10px 0 18px}.ob-note{font-size:11.5px;line-height:1.5;color:var(--tinta-cl);text-align:center;margin-top:12px}
@@ -249,3 +249,8 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
 .ob-next{padding:15px;border:1px solid var(--rose);background:var(--rose-cl);border-radius:14px;margin:16px 0}.ob-next span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--rose-btn);font-weight:700}.ob-next b{display:block;font-size:16px;line-height:1.35;margin-top:5px;color:var(--tinta)}.ob-next small{display:block;font-size:11.5px;line-height:1.45;color:var(--tinta-cl);margin-top:4px}
 @media(max-width:400px){.luxi-onboarding{padding-left:16px;padding-right:16px}.luxi-onboarding .ob-title{font-size:29px}.ob-sheet{padding-left:16px;padding-right:16px}}
 @media(prefers-reduced-motion:reduce){.ob-progress i,.ob-sheet{transition:none;animation:none}}\n.ob-next-dashboard{margin:12px 20px 18px;display:flex;align-items:center;gap:12px;justify-content:space-between}.ob-next-dashboard .ob-next-copy{flex:1;min-width:0}.ob-next-dashboard .oj-btn{flex:0 0 auto;width:auto;margin:0}.ob-next-dashboard b{font-size:15px}.ob-next-dashboard small{max-width:520px}
+`;
+
+function EstilosOnboarding() {
+  return <style>{ONBOARDING_CSS}</style>;
+}
