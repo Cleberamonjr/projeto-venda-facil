@@ -2545,11 +2545,20 @@ function TourDemo({ onSair, irPara }) {
     },
   ];
   const [i, setI] = useState(0);
+  const [fechado, setFechado] = useState(false);
   const p = passos[i];
 
   useEffect(() => {
     if (p.aba && irPara) irPara(p.aba);
   }, [i]);
+
+  const sair = () => {
+    // Fecha visualmente na hora; a persistência continua sendo feita pelo pai.
+    setFechado(true);
+    if (onSair) onSair();
+  };
+
+  if (fechado) return null;
 
   return (
     <div className="oj-tour-fundo">
@@ -2565,12 +2574,12 @@ function TourDemo({ onSair, irPara }) {
           ))}
         </div>
         <div className="oj-tour-acoes">
-          <button className="oj-link-sutil" onClick={onSair}>
+          <button className="oj-link-sutil" onClick={sair}>
             {p.fim ? "Fechar" : "Pular tour"}
           </button>
           <button
             className="oj-btn mini"
-            onClick={() => (p.fim ? onSair() : setI(i + 1))}
+            onClick={() => (p.fim ? sair() : setI(i + 1))}
           >
             {p.fim ? "Explorar sozinha" : "Próximo"}
           </button>
