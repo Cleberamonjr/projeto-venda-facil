@@ -169,86 +169,119 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
   );
 }
 
-export function ProximoPasso({ d, irPara }) {
+export function getNextBestAction(d) {
   const produtos = Array.isArray(d?.estoque) ? d.estoque : [];
-  const semFoto = produtos.filter(p => !p.capa && !p.foto && !p.imagem).length;
-  let acao = { type:"produtos", title:"Cadastre seus primeiros produtos", description:"Comece trazendo suas peças para a Luxi.", cta:"Adicionar produtos", aba:"estoque" };
-  if (produtos.length && semFoto > 0) acao = { type:"fotos", title:"Adicione fotos aos seus produtos", description:"Comece pelas peças que você quer destacar.", cta:"Adicionar fotos", aba:"estoque" };
-  else if (produtos.length && !d?.perfil?.catalogoPronto && !d?.catalogoPronto) acao = { type:"catalogo", title:"Seu catálogo está quase pronto", description:"Prepare uma vitrine para compartilhar com suas clientes.", cta:"Preparar catálogo", aba:"catalogo" };
-  else if (produtos.length && (!Array.isArray(d?.vendas) || d.vendas.length === 0)) acao = { type:"venda", title:"Vamos registrar sua primeira venda", description:"A primeira venda começa a transformar seus dados em informação útil.", cta:"Registrar venda", aba:"vendas" };
-  else if (produtos.length) acao = { type:"analise", title:"Veja o que suas vendas estão mostrando", description:"Continue registrando suas vendas para encontrar padrões reais.", cta:"Ver análise", aba:"conselho" };
+  const vendas = Array.isArray(d?.vendas) ? d.vendas : [];
+  const colecoes = Array.isArray(d?.colecoes) ? d.colecoes : [];
+  const semFoto = produtos.filter((p) => {
+    const fotos = Array.isArray(p?.fotos) ? p.fotos : [];
+    return fotos.length === 0 && !p?.capa && !p?.foto && !p?.imagem;
+  }).length;
+
+  if (!produtos.length) return {
+    type: "produtos", title: "Cadastre seus primeiros produtos",
+    description: "Comece trazendo suas peças para a Luxi.",
+    cta: "Adicionar produtos", aba: "estoque"
+  };
+  if (semFoto > 0) return {
+    type: "fotos", title: "Adicione fotos aos seus produtos",
+    description: "Comece pelas peças que você quer destacar.",
+    cta: "Adicionar fotos", aba: "estoque"
+  };
+  if (!colecoes.length) return {
+    type: "catalogo", title: "Seu catálogo está quase pronto",
+    description: "Organize suas peças em uma coleção para preparar sua vitrine.",
+    cta: "Preparar catálogo", aba: "catalogo"
+  };
+  if (!vendas.length) return {
+    type: "venda", title: "Vamos registrar sua primeira venda",
+    description: "A primeira venda começa a transformar seus dados em informação útil.",
+    cta: "Registrar venda", aba: "vendas"
+  };
+  return {
+    type: "analise", title: "Veja o que suas vendas estão mostrando",
+    description: "Continue registrando suas vendas para encontrar padrões reais.",
+    cta: "Ver análise", aba: "graficos"
+  };
+}
+
+export function ProximoPasso({ d, irPara }) {
+  const acao = getNextBestAction(d);
   return (
     <div className="ob-next ob-next-dashboard">
-      <div className="ob-next-copy"><span>Próximo passo</span><b>{acao.title}</b><small>{acao.description}</small></div>
-      <button type="button" className="oj-btn mini" onClick={() => irPara(acao.aba)}>{acao.cta} →</button>
+      <div className="ob-next-copy">
+        <span>Próximo passo</span><b>{acao.title}</b><small>{acao.description}</small>
+      </div>
+      <button type="button" className="oj-btn mini" onClick={() => irPara(acao.aba)}>
+        {acao.cta} →
+      </button>
     </div>
   );
 }
 
 export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
-  const [etapa,setEtapa]=useState(0);
-  const produtos=Array.isArray(d?.estoque)?d.estoque:[];
-  const semFoto=produtos.filter(p=>!p.capa && !p.foto && !p.imagem).length;
-  const proximo=useMemo(()=>{
-    if (!produtos.length) return {type:"produtos",title:"Cadastre seus primeiros produtos"};
-    if (semFoto>0) return {type:"fotos",title:"Adicione fotos aos seus produtos"};
-    if (!d?.perfil?.catalogoPronto && !d?.catalogoPronto) return {type:"catalogo",title:"Seu catálogo está quase pronto"};
-    if (!Array.isArray(d?.vendas) || d.vendas.length===0) return {type:"venda",title:"Vamos registrar sua primeira venda"};
-    return {type:"analise",title:"Veja o que suas vendas estão mostrando"};
-  },[produtos.length,semFoto,d?.perfil?.catalogoPronto,d?.catalogoPronto,d?.vendas?.length]);
+  const [etapa, setEtapa] = useState(0);
+  const produtos = Array.isArray(d?.estoque) ? d.estoque : [];
+  const semFoto = produtos.filter((p) => {
+    const fotos = Array.isArray(p?.fotos) ? p.fotos : [];
+    return fotos.length === 0 && !p?.capa && !p?.foto && !p?.imagem;
+  }).length;
+  const acao = useMemo(() => getNextBestAction(d), [d]);
 
-  if(etapa===0) return (
-    <div className="ob-overlay"><EstilosOnboarding />
-      <div className="ob-sheet">
-        <div className="ob-step">4 de 7</div>
-        <h2>Vamos trazer seus produtos para a Luxi.</h2>
-        <p>Você não precisa cadastrar tudo novamente.</p>
-        <div className="ob-progress"><i style={{width:"57%"}} /></div>
-        <Botao onClick={()=>{onImportar();setEtapa(1)}}>📥 Importar meus produtos</Botao>
-        <button type="button" className="oj-link-sutil" onClick={()=>onConcluir()}>Prefiro adicionar manualmente</button>
-        <div className="ob-note">A importação usa a função real de romaneio da Luxi. Não criamos dados fictícios.</div>
-      </div>
-    </div>
+  if (etapa === 0) return (
+    <div className="ob-overlay"><EstilosOnboarding /><div className="ob-sheet">
+      <div className="ob-step">1 de 4</div>
+      <h2>Vamos trazer seus produtos para a Luxi.</h2>
+      <p>Você não precisa cadastrar tudo novamente.</p>
+      <div className="ob-progress"><i style={{width:"57%"}} /></div>
+      <Botao onClick={() => { onImportar(); setEtapa(1); }}>📥 Importar meus produtos</Botao>
+      <button type="button" className="oj-link-sutil" onClick={onConcluir}>Prefiro adicionar manualmente</button>
+      <div className="ob-note">A importação usa a função real de romaneio da Luxi. Não criamos dados fictícios.</div>
+    </div></div>
   );
 
-  if(etapa===1) return (
-    <div className="ob-overlay"><EstilosOnboarding />
-      <div className="ob-sheet">
-        <div className="ob-step">5 de 7</div>
-        <h2>Seus produtos já estão aqui.</h2>
-        <p>{produtos.length ? produtos.length+" "+(produtos.length===1?"produto chegou":"produtos chegaram")+" à sua Luxi." : "Você pode começar adicionando suas primeiras peças."}</p>
-        <div className="ob-photo-grid">
-          {produtos.slice(0,3).map(p=><div key={p.id} className="ob-photo-card">{p.capa||p.foto||p.imagem ? <img src={p.capa||p.foto||p.imagem} alt="" />:<span>＋ Foto</span>}<small>{p.nome||p.codigo||"Produto"}</small></div>)}
-        </div>
-        <p className="ob-copy">Agora você pode adicionar fotos às peças que quiser. Não precisa fazer tudo agora.</p>
-        <Botao onClick={()=>{onConcluir();irPara("estoque")}}>Adicionar fotos</Botao>
-        <button type="button" className="oj-link-sutil" onClick={()=>onConcluir()}>Fazer depois</button>
-      </div>
-    </div>
-  );
+  if (etapa === 1) {
+    const quantidade = produtos.length;
+    return (
+      <div className="ob-overlay"><EstilosOnboarding /><div className="ob-sheet">
+        <div className="ob-step">2 de 4</div>
+        <h2>{quantidade ? "Seus produtos já estão aqui." : "Vamos cadastrar seus produtos."}</h2>
+        <p>{quantidade
+          ? "✨ Pronto! " + quantidade + " " + (quantidade === 1 ? "produto chegou" : "produtos chegaram") + " à sua Luxi."
+          : "A importação ainda não adicionou produtos. Você pode tentar novamente ou continuar manualmente."}</p>
+        {quantidade > 0 && <div className="ob-photo-grid">
+          {produtos.slice(0,3).map((p) => {
+            const foto = Array.isArray(p?.fotos) && p.fotos[0] ? p.fotos[0] : (p?.capa || p?.foto || p?.imagem);
+            return <div key={p.id} className="ob-photo-card">{foto ? <img src={foto} alt="" /> : <span>＋ Foto</span>}<small>{p.nome || p.codigo || "Produto"}</small></div>;
+          })}
+        </div>}
+        {quantidade > 0 && <p className="ob-copy">{semFoto ? "Agora podemos deixar seu catálogo mais bonito. Não precisa fazer tudo agora." : "Suas peças já têm fotos. Você pode continuar sem configurar mais nada agora."}</p>}
+        <Botao onClick={() => { if (quantidade && semFoto) irPara("estoque"); setEtapa(2); }}>
+          {quantidade && semFoto ? "Adicionar fotos" : "Continuar"}
+        </Botao>
+        <button type="button" className="oj-link-sutil" onClick={() => setEtapa(2)}>Fazer depois</button>
+      </div></div>
+    );
+  }
 
-  if(etapa===2) return (
-    <div className="ob-overlay"><EstilosOnboarding />
-      <div className="ob-sheet">
-        <div className="ob-step">6 de 7</div>
-        <h2>💡 A Luxi também observa seu negócio.</h2>
-        <p>Conforme você registrar produtos, clientes e vendas, ela vai ajudar você a perceber o que merece sua atenção.</p>
-        <div className="ob-advice"><b>Uma ideia da Luxi</b><span>Vou mostrar uma próxima ação útil quando houver algo que mereça sua atenção.</span></div>
-        <Botao onClick={()=>setEtapa(3)}>Entendi</Botao>
-      </div>
-    </div>
+  if (etapa === 2) return (
+    <div className="ob-overlay"><EstilosOnboarding /><div className="ob-sheet">
+      <div className="ob-step">3 de 4</div>
+      <h2>💡 A Luxi também observa seu negócio.</h2>
+      <p>Conforme você registrar produtos, clientes e vendas, ela vai ajudar você a perceber o que merece sua atenção.</p>
+      <div className="ob-advice"><b>Uma ideia da Luxi</b><span>{acao.title}. Vou mostrar uma próxima ação útil quando houver algo que mereça sua atenção.</span></div>
+      <Botao onClick={() => setEtapa(3)}>Entendi</Botao>
+    </div></div>
   );
 
   return (
-    <div className="ob-overlay"><EstilosOnboarding />
-      <div className="ob-sheet">
-        <div className="ob-step">7 de 7</div>
-        <h2>💗 Sua Luxi está pronta.</h2>
-        <p>Você já começou a organizar seu negócio.</p>
-        <div className="ob-next"><span>Próximo passo</span><b>{proximo.title}</b><small>A Luxi vai continuar guiando você por aqui.</small></div>
-        <Botao onClick={onConcluir}>Começar a usar a Luxi</Botao>
-      </div>
-    </div>
+    <div className="ob-overlay"><EstilosOnboarding /><div className="ob-sheet">
+      <div className="ob-step">4 de 4</div>
+      <h2>💗 Sua Luxi está pronta.</h2>
+      <p>Você já começou a organizar seu negócio.</p>
+      <div className="ob-next"><span>Próximo passo</span><b>{acao.title}</b><small>A Luxi vai continuar guiando você por aqui.</small></div>
+      <Botao onClick={onConcluir}>Começar a usar a Luxi</Botao>
+    </div></div>
   );
 }
 
