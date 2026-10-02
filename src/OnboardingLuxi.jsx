@@ -31,7 +31,7 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
   const [etapa, setEtapa] = useState(0);
   const [tipo, setTipo] = useState("");
   const [f, setF] = useState({
-    nome: "", email: "", senha: "", senha2: "", loja: "",
+    nome: "", email: "", senha: "", senha2: "", loja: "", whatsapp: "", instagram: "",
     plano: "crescimento",
     fornecedores: [{ nome: "", margem: "100" }],
     formas: ["Dinheiro", "Débito", "Crédito", "Na confiança"],
@@ -117,7 +117,7 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
 
       {etapa === 1 && <>
         <h1 className="oj-h1 oj-serif ob-title">Qual é o seu negócio?</h1>
-        <p className="ob-copy">Isso ajuda a Luxi a preparar a experiência certa para você.</p>
+        <p className="ob-copy">Isso ajuda a Luxi a preparar a experiência certa para você e organizar sua rotina de vendas.</p>
         <div className="ob-options">
           {TIPOS.map(([id,icon,title,desc]) => (
             <button type="button" key={id} className="ob-option" data-selected={tipo===id ? "1":"0"} onClick={() => setTipo(id)}>
@@ -146,7 +146,9 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
         <h1 className="oj-h1 oj-serif ob-title">Seu negócio</h1>
         <p className="ob-copy">Qual nome você quer ver na sua Luxi?</p>
         <div className="oj-campo"><label>Nome da loja</label><input className="oj-in" autoComplete="organization" value={f.loja} onChange={e=>alterar("loja",e.target.value)} placeholder="Ex.: Ateliê Rosa" /></div>
-        <div className="ob-note">Você poderá alterar isso depois.</div>
+        <div className="oj-campo"><label>WhatsApp comercial <small>(opcional)</small></label><input className="oj-in" type="tel" inputMode="tel" autoComplete="tel" value={f.whatsapp} onChange={e=>alterar("whatsapp",e.target.value)} placeholder="Ex.: +55 11 99999-9999" /></div>
+        <div className="oj-campo"><label>Instagram <small>(opcional)</small></label><input className="oj-in" autoCapitalize="none" value={f.instagram} onChange={e=>alterar("instagram",e.target.value)} placeholder="@sualoja" /></div>
+        <div className="ob-note">O WhatsApp e o Instagram ajudam a preparar seus canais de atendimento e apresentação. Você pode configurar ou alterar tudo depois.</div>
         {erro && <div className="oj-erro ob-error">{erro}</div>}
         <Botao onClick={avancar} disabled={processando}>Continuar</Botao>
       </>}
@@ -156,10 +158,10 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
         <p className="ob-copy">Você já tem produtos para cadastrar?</p>
         <div className="ob-options">
           <button type="button" className="ob-option" data-selected={inicio==="importar"?"1":"0"} onClick={()=>setInicio("importar")}>
-            <span className="ob-icon">📥</span><span><b>Quero importar meus produtos</b><small>Traga vários produtos de uma vez.</small></span>{inicio==="importar"&&<strong>✓</strong>}
+            <span className="ob-icon">📥</span><span><b>Quero importar meus produtos</b><small>Traga vários produtos de uma vez e evite cadastrar tudo novamente.</small></span>{inicio==="importar"&&<strong>✓</strong>}
           </button>
           <button type="button" className="ob-option" data-selected={inicio==="manual"?"1":"0"} onClick={()=>setInicio("manual")}>
-            <span className="ob-icon">➕</span><span><b>Quero adicionar manualmente</b><small>Comece cadastrando suas primeiras peças.</small></span>{inicio==="manual"&&<strong>✓</strong>}
+            <span className="ob-icon">➕</span><span><b>Quero adicionar manualmente</b><small>Comece pelas peças mais importantes e complete depois.</small></span>{inicio==="manual"&&<strong>✓</strong>}
           </button>
         </div>
         {erro && <div className="oj-erro ob-error">{erro}</div>}
