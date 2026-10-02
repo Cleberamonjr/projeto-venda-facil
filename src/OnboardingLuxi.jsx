@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import * as dados from "./dados.js";
 
 const TIPOS = [
   ["loja", "🏪", "Tenho uma loja", "Organizo minha própria loja"],
@@ -39,6 +40,14 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
   const [erro, setErro] = useState("");
   const [processando, setProcessando] = useState(false);
   const [inicio, setInicio] = useState("");
+  const [beta, setBeta] = useState(null);
+  useEffect(() => {
+    if (!contaLogada) { setBeta(null); return; }
+    let ativo = true;
+    dados.meuAcessoBeta().then(v => { if (ativo) setBeta(v); }).catch(() => { if (ativo) setBeta(null); });
+    return () => { ativo = false; };
+  }, [contaLogada]);
+  const diasBeta = beta?.expira_em ? Math.max(1, Math.ceil((new Date(beta.expira_em).getTime() - Date.now()) / 864e5)) : 0;
   const alterar = (k,v) => setF(prev => ({...prev,[k]:v}));
 
   const avancar = async () => {
@@ -83,8 +92,17 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
       <h1 className="oj-h1 oj-serif ob-title">Bem-vinda à Luxi</h1>
       <p className="oj-sub ob-lead">Vamos colocar seu negócio em ordem juntas.</p>
       <p className="ob-copy">Em poucos passos, vamos organizar seus produtos, preparar seu catálogo e deixar sua gestão pronta para começar.</p>
+      {beta && diasBeta > 0 && (
+        <div className="ob-beta-card">
+          <span>Seu acesso beta</span>
+          <b>{diasBeta} dias</b>
+          <small>Você usa a Luxi completa durante o período liberado, sem cartão e sem cobrança.</small>
+        </div>
+      )}
       <div className="ob-progress"><i style={{width:"20%"}} /></div>
-      <Botao onClick={() => setEtapa(1)}>Começar</Botao>
+      <Botao onClick={() => beta && diasBeta > 0 ? setEtapa(3) : setEtapa(1)}>
+        {beta && diasBeta > 0 ? "Começar meu beta" : "Começar"}
+      </Botao>
       <div className="ob-note">Você poderá ajustar suas informações depois.</div>
     </div>
   );
@@ -237,7 +255,8 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
 const ONBOARDING_CSS = String.raw`/* ===== onboarding Luxi v2.3 ===== */
 .luxi-onboarding{min-height:100vh;max-width:520px;margin:0 auto;padding:48px 24px 40px;background:linear-gradient(to bottom,#FBF8F9,#F5EEF0);display:flex;flex-direction:column;justify-content:center}
 .luxi-onboarding .oj-btn{margin-top:18px}.luxi-onboarding .oj-campo{margin-bottom:13px}.luxi-onboarding .oj-in{background:#fff}.luxi-onboarding .oj-marca{text-align:center;font-size:32px}
-.luxi-onboarding .ob-title{font-size:34px;margin-top:18px}.ob-lead{font-size:19px;color:var(--rose-esc);line-height:1.4;margin-top:10px}.ob-copy{font-size:14px;line-height:1.6;color:var(--tinta-cl);margin:10px 0 18px}.ob-note{font-size:11.5px;line-height:1.5;color:var(--tinta-cl);text-align:center;margin-top:12px}
+.luxi-onboarding .ob-title{font-size:34px;margin-top:18px}.ob-lead{font-size:19px;color:var(--rose-esc);line-height:1.4;margin-top:10px}.ob-copy{font-size:14px;line-height:1.6;color:var(--tinta-cl);margin:10px 0 18px}.ob-beta-card{padding:14px;border:1px solid var(--rose);background:var(--rose-cl);border-radius:14px;margin:16px 0 4px}.ob-beta-card span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--rose-btn);font-weight:700}.ob-beta-card b{display:block;font-size:28px;color:var(--marinho);margin:3px 0}.ob-beta-card small{display:block;font-size:11.5px;line-height:1.45;color:var(--tinta-cl)}
+.ob-note{font-size:11.5px;line-height:1.5;color:var(--tinta-cl);text-align:center;margin-top:12px}
 .luxi-ob-logo{width:64px;height:64px;border-radius:50%;background:var(--rose-cl);display:grid;place-items:center;margin:0 auto 8px;font-size:27px}
 .ob-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}.ob-back{width:44px;height:44px;border:0;background:transparent;color:var(--tinta);font-size:30px;border-radius:10px}.ob-step{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--tinta-cl);font-weight:700}
 .ob-progress{height:5px;background:var(--linha);border-radius:99px;overflow:hidden;margin:8px 0 24px}.ob-progress i{display:block;height:100%;background:var(--rose-btn);border-radius:99px;transition:width .25s ease}
