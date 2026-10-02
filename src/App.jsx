@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import * as dados from "./dados.js";
 import { WHATSAPP_SUPORTE, linkSuporte } from "./contato.js";
+import { Cadastro as CadastroNovo, OnboardingOperacional } from "./OnboardingLuxi.jsx";
 
 /* ============================================================
    ORGANIZE JEWELRY — v1
@@ -1266,6 +1267,7 @@ export default function OrganizeJewelry() {
   const [ate, setAte] = useState("");
   // true = existe sessão Supabase válida (mesmo que ainda sem loja criada)
   const [contaLogada, setContaLogada] = useState(false);
+  const [onboardingOperacional, setOnboardingOperacional] = useState(false);
 
   /* Convite de consultora: chega como ?convite=CODIGO num link de
      WhatsApp. Fica guardado até ser aceito (ou cancelado) — depois de
@@ -1774,7 +1776,7 @@ export default function OrganizeJewelry() {
     return (
       <div className="oj">
         <style>{CSS}</style>
-        <Cadastro
+        <CadastroNovo
           contaLogada={contaLogada}
           criarConta={async (email, senha) => {
             await dados.auth.cadastrar(email, senha);
@@ -1801,8 +1803,16 @@ export default function OrganizeJewelry() {
               plano: perfil.plano,
               dona: perfil.nome,
             });
-            await recarregar();
+            const estCriada = await recarregar();
             setTela("app");
+            if (estCriada?.lojaId) {
+              try {
+                const concluido = localStorage.getItem("luxi:onboarding:v1:" + estCriada.lojaId) === "1";
+                setOnboardingOperacional(!concluido);
+              } catch (_) {
+                setOnboardingOperacional(true);
+              }
+            }
           }}
           onMestre={async () => {
             const est = await recarregar();
@@ -2197,6 +2207,20 @@ export default function OrganizeJewelry() {
       </div>
 
       <Aviso d={d} irPara={irPara} />
+
+      {onboardingOperacional && (
+        <OnboardingOperacional
+          d={d}
+          onImportar={() => setModal({ tipo: "romaneio" })}
+          irPara={irPara}
+          onConcluir={() => {
+            try {
+              if (d.lojaId) localStorage.setItem("luxi:onboarding:v1:" + d.lojaId, "1");
+            } catch (_) {}
+            setOnboardingOperacional(false);
+          }}
+        />
+      )}
 
       <div className="oja" key={aba}>
         {["catalogo", "clientes", "maleta", "graficos", "equipe", "contas", "admin", "perfil", "integracoes"].includes(aba) && (
@@ -3939,7 +3963,7 @@ function Filtro({ periodo, setPeriodo, de, ate, setDe, setAte }) {
 }
 
 /* ---------------- cadastro ---------------- */
-function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, aoEntrar }) {
+function CadastroLegado({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, aoEntrar }) {
   const [p, setP] = useState(0);
   const [f, setF] = useState({
     plano: "crescimento",
