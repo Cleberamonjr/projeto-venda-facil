@@ -2,6 +2,12 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import { linkSuporte } from "./contato.js";
+import LonaPublica, { ErroDaLona } from "./LonaPublica.jsx";
+import { slugDaUrl } from "./lona/util.js";
+
+/* Vitrine pública (/?m=apelido): a cliente da vendedora abre SEM login. Nesse caso mostramos só a vitrine:
+   sem app, sem instalar, sem faixa de "versão nova" e sem registrar o aplicativo no aparelho dela. */
+const slugLona = slugDaUrl(window.location.search);
 
 class ErroBoundary extends React.Component {
   constructor(p){ super(p); this.state = { erro: null, info: null }; }
@@ -78,7 +84,7 @@ function avisarNovaVersao() {
 }
 window.addEventListener("luxi:nova-versao", avisarNovaVersao);
 
-if ("serviceWorker" in navigator) {
+if (!slugLona && "serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
       const reg = await navigator.serviceWorker.register("./sw.js");
@@ -112,6 +118,7 @@ if ("serviceWorker" in navigator) {
    política NÃO permite, de propósito. O relatório que chega ao servidor prova que o canal de relatórios funciona
    (sem isso, "nenhum relatório" não diria se está tudo certo ou se o canal quebrou). */
 try {
+  if (slugLona) throw new Error("vitrine pública: sem sinal da política de segurança");
   const hoje = new Date().toISOString().slice(0, 10);
   if (localStorage.getItem("luxi:csp-sinal") !== hoje) {
     localStorage.setItem("luxi:csp-sinal", hoje);
@@ -122,5 +129,7 @@ try {
 }
 
 createRoot(document.getElementById("root")).render(
-  <ErroBoundary><App/></ErroBoundary>
+  slugLona
+    ? <ErroDaLona><LonaPublica slug={slugLona}/></ErroDaLona>
+    : <ErroBoundary><App/></ErroBoundary>
 );

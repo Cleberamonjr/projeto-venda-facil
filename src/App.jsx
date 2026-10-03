@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import * as dados from "./dados.js";
+import Lona from "./Lona.jsx";
 import { WHATSAPP_SUPORTE, linkSuporte } from "./contato.js";
 
 /* ============================================================
@@ -1868,6 +1869,7 @@ export default function OrganizeJewelry() {
     vendas: <Vendas d={d} dentro={dentro} quitarVenda={quitarVendaConfianca} />,
     conselho: <Conselheiro d={d} dentro={dentro} />,
     catalogo: <Catalogo d={d} />,
+    lona: <Lona d={d} recarregar={recarregar} />,
     clientes: (
       <Clientes
         d={d}
@@ -1945,6 +1947,7 @@ export default function OrganizeJewelry() {
     vendas: ["Suas vendas", "O que já vendeu e o que ainda vão te pagar"],
     conselho: ["Dicas pra você", "O que seus números estão pedindo agora"],
     catalogo: ["Seu catálogo", "Monta e manda no zap num toque"],
+    lona: ["Sua lona", "Sua vitrine: a cliente escolhe e pede sem login"],
     clientes: ["Suas clientes", "Quem compra sempre, quem sumiu e quem deve"],
     maleta: ["Quem tá com o quê", "Suas peças que estão na rua pra vender"],
     graficos: ["Seus números", "Um raio-x do que tá bombando (ou não)"],
@@ -2029,6 +2032,7 @@ export default function OrganizeJewelry() {
                   ["vendas", "Minhas vendas", "O que eu vendi"],
                   ["clientes", "Minhas clientes", "Quem compra comigo"],
                   ["catalogo", "Catálogo", "Enviar no WhatsApp"],
+                  ["lona", "Minha lona", "Vitrine e pedidos"],
                 ]],
                 ["Conta", [["perfil", "Minha conta", "Dados e acesso"]]],
               ]
@@ -2039,6 +2043,7 @@ export default function OrganizeJewelry() {
               ["vendas", "Vendas", "Histórico e recebimentos"],
               ["clientes", "Clientes", "Quem compra e quanto gasta"],
               ["catalogo", "Catálogo", "Enviar no WhatsApp"],
+              ["lona", "Lona", "Vitrine e pedidos"],
             ]],
             ["Equipe", [
               ["maleta", "Maleta", "O que está com quem"],
@@ -2184,7 +2189,7 @@ export default function OrganizeJewelry() {
 
         <h1 className="oj-h1 oj-serif">{titulos[aba][0]}</h1>
         <div className="oj-sub">{titulos[aba][1]}</div>
-        {aba !== "admin" && (
+        {aba !== "admin" && aba !== "lona" && (
           <Filtro
             periodo={periodo}
             setPeriodo={setPeriodo}
@@ -8556,7 +8561,20 @@ function Catalogo({ d }) {
   const escolhidas = lista.filter((p) => sel.includes(p.id));
 
   const slug = d.perfil.slug || "minhaloja";
-  const link = `https://luxi.app/${slug}`;
+  /* Se a pessoa já publicou a lona, o catálogo manda o link REAL da vitrine.
+     Sem lona publicada nada muda: segue o texto de sempre. */
+  const [linkLona, setLinkLona] = useState(null);
+  useEffect(() => {
+    if (!d.lojaId) return undefined;
+    let vivo = true;
+    dados.lonaResumo().then((lista) => {
+      const ehCons = d.perfil.papel === "consultora" && !d.perfil.mestre;
+      const minha = (lista || []).find((c) => (ehCons ? true : c.eh_dona));
+      if (vivo && minha && minha.publicada && minha.slug) setLinkLona(`${window.location.origin}${window.location.pathname}?m=${encodeURIComponent(minha.slug)}`);
+    }).catch(() => {});
+    return () => { vivo = false; };
+  }, [d.lojaId]);
+  const link = linkLona || `https://luxi.app/${slug}`;
 
   const texto =
     `${d.perfil.loja}\n\n` +
@@ -8693,6 +8711,7 @@ function Mais({ irPara, mestre }) {
     ["maleta", "Maleta", "O que está com cada consultora"],
     ["clientes", "Clientes", "Histórico e quanto cada uma já gastou"],
     ["catalogo", "Catálogo", "Monte e envie no WhatsApp"],
+    ["lona", "Lona", "Vitrine para suas clientes"],
     ["equipe", "Equipe", "Consultoras e comissões"],
     ["contas", "Contas", "Despesas, plano e a receber"],
   ];

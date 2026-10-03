@@ -991,3 +991,41 @@ export async function removerAcessoBeta(email) {
     throw new Error("Não consegui remover esse acesso.");
   }
 }
+
+/* ---------- lona: a vitrine pública de cada consultora ----------
+   Tudo passa por funções do banco (que conferem quem está chamando). As tabelas da lona são fechadas:
+   nem esta camada nem ninguém lê/escreve nelas direto. O erro volta com o código (LX404, LX410...) que a
+   vitrine usa para falar com a cliente em português. */
+async function rpcLona(nome, args) {
+  const { data, error } = await sb.rpc(nome, args);
+  if (error) {
+    const e = new Error(error.message || "Não deu certo");
+    e.code = error.code;
+    throw e;
+  }
+  return data;
+}
+export const lonaResumo = () => rpcLona("lona_resumo");
+export const lonaMinha = (consultoraId) => rpcLona("lona_minha", { p_consultora: consultoraId || null });
+export const lonaSalvar = (lonaId, rascunho) => rpcLona("lona_salvar", { p_lona: lonaId, p_rascunho: rascunho });
+export const lonaPublicar = (lonaId) => rpcLona("lona_publicar", { p_lona: lonaId });
+export const lonaTirarDoAr = (lonaId) => rpcLona("lona_tirar_do_ar", { p_lona: lonaId });
+export const lonaSalvarPix = (chave) => rpcLona("lona_salvar_pix", { p_chave: chave || "" });
+export const lonaPedidos = (consultoraId) => rpcLona("lona_pedidos_listar", { p_consultora: consultoraId || null });
+export const lonaConfirmar = (pedidoId, valoresCentavos) =>
+  rpcLona("lona_confirmar_pedido", { p_pedido: pedidoId, p_valores: valoresCentavos || {} });
+export const lonaCancelar = (pedidoId) => rpcLona("lona_cancelar_pedido", { p_pedido: pedidoId });
+/* públicas (a cliente, sem login) */
+export const lonaPublica = (slug) => rpcLona("lona_publica", { p_slug: slug });
+export const lonaCriarPedido = ({ slug, nome, whatsapp, pecas, origem }) =>
+  rpcLona("lona_criar_pedido", { p_slug: slug, p_nome: nome, p_whatsapp: whatsapp, p_pecas: pecas, p_origem: origem });
+
+/* capa da lona: bucket público "logos", pasta = id da loja, nome único a cada envio
+   (o armazenamento não permite sobrescrever; a regra do banco exige "capa-<id da consultora>-…") */
+export async function enviarCapaLona(lojaId, consultoraId, blob) {
+  const sufixo = (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())).slice(0, 8);
+  const caminho = `${lojaId}/capa-${consultoraId}-${sufixo}.jpg`;
+  const { error } = await sb.storage.from("logos").upload(caminho, blob, { contentType: "image/jpeg", cacheControl: "31536000" });
+  if (error) throw error;
+  return sb.storage.from("logos").getPublicUrl(caminho).data.publicUrl;
+}

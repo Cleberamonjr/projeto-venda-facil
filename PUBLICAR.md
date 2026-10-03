@@ -70,3 +70,9 @@ prende `position:fixed` e esconde a peça fora da janela.
 - `tests/navegador/painel_celular.py` mede por código: borda, texto espremido, toque >= 44 px, contraste >= 4,5:1, rodapé da janela à vista
   (320/360/390/430 px x claro/escuro x 7 telas) e tem um AUTO-TESTE que injeta o defeito original e exige que seja acusado.
 - Seções do painel: Lojas · Acessos · Suporte. O filtro de período não aparece no painel (ele não o usa).
+
+## Lona (vitrine pública por consultora)
+- **Endereço:** `/?m=apelido` (igual aos convites `?beta=`/`?convite=`). Não usar `/m/apelido`: o app é servido com caminhos relativos e a página abre em branco. `public/_redirects` só redireciona `/m/*` para `/?m=*` por conveniência.
+- **Banco:** migrações `20261001_lona_vitrine.sql` e `20261001_lona_capa_consultora.sql` (objetos novos; as tabelas da lona são fechadas, tudo passa por funções que conferem quem chama). A venda sai SEMPRE do `registrar_venda`.
+- **Armadilhas já pagas (não repetir):** (1) o Postgres limita repetição de regex a 255; (2) permissão que devolve `NULL` passa em `if not ...` — sempre `coalesce(..., false)`; (3) política de storage NÃO pode chamar função que `authenticated` não executa: derruba todo envio de arquivo — usar função em `privado.*` com `grant execute ... to authenticated`; (4) `width`/`height` em `<img>` vencem o `aspect-ratio` do CSS — usar `height:auto`.
+- **Testes:** `tests/navegador/lona_publica.py` (vitrine), `lona_editor.py` (tela no app), `lona_tema.py` (3 larguras × 2 temas); todos entram em `todos.py`. Os testes de banco rodaram com dados fictícios desfeitos ao fim (não ficaram no repositório).

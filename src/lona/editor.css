@@ -1,0 +1,34 @@
+/* Lona (tela do app): só detalhes que o app ainda não tinha. Tudo preso a .lona-ed. */
+.lona-ed{padding-bottom:40px}
+.lona-ed .oj-seg{margin-top:4px}
+.lona-ed-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.lona-ed-link{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--bege-2);font-size:13px;word-break:break-all}
+.lona-ed-grupo{border:0;margin:0;padding:0;min-width:0}
+.lona-ed-grupo:disabled{opacity:.7}
+.lona-ed-capa{display:block;width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin:8px 0}
+.lona-ed-arquivo{position:relative;margin-top:8px;cursor:pointer}
+.lona-ed-arquivo input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.lona-ed-cor{width:44px;height:44px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+.lona-ed-cor[data-on="1"]{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--tinta)}
+.lona-ed-cor-livre{width:44px;height:44px;padding:0;border:0;background:transparent;cursor:pointer}
+.lona-ed-item-topo{display:flex;gap:12px;align-items:flex-start}
+.lona-ed-mini{flex:none;width:64px;height:64px;object-fit:cover;border-radius:10px;background:var(--bege-2)}
+.lona-ed-mini--p{width:48px;height:48px}
+.lona-ed-sem{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--tinta-cl);text-align:center}
+.lona-ed-grade{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+@media (max-width:340px){.lona-ed-grade{grid-template-columns:1fr}}
+.lona-ed-checks{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:14px}
+.lona-ed-checks label{display:inline-flex;align-items:center;gap:8px;min-height:44px}
+.lona-ed-checks input{width:20px;height:20px}
+.lona-ed-previa{margin-top:12px;max-height:75vh;overflow:auto;border:1px solid var(--linha);border-radius:12px}
+.lona-ed .oj-card{margin-left:14px;margin-right:14px}
+.lona-ed-conf{margin-top:12px;padding-top:12px;border-top:1px solid var(--linha)}
+.lona-ed .oj-chip{min-height:44px}
+/* contraste (≥4,5:1) só aqui dentro: o tom global dos botões fica abaixo disso em alguns temas */
+.lona-ed .oj-btn:not(.sec):not(:disabled){background:#8B4A57;color:#fff}
+.lona-ed .oj-btn.sec{color:#8B505C}
+.lona-ed .oj-link-sutil{color:#7A4450;min-height:44px}
+.oj[data-theme="escuro"] .lona-ed .oj-btn.sec,
+.oj[data-theme="escuro"] .lona-ed .oj-link-sutil{color:#E8A6AA}
+.lona-ed-alerta{color:#9A4A22}
+.oj[data-theme="escuro"] .lona-ed-alerta{color:#F2A98A}
