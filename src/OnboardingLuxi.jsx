@@ -91,7 +91,7 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
       <div className="oj-marca"><b>Luxi</b></div>
       <h1 className="oj-h1 oj-serif ob-title">Bem-vinda à Luxi</h1>
       <p className="oj-sub ob-lead">Vamos colocar seu negócio em ordem juntas.</p>
-      <p className="ob-copy">Em poucos passos, vamos organizar seus produtos, preparar seu catálogo e deixar sua gestão pronta para começar.</p>
+      <p className="ob-copy">Em poucos passos, vamos organizar seus produtos, abrir sua loja on-line e deixar sua gestão pronta para começar.</p>
       {beta && diasBeta > 0 && (
         <div className="ob-beta-card">
           <span>Seu acesso beta</span>
@@ -191,9 +191,9 @@ export function getNextBestAction(d) {
     cta: "Adicionar fotos", aba: "estoque"
   };
   if (!colecoes.length) return {
-    type: "catalogo", title: "Seu catálogo está quase pronto",
-    description: "Organize suas peças em uma coleção para preparar sua vitrine.",
-    cta: "Preparar catálogo", aba: "catalogo"
+    type: "catalogo", title: "Sua loja on-line está quase pronta",
+    description: "Organize suas peças em uma coleção e abra sua loja on-line para as clientes pedirem.",
+    cta: "Abrir loja on-line", aba: "catalogo"
   };
   if (!vendas.length) return {
     type: "venda", title: "Vamos registrar sua primeira venda",
@@ -257,7 +257,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
             return <div key={p.id} className="ob-photo-card">{foto ? <img src={foto} alt="" /> : <span>＋ Foto</span>}<small>{p.nome || p.codigo || "Produto"}</small></div>;
           })}
         </div>}
-        {quantidade > 0 && <p className="ob-copy">{semFoto ? "Agora podemos deixar seu catálogo mais bonito. Não precisa fazer tudo agora." : "Suas peças já têm fotos. Você pode continuar sem configurar mais nada agora."}</p>}
+        {quantidade > 0 && <p className="ob-copy">{semFoto ? "Agora podemos deixar sua loja on-line mais bonita. Não precisa fazer tudo agora." : "Suas peças já têm fotos. Você pode continuar sem configurar mais nada agora."}</p>}
         <Botao onClick={() => { if (quantidade && semFoto) irPara("estoque"); setEtapa(2); }}>
           {quantidade && semFoto ? "Adicionar fotos" : "Continuar"}
         </Botao>
