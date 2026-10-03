@@ -168,9 +168,9 @@ begin
         for v_unit in 1..greatest(0,v_v.qtd) loop
           update public.maleta_acerto_itens x
              set estado='vendeu',venda_id=v_v.id,
-                 venda_centavos=round(v_v.valor_centavos/greatest(v_v.qtd,1.0)),
-                 custo_centavos=round(v_v.custo_centavos/greatest(v_v.qtd,1.0)),
-                 comissao_centavos=round(coalesce(v_v.comissao_centavos,0)/greatest(v_v.qtd,1.0)),
+                 venda_centavos=round(v_v.valor_centavos::numeric/greatest(v_v.qtd,1))::int,
+                 custo_centavos=round(v_v.custo_centavos::numeric/greatest(v_v.qtd,1))::int,
+                 comissao_centavos=round(coalesce(v_v.comissao_centavos,0)::numeric/greatest(v_v.qtd,1))::int,
                  atualizado_em=now()
            where x.id=(
              select y.id from public.maleta_acerto_itens y
