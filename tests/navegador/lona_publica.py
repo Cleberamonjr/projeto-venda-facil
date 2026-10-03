@@ -177,6 +177,14 @@ def rodar(fotos=False):
         check(pg.evaluate("document.querySelectorAll('.lona-peca').length") == 3, "a vitrine se atualizou sozinha (a peça sumiu)")
         ctx.close()
 
+        # 2d2) o mesmo erro, mas SEM o código (só o texto): a vitrine entende igual
+        estado = {"lona": LONA, "pedidos": [], "chamadas": [], "erro_pedido": (400, {"message": "Há muitos pedidos em aberto nesta lona. Fale direto no WhatsApp."})}
+        ctx, pg = abrir(estado)
+        pg.click(".lona-peca >> nth=0 >> text=Por no carrinho"); pg.click(".lona-barra >> text=Ver e enviar")
+        pg.fill("#lona-nome", "Maria"); pg.fill("#lona-fone", "11988887777"); pg.click("text=Enviar pedido para Ana"); pg.wait_for_selector("[role=alert]")
+        check(pg.query_selector("[role=alert] a[href^='https://wa.me/5511999998888']") is not None, "erro sem código: reconhecido pelo texto e oferece o WhatsApp direto")
+        ctx.close()
+
         # 2e) muitos pedidos: LX429 -> oferece WhatsApp direto
         estado = {"lona": LONA, "pedidos": [], "chamadas": [], "erro_pedido": (400, {"code": "LX429", "message": "Há muitos pedidos em aberto nesta lona. Fale direto no WhatsApp.", "details": None, "hint": None})}
         ctx, pg = abrir(estado)

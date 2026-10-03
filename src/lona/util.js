@@ -106,8 +106,15 @@ export function validarCliente(nome, fone) {
 
 /* O banco responde com códigos; aqui viram frases para a cliente. */
 export function mensagemDeErro(e) {
-  const cod = (e && e.code) || "";
+  let cod = (e && e.code) || "";
   const msg = (e && e.message) || "";
+  /* se o código não chegar, reconhece pelo texto que o banco escreve */
+  if (!/^LX\d{3}$/.test(cod)) {
+    if (/acabaram de sair/i.test(msg)) cod = "LX410";
+    else if (/pedidos em aberto/i.test(msg)) cod = "LX429";
+    else if (/n[aã]o est[aá] dispon[ií]vel/i.test(msg)) cod = "LX404";
+    else if (/^Informe |Escolha de 1 a 8|Forma inv[aá]lida/i.test(msg)) cod = "LX422";
+  }
   if (cod === "LX410") return { texto: msg || "Algumas peças acabaram de sair.", recarregar: true };
   if (cod === "LX429") return { texto: msg || "Há muitos pedidos em aberto. Fale direto no WhatsApp.", direto: true };
   if (cod === "LX422") return { texto: msg || "Confira seus dados." };
