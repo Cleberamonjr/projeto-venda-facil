@@ -195,7 +195,7 @@ function traduzErro(m = "") {
 }
 
 /* ---------- criar loja + assinatura em teste de 72h ---------- */
-export async function criarLoja({ nome, fornecedores, formas, margem, plano, dona }) {
+export async function criarLoja({ nome, fornecedores, formas, margem, plano, dona, whatsapp }) {
   const u = await auth.usuario();
   if (!u) throw new Error("Sessão ausente.");
 
@@ -210,6 +210,7 @@ export async function criarLoja({ nome, fornecedores, formas, margem, plano, don
     .insert({
       dona_id: u.id,
       nome,
+      whatsapp: whatsapp ? String(whatsapp).replace(/\D/g, "").slice(0, 11) : null,
       fornecedores: fornNomes, // mantém a coluna antiga preenchida (compat)
       fornecedores_json: fornArr, // formato novo com margem
       formas_pagamento: formas && formas.length ? formas : ["Dinheiro", "Débito", "Crédito", "Na confiança"],
