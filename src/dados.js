@@ -779,6 +779,18 @@ const gerarConviteCodigo = () =>
 
 export const consultoras = {
   criar: async (lojaId, x) => {
+    const [{ data: assinatura }, { count }] = await Promise.all([
+      sb.from("assinaturas").select("plano,status").eq("loja_id",lojaId).maybeSingle(),
+      sb.from("consultoras").select("id", { count: "exact", head: true }).eq("loja_id",lojaId).eq("eh_dona",false).eq("ativa",true),
+    ]);
+    const limites = { crescimento: 5, joalheria: 10, inteligencia: 25 };
+    const limite = limites[assinatura?.plano] || 0;
+    if (!["trial","ativa"].includes(assinatura?.status) || !limite) {
+      throw new Error("A equipe está disponível no plano Equipe.");
+    }
+    if ((count || 0) >= limite) {
+      throw new Error("Você já chegou ao limite de vendedoras deste plano.");
+    }
     const { data, error } = await sb
       .from("consultoras")
       .insert({
