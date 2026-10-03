@@ -220,7 +220,62 @@ export function ProximoPasso({ d, irPara }) {
   );
 }
 
+export function TourLuxi({ irPara, onConcluir }) {
+  const [etapa, setEtapa] = useState(0);
+  const [alvo, setAlvo] = useState(null);
+  const passos = [
+    { aba:"painel", alvo:'[data-tour-role="inicio"]', titulo:"A Luxi começa aqui", texto:"Este é o seu ponto de partida. Aqui você acompanha o que merece atenção e encontra os principais caminhos da sua operação." },
+    { aba:"estoque", alvo:'[data-tour-role="pecas"]', titulo:"Suas peças", texto:"Aqui você cadastra produtos, adiciona fotos, preços e organiza suas coleções. É a base para a Luxi trabalhar com dados reais." },
+    { aba:"vendas", alvo:'[data-tour-role="vendas"]', titulo:"Suas vendas", texto:"Registre as vendas aqui. Esse histórico mantém a operação organizada e alimenta as orientações da Luxi." },
+    { aba:"clientes", alvo:'[data-tour-role="clientes"]', titulo:"Suas clientes", texto:"Aqui ficam as informações do relacionamento com quem compra de você, sem espalhar a operação por vários lugares." },
+    { aba:"lona", alvo:'[data-tour-role="lona-screen"]', titulo:"Sua loja on-line", texto:"A Lona é a vitrine pública da sua Luxi. Você organiza suas peças e prepara o espaço para suas clientes conhecerem e pedirem produtos." },
+    { aba:"conselho", alvo:'[data-tour-role="conselheira-screen"]', titulo:"Sua Conselheira", texto:"Ela transforma o que você registra em próximos passos úteis, para você saber o que merece atenção sem precisar procurar." },
+  ];
+  const passo = passos[etapa];
+
+  useEffect(() => {
+    irPara(passo.aba);
+  }, [etapa]);
+
+  useEffect(() => {
+    let ativo = true;
+    const localizar = () => {
+      const el = document.querySelector(passo.alvo);
+      if (!el) { if (ativo) setAlvo(null); return; }
+      const r = el.getBoundingClientRect();
+      if (ativo) setAlvo({ top:r.top, left:r.left, width:r.width, height:r.height });
+      el.scrollIntoView({ block:"nearest", inline:"nearest" });
+    };
+    const t = setTimeout(localizar, 240);
+    window.addEventListener("resize", localizar);
+    window.addEventListener("scroll", localizar, true);
+    return () => { ativo=false; clearTimeout(t); window.removeEventListener("resize", localizar); window.removeEventListener("scroll", localizar, true); };
+  }, [etapa, passo.alvo]);
+
+  const proximo = () => etapa === passos.length - 1 ? onConcluir() : setEtapa(v => v + 1);
+  return (
+    <div className="ob-tour" role="dialog" aria-modal="true" aria-label="Tour guiado da Luxi">
+      <EstilosOnboarding />
+      <div className="ob-tour-dim" />
+      {alvo && <div className="ob-tour-focus" style={{top:alvo.top-7,left:alvo.left-7,width:alvo.width+14,height:alvo.height+14}} />}
+      {alvo && <div className="ob-tour-arrow" style={{top:Math.max(18,alvo.top-28),left:Math.min(window.innerWidth-38,Math.max(18,alvo.left+alvo.width/2-14))}}>↓</div>}
+      <div className="ob-tour-card">
+        <div className="ob-tour-head"><span>{etapa+1} de {passos.length}</span><button type="button" onClick={onConcluir}>Pular tour</button></div>
+        <div className="ob-tour-kicker">LUXI · {passo.aba==="lona" ? "LOJA ON-LINE" : passo.aba==="conselho" ? "CONSELHEIRA" : "GESTÃO"}</div>
+        <h2>{passo.titulo}</h2>
+        <p>{passo.texto}</p>
+        <div className="ob-tour-hint">{alvo ? "A área destacada é onde isso acontece. Observe na própria tela." : "Carregando a área desta etapa…"}</div>
+        <div className="ob-tour-actions">
+          <button type="button" className="oj-btn sec" onClick={onConcluir}>Pular</button>
+          <button type="button" className="oj-btn" onClick={proximo}>{etapa===passos.length-1 ? "Começar a usar" : "Próximo →"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
+  const [modo, setModo] = useState("tour");
   const [etapa, setEtapa] = useState(0);
   const produtos = Array.isArray(d?.estoque) ? d.estoque : [];
   const semFoto = produtos.filter((p) => {
@@ -229,15 +284,16 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   }).length;
   const acao = useMemo(() => getNextBestAction(d), [d]);
 
+  if (modo === "tour") return <TourLuxi irPara={irPara} onConcluir={onConcluir} />;
+
   if (etapa === 0) return (
     <div className="ob-overlay"><EstilosOnboarding /><div className="ob-sheet">
-      <div className="ob-step">1 de 4</div>
-      <h2>Vamos trazer seus produtos para a Luxi.</h2>
-      <p>Você não precisa cadastrar tudo novamente.</p>
-      <div className="ob-progress"><i style={{width:"57%"}} /></div>
+      <div className="ob-step">Preenchimento assistido</div>
+      <h2>Vamos preparar seus primeiros produtos.</h2>
+      <p>Você pode importar um romaneio ou cadastrar manualmente. A Luxi não cria dados fictícios.</p>
       <Botao onClick={() => { onImportar(); setEtapa(1); }}>📥 Importar meus produtos</Botao>
-      <button type="button" className="oj-link-sutil" onClick={onConcluir}>Prefiro adicionar manualmente</button>
-      <div className="ob-note">A importação usa a função real de romaneio da Luxi. Não criamos dados fictícios.</div>
+      <button type="button" className="oj-link-sutil" onClick={() => setModo("tour")}>Voltar ao tour</button>
+      <button type="button" className="oj-link-sutil" onClick={onConcluir}>Fazer depois</button>
     </div></div>
   );
 
@@ -245,42 +301,25 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
     const quantidade = produtos.length;
     return (
       <div className="ob-overlay"><EstilosOnboarding /><div className="ob-sheet">
-        <div className="ob-step">2 de 4</div>
+        <div className="ob-step">Preenchimento assistido</div>
         <h2>{quantidade ? "Seus produtos já estão aqui." : "Vamos cadastrar seus produtos."}</h2>
-        <p>{quantidade
-          ? "✨ Pronto! " + quantidade + " " + (quantidade === 1 ? "produto chegou" : "produtos chegaram") + " à sua Luxi."
-          : "A importação ainda não adicionou produtos. Você pode tentar novamente ou continuar manualmente."}</p>
-        {quantidade > 0 && <div className="ob-photo-grid">
-          {produtos.slice(0,3).map((p) => {
-            const foto = Array.isArray(p?.fotos) && p.fotos[0] ? p.fotos[0] : (p?.capa || p?.foto || p?.imagem);
-            return <div key={p.id} className="ob-photo-card">{foto ? <img src={foto} alt="" /> : <span>＋ Foto</span>}<small>{p.nome || p.codigo || "Produto"}</small></div>;
-          })}
-        </div>}
-        {quantidade > 0 && <p className="ob-copy">{semFoto ? "Agora podemos deixar sua loja on-line mais bonita. Não precisa fazer tudo agora." : "Suas peças já têm fotos. Você pode continuar sem configurar mais nada agora."}</p>}
-        <Botao onClick={() => { if (quantidade && semFoto) irPara("estoque"); setEtapa(2); }}>
-          {quantidade && semFoto ? "Adicionar fotos" : "Continuar"}
-        </Botao>
+        <p>{quantidade ? "✨ " + quantidade + (quantidade===1 ? " produto chegou" : " produtos chegaram") + " à sua Luxi." : "A importação ainda não adicionou produtos. Você pode tentar novamente ou continuar manualmente."}</p>
+        {quantidade>0 && <div className="ob-photo-grid">{produtos.slice(0,3).map(p => {
+          const foto=Array.isArray(p?.fotos)&&p.fotos[0]?p.fotos[0]:(p?.capa||p?.foto||p?.imagem);
+          return <div key={p.id} className="ob-photo-card">{foto?<img src={foto} alt="" />:<span>＋ Foto</span>}<small>{p.nome||p.codigo||"Produto"}</small></div>;
+        })}</div>}
+        <Botao onClick={() => { if(quantidade&&semFoto) irPara("estoque"); setEtapa(2); }}>{quantidade&&semFoto?"Adicionar fotos":"Continuar"}</Botao>
         <button type="button" className="oj-link-sutil" onClick={() => setEtapa(2)}>Fazer depois</button>
       </div></div>
     );
   }
 
-  if (etapa === 2) return (
-    <div className="ob-overlay"><EstilosOnboarding /><div className="ob-sheet">
-      <div className="ob-step">3 de 4</div>
-      <h2>💡 A Luxi também observa seu negócio.</h2>
-      <p>Conforme você registrar produtos, clientes e vendas, ela vai ajudar você a perceber o que merece sua atenção.</p>
-      <div className="ob-advice"><b>Uma ideia da Luxi</b><span>{acao.title}. Vou mostrar uma próxima ação útil quando houver algo que mereça sua atenção.</span></div>
-      <Botao onClick={() => setEtapa(3)}>Entendi</Botao>
-    </div></div>
-  );
-
   return (
     <div className="ob-overlay"><EstilosOnboarding /><div className="ob-sheet">
-      <div className="ob-step">4 de 4</div>
+      <div className="ob-step">Próximo passo</div>
       <h2>💗 Sua Luxi está pronta.</h2>
-      <p>Você já começou a organizar seu negócio.</p>
-      <div className="ob-next"><span>Próximo passo</span><b>{acao.title}</b><small>A Luxi vai continuar guiando você por aqui.</small></div>
+      <p>O tour mostrou onde as principais funções ficam. Agora você pode preencher no seu ritmo.</p>
+      <div className="ob-next"><span>Luxi recomenda</span><b>{acao.title}</b><small>{acao.description}</small></div>
       <Botao onClick={onConcluir}>Começar a usar a Luxi</Botao>
     </div></div>
   );
@@ -302,6 +341,8 @@ const ONBOARDING_CSS = String.raw`/* ===== onboarding Luxi v2.3 ===== */
 .ob-next{padding:15px;border:1px solid var(--rose);background:var(--rose-cl);border-radius:14px;margin:16px 0}.ob-next span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--rose-btn);font-weight:700}.ob-next b{display:block;font-size:16px;line-height:1.35;margin-top:5px;color:var(--tinta)}.ob-next small{display:block;font-size:11.5px;line-height:1.45;color:var(--tinta-cl);margin-top:4px}
 @media(max-width:400px){.luxi-onboarding{padding-left:16px;padding-right:16px}.luxi-onboarding .ob-title{font-size:29px}.ob-sheet{padding-left:16px;padding-right:16px}}
 @media(prefers-reduced-motion:reduce){.ob-progress i,.ob-sheet{transition:none;animation:none}}\n.ob-next-dashboard{margin:12px 20px 18px;display:flex;align-items:center;gap:12px;justify-content:space-between}.ob-next-dashboard .ob-next-copy{flex:1;min-width:0}.ob-next-dashboard .oj-btn{flex:0 0 auto;width:auto;margin:0}.ob-next-dashboard b{font-size:15px}.ob-next-dashboard small{max-width:520px}
+
+.ob-tour{position:fixed;inset:0;z-index:80;pointer-events:none}.ob-tour-dim{position:absolute;inset:0;background:rgba(38,28,33,.54)}.ob-tour-focus{position:fixed;z-index:81;border:2px solid var(--rose-btn);border-radius:14px;box-shadow:0 0 0 9999px rgba(38,28,33,.54),0 0 0 6px rgba(196,138,148,.18);pointer-events:none;transition:top .22s,left .22s,width .22s,height .22s}.ob-tour-arrow{position:fixed;z-index:82;width:28px;height:28px;border-radius:50%;background:var(--rose-btn);color:#fff;display:grid;place-items:center;font-weight:800;box-shadow:0 5px 16px rgba(0,0,0,.22);pointer-events:none}.ob-tour-card{position:fixed;z-index:83;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(500px,calc(100% - 24px));background:var(--bege);border:1px solid var(--linha);border-radius:20px;padding:17px 18px 16px;box-shadow:0 -12px 50px -18px rgba(38,28,33,.55);pointer-events:auto}.ob-tour-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.ob-tour-head span,.ob-tour-kicker{font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--rose-btn)}.ob-tour-head button{border:0;background:none;color:var(--tinta-cl);font:inherit;font-size:11px;text-decoration:underline;cursor:pointer}.ob-tour-kicker{margin-top:10px}.ob-tour-card h2{font-size:22px;line-height:1.2;margin:5px 0;color:var(--tinta)}.ob-tour-card p{font-size:13px;line-height:1.5;color:var(--tinta-cl);margin:0 0 8px}.ob-tour-hint{font-size:11px;line-height:1.4;color:var(--tinta-cl);padding:9px 10px;border-radius:10px;background:var(--rose-cl);margin:8px 0 10px}.ob-tour-actions{display:flex;gap:8px}.ob-tour-actions .oj-btn{flex:1;margin:0}.ob-tour-actions .sec{flex:0 0 34%}@media(max-width:400px){.ob-tour-card{padding:15px}.ob-tour-card h2{font-size:20px}}
 `;
 
 function EstilosOnboarding() {
