@@ -1816,6 +1816,7 @@ export default function OrganizeJewelry() {
               margem: perfil.margem,
               plano: perfil.plano,
               dona: perfil.nome,
+              whatsapp: perfil.whatsapp,
             });
             const estCriada = await recarregar();
             setTela("app");
