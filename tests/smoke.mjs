@@ -689,10 +689,7 @@ await teste('T2. cada acesso beta mostra a ação certa para a situação da pes
 
 await teste('Y. planos comerciais: Equipe custa R$ 129,90 e cobre até 5 vendedoras; anual aplica 5%', async () => {
   const okPreco = js.includes('preco: "129,90"') && js.includes('consultoras: 5') && js.includes('Até 5 vendedoras');
-  const okAnual = js.includes('mensal * 12 * 0.95') && js.includes('Anual · 5% off') && js.includes('Equivale a R
-console.log(todos ? `\nTODOS OS ${resultados.length} TESTES PASSARAM` : `\n${resultados.filter((x) => !x).length} TESTE(S) FALHARAM — NÃO PUBLIQUE`);
-process.exit(todos ? 0 : 1);
-);
+  const okAnual = js.includes('mensal * 12 * 0.95') && js.includes('Anual · 5% off') && js.includes('Equivale a R$');
   const semPlano179Publico = js.includes('PLANO_PUBLICOS = () => PLANOS.filter((x) => !x.legado && !x.emBreve)');
   return { ok: okPreco && okAnual && semPlano179Publico, detalhe: 'Equipe 129,90/5 vendedoras=' + okPreco + '; anual -5%=' + okAnual + '; Escala/Visão fora da oferta pública=' + semPlano179Publico };
 });
