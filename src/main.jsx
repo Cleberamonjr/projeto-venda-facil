@@ -1,6 +1,5 @@
 import React from "react";
 import * as Sentry from "@sentry/react";
-import { BrowserTracing } from "@sentry/tracing";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import { linkSuporte } from "./contato.js";
@@ -11,24 +10,22 @@ import { slugDaUrl } from "./lona/util.js";
    sem app, sem instalar, sem faixa de "versão nova" e sem registrar o aplicativo no aparelho dela. */
 
 // ============================================================
-// SENTRY ERROR MONITORING
+// SENTRY (monitoramento de erros)
+// Só liga quando existe uma chave REAL em VITE_SENTRY_DSN (Cloudflare Pages > Variáveis do build).
+// Sem chave nada é enviado. Nunca enviamos dados pessoais (nome/telefone das clientes) por padrão.
 // ============================================================
-Sentry.init({
-  dsn: "https://a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0@ingest.sentry.io/7654321",  // DSN de teste — Substituir quando tiver conta Sentry real
-  integrations: [new BrowserTracing()],
-  tracesSampleRate: 0.1,  // Rastrear 10% das transações
-  release: "luxi-1.0.0",
-  environment: "production",
-  logErrors: true,
-  debug: false,
-  // Ignorar erros comuns que não importam
-  ignoreErrors: [
-    'top.GLOBALS',
-    'NetworkError',
-    'TimeoutError',
-    'cancelled',
-  ],
-});
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+if (SENTRY_DSN && /^https:\/\/[^@\s]+@[^/\s]+\/\d+$/.test(SENTRY_DSN)) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    integrations: [Sentry.browserTracingIntegration()],
+    tracesSampleRate: 0.1,
+    release: "luxi-1.0.0",
+    environment: "production",
+    sendDefaultPii: false,
+    ignoreErrors: ["top.GLOBALS", "NetworkError", "TimeoutError", "cancelled"],
+  });
+}
 
 const slugLona = slugDaUrl(window.location.search);
 
