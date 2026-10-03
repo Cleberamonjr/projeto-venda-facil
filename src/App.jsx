@@ -872,14 +872,14 @@ const PLANOS = [
     valor: 129.9,
     limite: 3000,
     leituras: 100,
-    consultoras: 3,
+    consultoras: 5,
     selo: "Para crescer com clareza",
     linha: "Quando o negócio cresce, a clareza devolve seu tempo.",
     herda: "Solo",
     itens: [
       "Tudo do Solo, para até 3.000 códigos",
       "Equipe: o que está com cada pessoa e até quando",
-      "3 consultoras com comissão e vendas separadas",
+      "Até 5 vendedoras com comissão e vendas separadas",
       "Conselheiro de negócio com ações práticas",
       "Assistente de recompra",
       "100 romaneios lidos por foto, todo mês",
@@ -1997,6 +1997,21 @@ export default function OrganizeJewelry() {
       ];
   const temEquipe = !ehConsultora && ["crescimento", "joalheria", "inteligencia"].includes(planoAtivo(d.perfil).id);
 
+  const acessoLiberado = d.perfil?.mestre || d.perfil?.assinado || emTeste(d.perfil);
+  if (!acessoLiberado) {
+    return (
+      <AcessoEncerrado
+        perfil={d.perfil}
+        sair={async () => {
+          try { await dados.auth.sair(); } catch (e) { console.error("Falha ao sair", e); }
+          setContaLogada(false);
+          setD(VAZIO);
+          setTela("login");
+        }}
+      />
+    );
+  }
+
   return (
     <div className="oj" data-theme={tema}>
       <style>{CSS}</style>
@@ -2415,8 +2430,26 @@ function CampoSenha({ label, valor, onChange, onEnter, placeholder, autoComplete
 }
 
 /* ---------------- cartão de plano ---------------- */
-function CartaoPlano({ p, escolhido, aoEscolher, atual, botao }) {
+function precoAnual(p) {
+  const mensal = Number(p.valor) || 0;
+  const total = mensal * 12 * 0.95;
+  return { mensalEquiv: total / 12, total };
+}
+function dinheiroPlano(v) {
+  return Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function SeletorCobranca({ valor, onChange }) {
+  return (
+    <div style={{ display:"flex", gap:8, padding:"0 20px", margin:"0 0 14px" }} role="group" aria-label="Periodicidade da assinatura">
+      <button type="button" className="oj-chip" data-on={valor === "mensal" ? "1" : "0"} onClick={() => onChange("mensal")} style={{ flex:1 }}>Mensal</button>
+      <button type="button" className="oj-chip" data-on={valor === "anual" ? "1" : "0"} onClick={() => onChange("anual")} style={{ flex:1 }}>Anual · 5% off</button>
+    </div>
+  );
+}
+function CartaoPlano({ p, escolhido, aoEscolher, atual, botao, periodo = "mensal" }) {
   const [tudo, setTudo] = useState(false);
+  const anual = periodo === "anual";
+  const preco = anual ? precoAnual(p) : null;
   if (p.emBreve) return (
     <div className="oj-plano" style={{ opacity:.65, position:"relative" }}>
       <div style={{ position:"absolute", top:12, right:12, background:"var(--rose)", color:"#fff",
@@ -2424,7 +2457,7 @@ function CartaoPlano({ p, escolhido, aoEscolher, atual, botao }) {
         EM BREVE
       </div>
       <div className="oj-lbl">{p.nome}</div>
-      <div className="oj-valor">R$ {p.preco}<span style={{fontSize:13}}>/mês</span></div>
+      <div className="oj-valor">{anual ? <>R$ {dinheiroPlano(preco.total)}<span style={{fontSize:13}}>/ano</span></> : <>R$ {p.preco}<span style={{fontSize:13}}>/mês</span></>}</div>
       <div className="oj-meta" style={{marginTop:6}}>{p.descricao}</div>
       <button className="oj-btn" disabled style={{marginTop:12,opacity:.5,cursor:"not-allowed"}}>
         Disponível em breve
@@ -2448,12 +2481,12 @@ function CartaoPlano({ p, escolhido, aoEscolher, atual, botao }) {
       <div className="topo" style={{ marginTop: 4 }}>
         <span className="nome">{p.nome}</span>
         <span className="preco">
-          R$ {p.preco}
-          <small> /mês</small>
+          {anual ? <>R$ {dinheiroPlano(preco.total)}<small> /ano</small></> : <>R$ {p.preco}<small> /mês</small></>}
         </span>
       </div>
 
       <div className="maturidade">{p.maturidade}</div>
+      {anual && <div className="oj-meta" style={{ marginTop: 5 }}>Equivale a R$ {dinheiroPlano(preco.mensalEquiv)}/mês · 5% de desconto no ano</div>}
 
       <div className="capacidade">
         <div>
@@ -2986,6 +3019,7 @@ function AceitarConvite({ criarConta, entrarConta, aceitar, cancelar, erroInicia
 /* Página de vendas isolada, chamada a partir do login */
 function Vitrine({ voltar }) {
   const [plano, setPlano] = useState("crescimento");
+  const [periodoPlano, setPeriodoPlano] = useState("mensal");
   const p = PLANOS.find((x) => x.id === plano);
   return (
     <div style={{ padding: "40px 24px" }} className="oja">
@@ -3003,6 +3037,7 @@ function Vitrine({ voltar }) {
       <div className="oj-sec" style={{ margin: "28px 0 12px" }}>
         Escolha seu plano
       </div>
+      <SeletorCobranca valor={periodoPlano} onChange={setPeriodoPlano} />
 
       {PLANO_PUBLICOS().map((x) => (
         <CartaoPlano
@@ -3010,11 +3045,12 @@ function Vitrine({ voltar }) {
           p={x}
           escolhido={plano === x.id}
           aoEscolher={() => setPlano(x.id)}
+          periodo={periodoPlano}
         />
       ))}
 
       <button className="oj-btn" style={{ marginTop: 12 }} onClick={voltar}>
-        Assinar o {p.nome} · R$ {p.preco}
+        Assinar o {p.nome} · {periodoPlano === "anual" ? `R$ ${dinheiroPlano(precoAnual(p).total)}/ano` : `R$ ${p.preco}/mês`}
       </button>
       <button className="oj-btn sec" style={{ marginTop: 8 }} onClick={voltar}>
         Voltar para o login
@@ -4029,6 +4065,7 @@ function CadastroLegado({ onPronto, onMestre, contaLogada, criarConta, tentarEnt
   const [cupomTxt, setCupomTxt] = useState("");
   const [cupom, setCupom] = useState(null);
   const [cupomErro, setCupomErro] = useState("");
+  const [periodoPlano, setPeriodoPlano] = useState("mensal");
   // Cliente beta: mostra os dias reais liberados (em vez do "72h" padrão).
   const [beta, setBeta] = useState(null);
   useEffect(() => {
@@ -4122,10 +4159,9 @@ function CadastroLegado({ onPronto, onMestre, contaLogada, criarConta, tentarEnt
         <div className="oj-sec" style={{ margin: "30px 0 4px" }}>
           Escolha seu plano
         </div>
+        <SeletorCobranca valor={periodoPlano} onChange={setPeriodoPlano} />
         <div className="oj-meta" style={{ marginBottom: 12 }}>
-          72 horas com tudo liberado, sem cartão. Depois, se você não assinar, sua conta
-          continua aberta no plano Livre — até 10 códigos, sem perder nada do que já
-          cadastrou.
+          72 horas com tudo liberado, sem cartão. Depois, seus dados continuam guardados, mas o uso da loja fica pausado até você assinar um dos planos.
         </div>
 
         {PLANO_PUBLICOS().map((x) => (          <div
@@ -4141,8 +4177,7 @@ function CadastroLegado({ onPronto, onMestre, contaLogada, criarConta, tentarEnt
             <div className="topo">
               <span className="nome">{x.nome}</span>
               <span className="preco">
-                R$ {x.preco}
-                <small> /mês</small>
+                {periodoPlano === "anual" ? <>R$ {dinheiroPlano(precoAnual(x).total)}<small> /ano</small></> : <>R$ {x.preco}<small> /mês</small></>}
               </span>
             </div>
             {x.persona && (
@@ -4505,9 +4540,49 @@ function CadastroLegado({ onPronto, onMestre, contaLogada, criarConta, tentarEnt
         <div className="oj-meta" style={{ textAlign: "center", marginTop: 14 }}>
           {beta
             ? `Beta liberado por ${diasBeta} dias · sem cartão`
-            : `${plano.nome} liberado por 72 horas · R$ ${plano.preco}/mês só se você continuar`}
+            : `${plano.nome} liberado por 72 horas · depois, escolha um dos planos para continuar`}
         </div>
       )}
+    </div>
+  );
+}
+
+function AcessoEncerrado({ perfil, sair }) {
+  const [periodo, setPeriodo] = useState("mensal");
+  return (
+    <div className="oj">
+      <style>{CSS}</style>
+      <div style={{ padding: "44px 20px 36px" }}>
+        <Marca size={62} animar={false} />
+        <div className="oj-marca" style={{ marginTop: 16 }}><b>Luxi</b></div>
+        <h1 className="oj-h1 oj-serif" style={{ fontSize: 34, marginTop: 14 }}>Seu período de teste terminou</h1>
+        <p className="oj-sub" style={{ marginTop: 10, fontSize: 15, lineHeight: 1.6 }}>
+          Seus dados continuam guardados. Para voltar a usar a loja, escolha um dos planos abaixo e faça a assinatura.
+        </p>
+        <div className="oj-card flat" style={{ margin: "20px 0 16px" }}>
+          <div className="oj-lbl">Sua loja está preservada</div>
+          <div className="oj-meta" style={{ marginTop: 8, lineHeight: 1.6 }}>
+            Nenhum produto, venda, cliente ou pedido é apagado pelo fim do teste ou por uma atualização do Luxi.
+          </div>
+        </div>
+        <SeletorCobranca valor={periodo} onChange={setPeriodo} />
+        {PLANO_PUBLICOS().map((p) => (
+          <CartaoPlano key={p.id} p={p} escolhido={false} periodo={periodo}
+            botao={
+              <button className="oj-btn" style={{ marginTop: 12 }} onClick={() => {
+                const link = LINKS_PAGAMENTO[p.id];
+                if (link) window.open(link, "_blank", "noopener");
+                else if (WHATSAPP_SUPORTE) window.open(linkSuporte("Oi! Quero assinar o plano " + p.nome + " da Luxi."), "_blank", "noopener");
+              }}>
+                {periodo === "anual"
+                  ? "Assinar " + p.nome + " · R$ " + dinheiroPlano(precoAnual(p).total) + "/ano"
+                  : "Assinar " + p.nome + " · R$ " + p.preco + "/mês"}
+              </button>
+            }
+          />
+        ))}
+        <button className="oj-btn sec" style={{ marginTop: 8 }} onClick={sair}>Sair</button>
+      </div>
     </div>
   );
 }
@@ -7499,6 +7574,7 @@ function Perfil({ d, salvar, irPara, tema, setTema }) {
   const set = (campo, v) => salvar({ ...d, perfil: { ...p, [campo]: v } });
 
   const [pagando, setPagando] = useState(null); // plano em processo de pagamento
+  const [periodoPlano, setPeriodoPlano] = useState("mensal");
   const [novaSenha, setNovaSenha] = useState("");
   const [repetirSenha, setRepetirSenha] = useState("");
   const [senhaMsg, setSenhaMsg] = useState("");
@@ -7669,7 +7745,7 @@ function Perfil({ d, salvar, irPara, tema, setTema }) {
             {plano.nome}
             {emTeste(p) && !p.assinado ? ` · teste, ${horasRestantes(p)}h` : ""}
           </span>
-          <b style={{ marginLeft: "auto" }}>R$ {plano.preco}/mês</b>
+          <b style={{ marginLeft: "auto" }}>{plano.emBreve ? "Plano em breve" : <>R$ {plano.preco}/mês</>}</b>
         </div>
         {plano.limite !== Infinity && (
           <>
@@ -7684,12 +7760,14 @@ function Perfil({ d, salvar, irPara, tema, setTema }) {
       </div>
 
       <div className="oj-sec">Mudar de plano</div>
+      <SeletorCobranca valor={periodoPlano} onChange={setPeriodoPlano} />
       <div style={{ padding: "0 20px" }}>
         {PLANO_PUBLICOS().map((x) => (
           <CartaoPlano
             key={x.id}
             p={x}
             atual={plano.id === x.id}
+            periodo={periodoPlano}
             botao={
               <button
                 className="oj-btn"
