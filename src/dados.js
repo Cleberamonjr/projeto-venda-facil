@@ -1029,3 +1029,23 @@ export async function enviarCapaLona(lojaId, consultoraId, blob) {
   if (error) throw error;
   return sb.storage.from("logos").getPublicUrl(caminho).data.publicUrl;
 }
+
+/* foto de uma peça que JÁ está no estoque (ex.: veio de romaneio, sem foto).
+   Diferente do cadastro, aqui o erro de envio NÃO é engolido: a pessoa precisa saber por que a peça segue sem foto. */
+export async function adicionarFotoPeca(lojaId, peca, blob) {
+  const nome = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2);
+  const caminho = `${lojaId}/${nome}.jpg`;
+  const { error: e1 } = await sb.storage.from(BUCKET_FOTOS).upload(caminho, blob, { contentType: "image/jpeg", cacheControl: "31536000" });
+  if (e1) {
+    const m = String(e1.message || "");
+    if (String(e1.statusCode) === "403" || /row-level|policy|unauthorized|permission/i.test(m))
+      throw new Error("Sem permissão para enviar foto. Entre com a conta da dona da loja, com o plano em dia.");
+    if (/exceed|too large|payload/i.test(m)) throw new Error("A foto ficou grande demais. Tire outra ou escolha uma menor.");
+    throw new Error("Não consegui enviar a foto. Confira a internet e tente de novo.");
+  }
+  const url = sb.storage.from(BUCKET_FOTOS).getPublicUrl(caminho).data.publicUrl;
+  const fotos = [url, ...(peca.fotos || []).filter((f) => typeof f === "string" && f)].slice(0, 4);
+  const { error: e2 } = await sb.from("pecas").update({ fotos }).eq("id", peca.id);
+  if (e2) throw new Error("A foto subiu, mas não consegui ligá-la à peça. Tente de novo.");
+  return url;
+}

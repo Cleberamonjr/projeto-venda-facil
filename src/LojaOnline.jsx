@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as dados from "./dados.js";
 import { novoItem, normalizar } from "./Lona.jsx";
-import { fotoUsavel, hrefWhats, linkDaLona, soDigitos } from "./lona/util.js";
+import { comprimirParaBlob, fotoUsavel, hrefWhats, linkDaLona, soDigitos } from "./lona/util.js";
 import "./lona/editor.css";
 
 const erroTexto = (e) => (e && e.message) || "Não deu certo. Tente de novo.";
@@ -24,6 +24,20 @@ export default function LojaOnline({ d, irPara, recarregar, Avulso }) {
   const [zap, setZap] = useState(soDigitos(d.perfil && d.perfil.whatsapp).slice(-11));
   const [zapCliente, setZapCliente] = useState("");
   const [texto, setTexto] = useState("");
+  const [fotografando, setFotografando] = useState("");
+
+  // fotografar uma peça que já está no estoque sem foto (a foto é o que a coloca na loja)
+  const adicionarFoto = async (p, file) => {
+    if (!file) return;
+    setFotografando(p.id); setAviso(null);
+    try {
+      const blob = await comprimirParaBlob(file, 900, 0.72); // o armazenamento aceita até 1 MB por foto
+      await dados.adicionarFotoPeca(lojaId, p, blob);
+      if (recarregar) await recarregar();
+      setAviso({ tipo: "ok", texto: `Foto de ${p.nome || p.codigo} salva. A peça já pode aparecer na loja.` });
+    } catch (e) { setAviso({ tipo: "erro", texto: erroTexto(e) }); }
+    setFotografando("");
+  };
 
   const elegiveis = useMemo(() => (d.estoque || []).filter((p) => !p.arquivada && p.qtd > 0), [d.estoque]);
 
@@ -140,6 +154,31 @@ export default function LojaOnline({ d, irPara, recarregar, Avulso }) {
         )}
       </div>
 
+      {semFoto.length > 0 ? (
+        <div className="oj-card">
+          <div className="oj-sec" style={{ margin: "0 0 4px", fontSize: 18 }}>Peças sem foto ({semFoto.length})</div>
+          <div className="oj-meta">Na loja on-line, peça sem foto não aparece. A foto é o que põe a peça à venda.</div>
+          {!ehConsultora ? (
+              <div>
+                {semFoto.slice(0, 8).map((p) => (
+                  <div key={p.id} className="oj-item">
+                    <div className="oj-quebra" style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600 }}>{p.nome || p.codigo}</div>
+                      <div className="oj-meta">{p.codigo} · {p.qtd} em estoque</div>
+                    </div>
+                    <label className="oj-bt lona-ed-arquivo" aria-label={`Adicionar foto de ${p.nome || p.codigo}`}>
+                      {fotografando === p.id ? "Enviando…" : "Adicionar foto"}
+                      <input type="file" accept="image/*" disabled={!!fotografando} onChange={(e) => { adicionarFoto(p, e.target.files && e.target.files[0]); e.target.value = ""; }} />
+                    </label>
+                  </div>
+                ))}
+                {semFoto.length > 8 ? <div className="oj-meta">E mais {semFoto.length - 8}. Depois que estas entrarem, a lista avança.</div> : null}
+              </div>
+            ) : null}
+          {ehConsultora ? <div className="oj-meta" style={{ marginTop: 8 }}>Peça para a dona da loja fotografar estas peças.</div> : null}
+        </div>
+      ) : null}
+
       {noAr ? (
         <>
           <div className="oj-card">
@@ -163,7 +202,7 @@ export default function LojaOnline({ d, irPara, recarregar, Avulso }) {
             <div className="oj-linha"><b>{visiveis.length}</b> {visiveis.length === 1 ? "peça" : "peças"} à venda na loja on-line</div>
             <div className="oj-linha"><b>{abertos}</b> {abertos === 1 ? "pedido" : "pedidos"} para você tratar</div>
             {semFoto.length > 0 ? (
-              <div className="oj-linha lona-ed-alerta">{semFoto.length} {semFoto.length === 1 ? "peça está" : "peças estão"} sem foto e <b>não aparece{semFoto.length === 1 ? "" : "m"} na loja</b>. Fotografe no Estoque para entrar{semFoto.length === 1 ? "" : "em"}.</div>
+              <div className="oj-linha lona-ed-alerta">{semFoto.length} {semFoto.length === 1 ? "peça está" : "peças estão"} sem foto e <b>não aparece{semFoto.length === 1 ? "" : "m"} na loja</b>. Fotografe para entrar{semFoto.length === 1 ? "" : "em"}.</div>
             ) : null}
             {novas.length > 0 ? (
               <>

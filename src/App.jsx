@@ -803,6 +803,10 @@ const ACABAMENTOS = [
   "Esmaltada", "Orgânica", "Minimalista", "Maximalista",
 ];
 const TAMANHOS = ["—", "35cm", "40cm", "45cm", "50cm", "60cm", "70cm", "16cm", "18cm", "20cm", "25cm"];
+/* o que o robô do romaneio devolve só vale se casar com as opções do app (sem diferença de acento/maiúscula) */
+const _chaveOpc = (s) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "");
+const casarOpcao = (v, lista) => { const k = _chaveOpc(v); return k ? (lista.find((o) => _chaveOpc(o) === k) || "") : ""; };
+const precoComMargem = (custo, margem) => Math.round(Number(custo || 0) * (1 + Number(margem || 0) / 100) * 100) / 100;
 
 /* Motivos de saída de peça que não é venda */
 const MOTIVOS_SAIDA = ["Devolução", "Troca", "Defeito", "Garantia", "Cortesia"];
@@ -5989,7 +5993,13 @@ function Romaneio({ d, recarregar, criarColecao, fechar }) {
           id: id(),
           qtd: Number(x.qtd) || 0,
           custo: Number(x.custo) || 0,
-          venda: 0,
+          banho: casarOpcao(x.banho, BANHOS),
+          pedra: casarOpcao(x.pedra, PEDRAS),
+          acabamento: casarOpcao(x.acabamento, ACABAMENTOS),
+          tamanho: casarOpcao(x.tamanho, TAMANHOS),
+          // o preço de venda já nasce calculado com a margem do fornecedor (ajusta-se à mão, peça a peça)
+          venda: precoComMargem(Number(x.custo) || 0, margem),
+          vendaAuto: true,
           revisar:
             x.revisar ?? (!x.codigo || !Number(x.qtd) || !Number(x.custo)),
         }))
@@ -6009,15 +6019,25 @@ function Romaneio({ d, recarregar, criarColecao, fechar }) {
     setItens(
       itens.map((i) => ({
         ...i,
-        venda: Math.round(i.custo * (1 + Number(margem) / 100) * 100) / 100,
+        venda: precoComMargem(i.custo, margem),
+        vendaAuto: true,
       }))
     );
 
+  // mexer no custo recalcula a venda enquanto ela ainda é a calculada; editar a venda à mão trava o valor
   const edit = (iid, campo, v) =>
-    setItens(itens.map((i) => (i.id === iid ? { ...i, [campo]: v } : i)));
+    setItens(
+      itens.map((i) => {
+        if (i.id !== iid) return i;
+        const novo = { ...i, [campo]: v };
+        if (campo === "custo" && i.vendaAuto) novo.venda = precoComMargem(v, margem);
+        if (campo === "venda") novo.vendaAuto = false;
+        return novo;
+      })
+    );
 
   const manual = () => {
-    setItens([{ id: id(), codigo: "", nome: "", qtd: 1, custo: 0, venda: 0, revisar: true }]);
+    setItens([{ id: id(), codigo: "", nome: "", qtd: 1, custo: 0, venda: 0, vendaAuto: true, revisar: true }]);
     setEtapa("conferencia");
   };
 
@@ -6168,7 +6188,6 @@ function Romaneio({ d, recarregar, criarColecao, fechar }) {
               ref={inputRef}
               type="file"
               accept="image/*,application/pdf"
-              capture="environment"
               style={{ display: "none" }}
               onChange={(e) => e.target.files[0] && ler(e.target.files[0])}
             />
@@ -6297,6 +6316,10 @@ function Romaneio({ d, recarregar, criarColecao, fechar }) {
               </div>
             </div>
 
+            <div className="oj-meta" style={{ margin: "0 0 10px" }}>
+              O preço de venda já vem calculado com a margem de {margem}% do fornecedor. Mude a margem acima e aplique de novo, ou ajuste peça a peça.
+              Banho, pedra, modelo e tamanho só vêm preenchidos quando o romaneio diz com clareza; confira antes de confirmar.
+            </div>
             {itens.map((i) => (
               <div className="oj-card" key={i.id} style={{ margin: "0 0 10px" }}>
                 {i.revisar && (
@@ -6414,7 +6437,9 @@ function Romaneio({ d, recarregar, criarColecao, fechar }) {
                     ))}
                   </div>
                   <div className="oj-meta" style={{ margin: "6px 0 12px" }}>
-                    A primeira foto é a que aparece no catálogo.
+                    {(i.fotos || []).length
+                      ? "A primeira foto é a que aparece na loja on-line."
+                      : "Sem foto, esta peça não aparece na loja on-line. Você pode fotografar depois, em Editar loja."}
                   </div>
                   {[
                     ["banho", "Banho", BANHOS],

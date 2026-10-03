@@ -37,9 +37,13 @@ def contexto(browser, vp, papel, st):
         if request.method == "OPTIONS": return route.fulfill(status=204, headers=cab)
         if caminho.startswith("/storage/v1/object/public/"): return route.fulfill(status=200, headers={**cab, "content-type": "image/jpeg"}, body=JPG)
         if caminho.startswith("/storage/v1/object/") and request.method == "POST":
+            if st.get("storage_403"): return j({"statusCode": "403", "error": "Unauthorized", "message": "new row violates row-level security policy"}, 403)
             st["envios"].append(caminho); return j({"Key": caminho})
         if caminho.startswith("/auth/v1/user"): return j(USUARIO)
         if caminho.startswith("/auth/v1/"): return j({})
+        if caminho.startswith("/functions/v1/ler-romaneio"):
+            st["leituras"] = st.get("leituras", 0) + 1
+            return j(st.get("romaneio", {"erro": "sem simulação"}))
         m = re.match(r"/rest/v1/rpc/([a-z_]+)", caminho)
         if m:
             n = m.group(1); corpo = json.loads(request.post_data or "{}") if request.post_data else {}
@@ -67,7 +71,9 @@ def contexto(browser, vp, papel, st):
             return j(None)
         m = re.match(r"/rest/v1/([a-z_]+)", caminho)
         if m:
-            if request.method in ("POST", "PATCH", "DELETE"): return route.fulfill(status=201, headers=cab, body="")
+            if request.method in ("POST", "PATCH", "DELETE"):
+                st.setdefault("gravacoes", []).append((request.method, caminho, request.post_data))
+                return route.fulfill(status=201, headers={**cab, "content-type": "application/json"}, body=json.dumps({"id": "novo-1"}))
             q = request.url
             if papel == "consultora" and m.group(1) == "lojas" and "dona_id=eq" in q: return j([])
             if m.group(1) == "consultoras" and "usuario_id=eq" in q: return j([c for c in tabelas["consultoras"] if c.get("usuario_id") == "u1"] if papel == "consultora" else [])

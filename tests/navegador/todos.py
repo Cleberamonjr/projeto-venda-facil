@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
-import editor, csp, login, suporte, painel_celular, lona_publica, lona_editor, lona_tema, loja_online
+import editor, csp, login, suporte, painel_celular, lona_publica, lona_editor, lona_tema, romaneio, loja_online
 falhas = editor.rodar(salvar_fotos=False)
 print("\n--- política de segurança (BLOQUEANDO) ---")
 ruim = csp.relatar(csp.rodar(csp.politica_completa()))
