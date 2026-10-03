@@ -121,8 +121,9 @@ declare
   v_a public.maleta_acertos;
   v_i record;
   v_v record;
+  v_sold integer;
   v_total integer;
-  v_n integer;
+  v_unit integer;
 begin
   if not public.maleta_pode_gerir(p_maleta) then
     raise exception 'Sem permissão' using errcode = 'LX403';
@@ -137,50 +138,45 @@ begin
     values(v_m.id,v_m.loja_id,v_m.consultora_id)
     returning * into v_a;
 
-    -- As vendas antigas desta maleta já são consideradas vendidas.
-    -- As unidades ainda em maleta continuam pendentes.
-    for v_i in
-      select * from public.maleta_itens where maleta_id = p_maleta order by codigo, id
-    loop
-      v_total := greatest(0, coalesce(v_i.qtd,0));
-      select coalesce(sum(v.qtd),0) into v_n
+    for v_i in select * from public.maleta_itens where maleta_id=p_maleta order by codigo,id loop
+      select coalesce(sum(v.qtd),0) into v_sold
         from public.vendas v
-       where v.loja_id = v_m.loja_id
-         and v.consultora_id = v_m.consultora_id
-         and v.peca_id = v_i.peca_id
-         and v.maleta_id = p_maleta;
+       where v.loja_id=v_m.loja_id and v.consultora_id=v_m.consultora_id
+         and v.peca_id=v_i.peca_id and v.maleta_id=p_maleta
+         and v.cancelada_em is null;
 
-      -- Se uma venda foi lançada antes deste acerto, as unidades vendidas
-      -- entram primeiro no histórico e o restante fica pendente.
-      for v_n in 1..coalesce(v_n,0) loop
-        insert into public.maleta_acerto_itens(
-          acerto_id,maleta_item_id,unidade,estado,venda_id,codigo,nome,custo_centavos,venda_centavos,comissao_centavos
-        )
-        select v_a.id,v_i.id,v_n,'vendeu',v.id,v_i.codigo,v_i.nome,
-               round(v.custo_centavos / greatest(v.qtd,1.0)),
-               round(v.valor_centavos / greatest(v.qtd,1.0)),
-               round(coalesce(v.comissao_centavos,0) / greatest(v.qtd,1.0))
-          from public.vendas v
-         where v.id = (
-           select vv.id
-             from public.vendas vv
-            where vv.loja_id=v_m.loja_id and vv.consultora_id=v_m.consultora_id
-              and vv.peca_id=v_i.peca_id and vv.maleta_id=p_maleta
-              and not exists(select 1 from public.maleta_acerto_itens z where z.venda_id=vv.id)
-            order by vv.vendida_em, vv.id
-            limit 1
-         );
-      end loop;
+      v_total := greatest(0,coalesce(v_i.qtd,0)) + coalesce(v_sold,0);
 
-      -- Cada unidade que ainda está na maleta vira uma linha própria.
-      select count(*) into v_n from public.maleta_acerto_itens where acerto_id=v_a.id and maleta_item_id=v_i.id;
-      for v_total in (v_n + 1)..(v_n + coalesce(v_i.qtd,0)) loop
+      for v_unit in 1..v_total loop
         insert into public.maleta_acerto_itens(
           acerto_id,maleta_item_id,unidade,estado,codigo,nome,custo_centavos,venda_centavos
-        ) values (
-          v_a.id,v_i.id,v_total,'pendente',v_i.codigo,v_i.nome,
+        ) values(
+          v_a.id,v_i.id,v_unit,'pendente',v_i.codigo,v_i.nome,
           v_i.custo_centavos,v_i.venda_centavos
         );
+      end loop;
+
+      -- Reaproveita as vendas que já existem, respeitando a comissão
+      -- registrada no dia da venda. Uma venda de 2 unidades ocupa 2 linhas.
+      for v_v in
+        select * from public.vendas v
+         where v.loja_id=v_m.loja_id and v.consultora_id=v_m.consultora_id
+           and v.peca_id=v_i.peca_id and v.maleta_id=p_maleta
+           and v.cancelada_em is null
+         order by v.vendida_em,v.id
+      loop
+        for v_unit in 1..greatest(0,v_v.qtd) loop
+          update public.maleta_acerto_itens x
+             set estado='vendeu',venda_id=v_v.id,
+                 venda_centavos=round(v_v.valor_centavos/greatest(v_v.qtd,1.0)),
+                 custo_centavos=round(v_v.custo_centavos/greatest(v_v.qtd,1.0)),
+                 comissao_centavos=round(coalesce(v_v.comissao_centavos,0)/greatest(v_v.qtd,1.0)),
+                 atualizado_em=now()
+           where x.id=(
+             select y.id from public.maleta_acerto_itens y
+              where y.acerto_id=v_a.id and y.maleta_item_id=v_i.id and y.estado='pendente'
+              order by y.unidade limit 1);
+        end loop;
       end loop;
     end loop;
   end if;
