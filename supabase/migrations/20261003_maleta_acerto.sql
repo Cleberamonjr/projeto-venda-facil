@@ -51,6 +51,34 @@ create index if not exists maleta_acerto_itens_acerto_idx on public.maleta_acert
 create index if not exists maleta_acerto_itens_venda_idx on public.maleta_acerto_itens(venda_id);
 
 alter table public.maleta_acertos enable row level security;
+alter table public.vendas add column if not exists cancelada_em timestamptz;
+alter table public.vendas add column if not exists cancelada_por uuid;
+alter table public.vendas add column if not exists cancelada_motivo text;
+
+create table if not exists public.contas_receber (
+  id uuid primary key default gen_random_uuid(),
+  loja_id uuid not null references public.lojas(id) on delete cascade,
+  consultora_id uuid references public.consultoras(id) on delete set null,
+  origem text not null default 'maleta_acerto',
+  referencia_id uuid references public.maleta_acertos(id) on delete set null,
+  nome text not null,
+  valor_centavos integer not null check (valor_centavos >= 0),
+  vencimento date not null,
+  status text not null default 'aberta' check (status in ('aberta','recebida','cancelada')),
+  recebido_em timestamptz,
+  criado_em timestamptz not null default now(),
+  atualizado_em timestamptz not null default now()
+);
+create unique index if not exists contas_receber_ref_idx on public.contas_receber(referencia_id) where referencia_id is not null;
+create index if not exists contas_receber_loja_idx on public.contas_receber(loja_id,status,vencimento);
+alter table public.contas_receber enable row level security;
+revoke all on table public.contas_receber from public,anon,authenticated;
+create policy contas_receber_select on public.contas_receber for select to authenticated
+using (privado.minha_loja(loja_id));
+create policy contas_receber_update on public.contas_receber for update to authenticated
+using (privado.pode_escrever(loja_id))
+with check (privado.pode_escrever(loja_id));
+grant select, update on public.contas_receber to authenticated;
 alter table public.maleta_acerto_itens enable row level security;
 revoke all on table public.maleta_acertos, public.maleta_acerto_itens from public, anon, authenticated;
 
@@ -86,7 +114,7 @@ $f$;
 
 create or replace function public.maleta_acerto_dados(p_maleta uuid)
 returns jsonb
-language plpgsql stable security definer set search_path = public
+language plpgsql volatile security definer set search_path = public
 as $f$
 declare
   v_m public.maletas;
@@ -222,8 +250,8 @@ begin
     if not found then raise exception 'Peça do acerto não encontrada' using errcode='LX404'; end if;
   end loop;
 
-  v_owner := public.minha_loja(v_m.loja_id);
-  v_cons := public.minha_consultoria(v_m.loja_id) = v_m.consultora_id;
+  v_owner := privado.minha_loja(v_m.loja_id);
+  v_cons := privado.minha_consultoria(v_m.loja_id) = v_m.consultora_id;
 
   if p_acerto_junto and not v_owner then raise exception 'Só a dona pode marcar acerto feito junto' using errcode='LX403'; end if;
   if p_dona_confirmou and not v_owner then raise exception 'Só a dona pode confirmar' using errcode='LX403'; end if;
@@ -286,13 +314,24 @@ begin
 
   -- Só agora mexe no estoque: as peças estavam fora da loja desde a entrega.
   for v_i in select * from public.maleta_acerto_itens where acerto_id=v_a.id and estado='voltou' loop
-    update public.pecas set qtd=qtd+1 where id=v_i.maleta_item_id::uuid;
+    update public.pecas p
+       set qtd=qtd+1
+     where p.id=(select mi.peca_id from public.maleta_itens mi where mi.id=v_i.maleta_item_id);
   end loop;
 
   -- Garante que cada venda usada no acerto está vinculada à maleta.
   for v_i in select * from public.maleta_acerto_itens where acerto_id=v_a.id and estado='vendeu' loop
     update public.vendas set maleta_id=p_maleta where id=v_i.venda_id and maleta_id is null;
   end loop;
+
+  -- O repasse da consultora vira uma conta a receber com vencimento no dia do acerto.
+  if v_a.repasse_centavos > 0 then
+    insert into public.contas_receber(loja_id,consultora_id,referencia_id,nome,valor_centavos,vencimento)
+    values(v_m.loja_id,v_m.consultora_id,v_a.id,
+           'Repasse de ' || coalesce((select nome from public.consultoras where id=v_m.consultora_id),'consultora'),
+           v_a.repasse_centavos,current_date)
+    on conflict (referencia_id) do nothing;
+  end if;
 
   update public.maletas set status='fechada', fechada_em=now() where id=p_maleta;
   update public.maleta_acertos set status='fechado', fechado_em=now(), atualizado_em=now() where id=v_a.id;
@@ -340,13 +379,26 @@ begin
   if not found or v_a.status <> 'fechado' then raise exception 'Só é possível desfazer um acerto fechado' using errcode='LX422'; end if;
   -- Retira do estoque somente o que entrou por este acerto.
   for v_i in select * from public.maleta_acerto_itens where acerto_id=v_a.id and estado='voltou' loop
-    update public.pecas set qtd=greatest(0,qtd-1) where id=v_i.maleta_item_id::uuid;
+    update public.pecas p
+       set qtd=greatest(0,qtd-1)
+     where p.id=(select mi.peca_id from public.maleta_itens mi where mi.id=v_i.maleta_item_id);
   end loop;
-  -- As vendas do acerto deixam de valer. Mantemos a linha para histórico/auditoria.
-  -- A coluna de comissão vira zero para que o mês deixe de descontá-la.
+  -- Vendas registradas durante este acerto são estornadas explicitamente:
+  -- deixam de aparecer na operação e a unidade volta para a maleta.
   for v_i in select * from public.maleta_acerto_itens where acerto_id=v_a.id and estado='vendeu' and venda_id is not null loop
-    update public.vendas set comissao_centavos=0, maleta_id=null where id=v_i.venda_id;
+    update public.vendas
+       set cancelada_em=now(), cancelada_por=auth.uid(),
+           cancelada_motivo=left(btrim(coalesce(p_motivo,'Desfazer acerto')),500)
+     where id=v_i.venda_id
+       and maleta_id=p_maleta
+       and cancelada_em is null;
+    update public.maleta_itens mi
+       set qtd=qtd+1
+     where mi.id=v_i.maleta_item_id;
   end loop;
+  update public.contas_receber
+     set status='cancelada',atualizado_em=now()
+   where referencia_id=v_a.id and status='aberta';
   update public.maleta_acertos set status='desfeito',desfeito_em=now(),desfeito_por=auth.uid(),desfeito_motivo=left(btrim(coalesce(p_motivo,'')),500),atualizado_em=now() where id=v_a.id;
   update public.maletas set status='aberta',fechada_em=null where id=p_maleta;
   return jsonb_build_object('ok',true,'reaberta',true);
