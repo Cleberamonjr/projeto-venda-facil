@@ -4,6 +4,7 @@ import * as dados from "./dados.js";
 import Lona from "./Lona.jsx";
 import LojaOnline from "./LojaOnline.jsx";
 import { WHATSAPP_SUPORTE, linkSuporte } from "./contato.js";
+import { Cadastro as CadastroNovo, OnboardingOperacional, ProximoPasso } from "./OnboardingLuxi.jsx";
 
 /* ============================================================
    ORGANIZE JEWELRY — v1
@@ -561,6 +562,16 @@ const CSS = `
   cursor:pointer;text-align:left;
 }
 .oj-menu button[data-ativo="1"]{background:var(--rose-cl);color:var(--rose-esc);font-weight:600}
+.oj-menu .oj-grupo-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:11px 12px;margin:2px 0 0;border:0;border-radius:10px;background:transparent;color:var(--tinta);font:inherit;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;text-align:left}
+.oj-menu .oj-grupo-btn:hover,.oj-menu .oj-grupo-btn:focus-visible{background:var(--rose-cl);color:var(--rose-esc)}
+.oj-menu .oj-grupo-btn[aria-expanded="true"]{color:var(--rose-esc)}
+.oj-menu .oj-grupo-chevron{font-size:15px;letter-spacing:0;line-height:1;transition:transform .18s ease;color:var(--tinta-cl)}
+.oj-menu .oj-grupo-btn[aria-expanded="true"] .oj-grupo-chevron{transform:rotate(180deg)}
+.oj-menu .oj-grupo-itens{overflow:hidden;padding-bottom:2px}
+.oj-menu .oj-grupo-itens .oj-menu-item{min-height:44px;padding-top:8px;padding-bottom:8px}
+.oj-menu .oj-grupo-itens .oj-menu-item small{font-size:10.5px}
+.oj-menu .oj-menu-ajuda{border-top:1px solid var(--linha);margin:7px 8px 0;padding-top:7px}
+.oj-menu .oj-tour-menu{color:var(--rose-esc)}
 .oj-hamb{background:none;border:none;padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:4px;margin-right:2px}
 .oj-hamb span{display:block;width:19px;height:2px;border-radius:2px;background:var(--tinta)}
 /* atalhos rápidos do cabeçalho — agilidade no dia a dia */
@@ -1175,6 +1186,8 @@ export default function OrganizeJewelry() {
   const [saindo, setSaindo] = useState(false);
   const [trocando, setTrocando] = useState(false);
   const [menu, setMenu] = useState(false);
+  // Accordion do menu: grupos visíveis, conteúdo sob demanda.
+  const [menuGrupo, setMenuGrupo] = useState("Dia a dia");
   // PWA: captura o evento de instalação para oferecer "baixar app"
   const [instalavel, setInstalavel] = useState(null);
   useEffect(() => {
@@ -1268,6 +1281,7 @@ export default function OrganizeJewelry() {
   const [ate, setAte] = useState("");
   // true = existe sessão Supabase válida (mesmo que ainda sem loja criada)
   const [contaLogada, setContaLogada] = useState(false);
+  const [onboardingOperacional, setOnboardingOperacional] = useState(false);
 
   /* Convite de consultora: chega como ?convite=CODIGO num link de
      WhatsApp. Fica guardado até ser aceito (ou cancelado) — depois de
@@ -1776,7 +1790,7 @@ export default function OrganizeJewelry() {
     return (
       <div className="oj">
         <style>{CSS}</style>
-        <Cadastro
+        <CadastroNovo
           contaLogada={contaLogada}
           criarConta={async (email, senha) => {
             await dados.auth.cadastrar(email, senha);
@@ -1803,8 +1817,16 @@ export default function OrganizeJewelry() {
               plano: perfil.plano,
               dona: perfil.nome,
             });
-            await recarregar();
+            const estCriada = await recarregar();
             setTela("app");
+            if (estCriada?.lojaId) {
+              try {
+                const concluido = localStorage.getItem("luxi:onboarding:v1:" + estCriada.lojaId) === "1";
+                setOnboardingOperacional(!concluido);
+              } catch (_) {
+                setOnboardingOperacional(true);
+              }
+            }
           }}
           onMestre={async () => {
             const est = await recarregar();
@@ -2056,29 +2078,40 @@ export default function OrganizeJewelry() {
             ]],
             ["Conta", [
               ["contas", "Contas", "Despesas e a receber"],
-              // ["integracoes", "Integrações", "Trazer dados de outro sistema"], // oculto ate implementar
               ["perfil", "Minha conta", "Plano, logo e WhatsApp"],
             ]],
-          ]).filter(([grupo]) => grupo !== "Equipe" || temEquipe).map(([grupo, itens]) => (
-            <div key={grupo}>
-              <div className="oj-grupo">{grupo}</div>
-              {itens.map(([k, t, sub]) => (
-                <button
-                  key={k}
-                  data-ativo={aba === k ? "1" : "0"}
-                  onClick={() => {
-                    setMenu(false);
-                    irPara(k);
-                  }}
-                >
-                  <span>
-                    {t}
-                    <small>{sub}</small>
-                  </span>
+          ]).filter(([grupo]) => grupo !== "Equipe" || temEquipe).map(([grupo, itens]) => {
+            const aberto = menuGrupo === grupo;
+            return (
+              <div key={grupo} className="oj-menu-grupo">
+                <button type="button" className="oj-grupo-btn" aria-expanded={aberto}
+                  onClick={() => setMenuGrupo(aberto ? null : grupo)}>
+                  <span>{grupo}</span>
+                  <span className="oj-grupo-chevron" aria-hidden="true">⌄</span>
                 </button>
-              ))}
-            </div>
-          ))}
+                {aberto && (
+                  <div className="oj-grupo-itens">
+                    {itens.map(([k, t, sub]) => (
+                      <button key={k} className="oj-menu-item" data-ativo={aba === k ? "1" : "0"}
+                        onClick={() => { setMenu(false); irPara(k); }}>
+                        <span>{t}<small>{sub}</small></span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          <div className="oj-menu-ajuda">
+            <button type="button" className="oj-tour-menu"
+              onClick={() => { setMenu(false); setOnboardingOperacional(true); }}>
+              <span>
+                Tour da Luxi
+                <small>Rever como a Luxi funciona</small>
+              </span>
+            </button>
+          </div>
 
           {d.perfil.mestre && (
             <div>
@@ -2203,6 +2236,24 @@ export default function OrganizeJewelry() {
       </div>
 
       <Aviso d={d} irPara={irPara} />
+
+      {onboardingOperacional && (
+        <OnboardingOperacional
+          d={d}
+          onImportar={() => setModal({ tipo: "romaneio" })}
+          irPara={irPara}
+          onConcluir={() => {
+            try {
+              if (d.lojaId) localStorage.setItem("luxi:onboarding:v1:" + d.lojaId, "1");
+            } catch (_) {}
+            setOnboardingOperacional(false);
+          }}
+        />
+      )}
+
+      {!onboardingOperacional && !somenteLeitura(d.perfil) && !d.perfil?.mestre && (
+        <ProximoPasso d={d} irPara={irPara} />
+      )}
 
       <div className="oja" key={aba}>
         {["catalogo", "lona", "clientes", "maleta", "graficos", "equipe", "contas", "admin", "perfil", "integracoes"].includes(aba) && (
@@ -2500,11 +2551,20 @@ function TourDemo({ onSair, irPara }) {
     },
   ];
   const [i, setI] = useState(0);
+  const [fechado, setFechado] = useState(false);
   const p = passos[i];
 
   useEffect(() => {
     if (p.aba && irPara) irPara(p.aba);
   }, [i]);
+
+  const sair = () => {
+    // Fecha visualmente na hora; a persistência continua sendo feita pelo pai.
+    setFechado(true);
+    if (onSair) onSair();
+  };
+
+  if (fechado) return null;
 
   return (
     <div className="oj-tour-fundo">
@@ -2520,12 +2580,12 @@ function TourDemo({ onSair, irPara }) {
           ))}
         </div>
         <div className="oj-tour-acoes">
-          <button className="oj-link-sutil" onClick={onSair}>
+          <button className="oj-link-sutil" onClick={sair}>
             {p.fim ? "Fechar" : "Pular tour"}
           </button>
           <button
             className="oj-btn mini"
-            onClick={() => (p.fim ? onSair() : setI(i + 1))}
+            onClick={() => (p.fim ? sair() : setI(i + 1))}
           >
             {p.fim ? "Explorar sozinha" : "Próximo"}
           </button>
@@ -3945,7 +4005,7 @@ function Filtro({ periodo, setPeriodo, de, ate, setDe, setAte }) {
 }
 
 /* ---------------- cadastro ---------------- */
-function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, aoEntrar }) {
+function CadastroLegado({ onPronto, onMestre, contaLogada, criarConta, tentarEntrar, aoEntrar }) {
   const [p, setP] = useState(0);
   const [f, setF] = useState({
     plano: "crescimento",
