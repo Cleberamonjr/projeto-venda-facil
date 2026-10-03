@@ -316,7 +316,7 @@ export async function carregarTudo() {
   }
   if (!loja) return { semLoja: true };
 
-  const [assin, cons, ent, pec, mal, mit, ven, sai, des, cli, col] = await comTimeout(Promise.all([
+  const [assin, cons, ent, pec, mal, mit, ven, sai, des, cli, col, rec] = await comTimeout(Promise.all([
     sb.from("assinaturas").select("*").eq("loja_id", loja.id).maybeSingle(),
     sb.from("consultoras").select("*").eq("loja_id", loja.id),
     sb.from("entradas").select("*").eq("loja_id", loja.id),
