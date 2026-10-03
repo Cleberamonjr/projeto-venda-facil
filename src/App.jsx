@@ -8192,6 +8192,10 @@ function Maleta({ d, salvar, recarregar }) {
   };
 
   const mudarEstado = async (item, estado) => {
+    if (item.venda_id && item.estado === "vendeu" && estado !== "vendeu") {
+      setErro("Essa venda já foi lançada. Para mudar o acerto, use Desfazer acerto.");
+      return;
+    }
     const itens=acerto.itens.map(x=>x.id===item.id?{...x,estado,venda_id:estado==="vendeu"?x.venda_id:null}:x);
     await salvarEstados(itens);
   };
