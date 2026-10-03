@@ -1964,7 +1964,7 @@ export default function OrganizeJewelry() {
         }}
       />
     ),
-    maleta: <Maleta d={d} salvar={salvar} />,
+    maleta: <Maleta d={d} salvar={salvar} recarregar={recarregar} />,
     graficos: ehConsultora ? (
       <div className="oj-vazio">
         <span className="oj-serif">Área da administradora</span>
