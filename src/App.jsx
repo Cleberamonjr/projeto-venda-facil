@@ -8118,377 +8118,173 @@ function Dashboards({ d, dentro }) {
 }
 
 /* ---------------- maleta ---------------- */
-function Maleta({ d, salvar }) {
+function Maleta({ d, salvar, recarregar }) {
   const [nova, setNova] = useState(false);
   const [consultoraId, setConsultoraId] = useState("");
   const [prazo, setPrazo] = useState(30);
   const [sel, setSel] = useState({});
   const [aberta, setAberta] = useState(null);
+  const [acerto, setAcerto] = useState(null);
+  const [carregandoAcerto, setCarregandoAcerto] = useState(false);
+  const [salvandoAcerto, setSalvandoAcerto] = useState(false);
+  const [erro, setErro] = useState("");
+  const [vendaAberta, setVendaAberta] = useState(null);
+  const [vendaCliente, setVendaCliente] = useState("");
+  const [vendaModalidade, setVendaModalidade] = useState("Dinheiro");
+  const [vendaPago, setVendaPago] = useState(true);
+  const [desfazerAberto, setDesfazerAberto] = useState(false);
+  const [desfazerMotivo, setDesfazerMotivo] = useState("");
 
   const maletas = d.maletas || [];
   const cons = (d.consultoras || []).filter((c) => !c.dona);
   const disponivel = d.estoque.filter((p) => p.qtd > 0);
   const quem = (cid) => (d.consultoras || []).find((c) => c.id === cid);
+  const plano = planoAtivo(d.perfil);
+  const liberado = !d.perfil.mestre && ["crescimento", "joalheria", "inteligencia"].includes(plano.id);
 
   const abrir = async () => {
-    const itens = Object.entries(sel)
-      .filter(([, q]) => q > 0)
-      .map(([pid, q]) => {
-        const p = d.estoque.find((x) => x.id === pid);
-        return {
-          pecaId: p.id,
-          codigo: p.codigo,
-          nome: p.nome,
-          banho: p.banho,
-          qtd: q,
-          custo: p.custo,
-          venda: p.venda,
-        };
-      });
+    const itens = Object.entries(sel).filter(([, q]) => q > 0).map(([pid, q]) => {
+      const p = d.estoque.find((x) => x.id === pid);
+      return { pecaId:p.id,codigo:p.codigo,nome:p.nome,banho:p.banho,qtd:q,custo:p.custo,venda:p.venda };
+    });
     if (!consultoraId || !itens.length) return;
-
-    await salvar({
-      ...d,
-      estoque: d.estoque.map((p) =>
-        sel[p.id] ? { ...p, qtd: p.qtd - sel[p.id] } : p
-      ),
-      maletas: [
-        ...maletas,
-        {
-          id: id(),
-          consultoraId,
-          prazo,
-          itens,
-          status: "aberta",
-          abertaEm: hoje(),
-        },
-      ],
-    });
-    setNova(false);
-    setSel({});
-    setConsultoraId("");
+    try {
+      if (d.lojaId) { await dados.abrirMaleta(d.lojaId, { consultoraId, prazo, itens }); await recarregar(); }
+      else await salvar({...d,estoque:d.estoque.map((p)=>sel[p.id]?{...p,qtd:p.qtd-sel[p.id]}:p),maletas:[...maletas,{id:id(),consultoraId,prazo,itens,status:"aberta",abertaEm:hoje()}]});
+      setNova(false); setSel({}); setConsultoraId("");
+    } catch(e) { setErro(e.message || "Não consegui abrir a maleta."); }
   };
 
-  /* venda direto da maleta: sai da maleta, vira venda da consultora */
-  const venderDaMaleta = async (m, item) => {
-    await salvar({
-      ...d,
-      maletas: maletas.map((x) =>
-        x.id === m.id
-          ? {
-              ...x,
-              itens: x.itens.map((i) =>
-                i.pecaId === item.pecaId ? { ...i, qtd: i.qtd - 1 } : i
-              ),
-            }
-          : x
-      ),
-      vendas: [
-        ...d.vendas,
-        {
-          id: id(),
-          pecaId: item.pecaId,
-          codigo: item.codigo,
-          nome: item.nome,
-          qtd: 1,
-          valor: item.venda,
-          custo: item.custo,
-          modalidade: "Dinheiro",
-          cliente: "",
-          pago: true,
-          consultoraId: m.consultoraId,
-          maletaId: m.id,
-          data: hoje(),
-        },
-      ],
-    });
+  const carregarAcerto = async (m) => {
+    setErro(""); setAberta(m.id); setCarregandoAcerto(true);
+    try {
+      if (d.lojaId) {
+        const x = await dados.maletaAcertoDados(m.id);
+        setAcerto({ ...x, maleta:m });
+      } else {
+        const itens=[];
+        m.itens.forEach((i) => { for(let u=1;u<=i.qtd;u++) itens.push({id:"local-"+i.pecaId+"-"+u,maleta_item_id:i.pecaId,unidade:u,estado:"pendente",codigo:i.codigo,nome:i.nome,custo_centavos:Math.round(i.custo*100),venda_centavos:Math.round(i.venda*100),comissao_centavos:0}); });
+        setAcerto({id:"local-"+m.id,maleta_id:m.id,status:"aberto",dona_confirmou_em:null,consultora_confirmou_em:null,acerto_junto:false,itens,maleta:m});
+      }
+    } catch(e) { setErro(e.message || "Não consegui abrir o acerto."); }
+    finally { setCarregandoAcerto(false); }
   };
 
-  /* devolver: o que sobrou volta para o estoque geral */
-  const devolver = async (m) => {
-    let estoque = [...d.estoque];
-    m.itens
-      .filter((i) => i.qtd > 0)
-      .forEach((i) => {
-        estoque = estoque.map((p) =>
-          p.id === i.pecaId ? { ...p, qtd: p.qtd + i.qtd } : p
-        );
-      });
-    await salvar({
-      ...d,
-      estoque,
-      maletas: maletas.map((x) =>
-        x.id === m.id ? { ...x, status: "fechada", fechadaEm: hoje() } : x
-      ),
-    });
-    setAberta(null);
+  const salvarEstados = async (itens, confirma={}) => {
+    setSalvandoAcerto(true); setErro("");
+    try {
+      if (d.lojaId) {
+        await dados.salvarMaletaAcerto(acerto.maleta_id,itens.map(x=>({id:x.id,estado:x.estado,venda_id:x.venda_id||null})),!!confirma.dona,!!confirma.consultora,!!confirma.junto);
+        const novo=await dados.maletaAcertoDados(acerto.maleta_id);
+        setAcerto({...novo,maleta:acerto.maleta});
+      } else {
+        const novo={...acerto,itens,acerto_junto:confirma.junto||acerto.acerto_junto};
+        if(confirma.dona) novo.dona_confirmou_em=new Date().toISOString();
+        if(confirma.consultora) novo.consultora_confirmou_em=new Date().toISOString();
+        setAcerto(novo);
+      }
+    } catch(e) { setErro(e.message || "Não consegui salvar o acerto."); }
+    finally { setSalvandoAcerto(false); }
   };
 
-  const ativas = maletas.filter((m) => m.status === "aberta");
-  const resumo = (m) => {
-    const custo = m.itens.reduce((t, i) => t + i.qtd * i.custo, 0);
-    const bruto = m.itens.reduce((t, i) => t + i.qtd * i.venda, 0);
-    const pct = Number(quem(m.consultoraId)?.comissao || 0);
-    const comissao = (bruto * pct) / 100;
-    return { custo, bruto, comissao, lucro: bruto - custo - comissao, pct };
+  const mudarEstado = async (item, estado) => {
+    const itens=acerto.itens.map(x=>x.id===item.id?{...x,estado,venda_id:estado==="vendeu"?x.venda_id:null}:x);
+    await salvarEstados(itens);
   };
-  const time = ativas.reduce(
-    (acc, m) => {
-      const r = resumo(m);
-      return {
-        custo: acc.custo + r.custo,
-        bruto: acc.bruto + r.bruto,
-        comissao: acc.comissao + r.comissao,
-        lucro: acc.lucro + r.lucro,
-      };
-    },
-    { custo: 0, bruto: 0, comissao: 0, lucro: 0 }
-  );
-  const exposto = time.custo;
 
-  if (!cons.length)
-    return (
-      <div className="oj-vazio">
-        <span className="oj-serif">Cadastre uma consultora</span>
-        A maleta é o estoque que fica com ela. Vá em Mais → Equipe e cadastre quem vende
-        com você.
-      </div>
-    );
+  const registrarVenda = async () => {
+    if(!vendaAberta) return;
+    setErro(""); setSalvandoAcerto(true);
+    try {
+      if(d.lojaId) {
+        const vendaId=await dados.registrarVendaMaleta(vendaAberta.maleta_id,{pecaId:vendaAberta.pecaId,valor:vendaAberta.venda_centavos/100,modalidade:vendaModalidade,cliente:vendaCliente.trim(),pago:vendaPago});
+        const itens=acerto.itens.map(x=>x.id===vendaAberta.id?{...x,estado:"vendeu",venda_id:vendaId}:x);
+        await dados.salvarMaletaAcerto(acerto.maleta_id,itens.map(x=>({id:x.id,estado:x.estado,venda_id:x.venda_id||null})));
+        const novo=await dados.maletaAcertoDados(acerto.maleta_id);
+        setAcerto({...novo,maleta:acerto.maleta});
+        if(recarregar) await recarregar();
+      } else {
+        const p=quem(acerto.maleta.consultoraId);
+        const venda={id:id(),pecaId:vendaAberta.pecaId,codigo:vendaAberta.codigo,nome:vendaAberta.nome,qtd:1,valor:vendaAberta.venda_centavos/100,custo:vendaAberta.custo_centavos/100,modalidade:vendaModalidade,cliente:vendaCliente,pago:vendaPago,consultoraId:acerto.maleta.consultoraId,maletaId:acerto.maleta.id,data:hoje(),comissao:(vendaAberta.venda_centavos/100*(p?.comissao||0))/100};
+        const itens=acerto.itens.map(x=>x.id===vendaAberta.id?{...x,estado:"vendeu",venda_id:venda.id,comissao_centavos:Math.round(venda.comissao*100)}:x);
+        await salvar({...d,vendas:[...d.vendas,venda]}); setAcerto({...acerto,itens});
+      }
+      setVendaAberta(null); setVendaCliente("");
+    } catch(e) { setErro(e.message || "Não consegui registrar a venda."); }
+    finally { setSalvandoAcerto(false); }
+  };
 
-  return (
-    <>
-      <div className="oj-card">
-        <div className="oj-lbl">Capital na rua — visão do time</div>
-        <div className="oj-valor" style={{ color: "var(--roxo)" }}>
-          {brl(exposto)}
-        </div>
-        <div className="oj-meta" style={{ marginTop: 6 }}>
-          {ativas.length} maleta(s) aberta(s) ·{" "}
-          {ativas.reduce((s, m) => s + m.itens.reduce((t, i) => t + i.qtd, 0), 0)} peça(s)
-          fora da sua mão
-        </div>
+  const confirmar = async (tipo) => {
+    if(tipo==="junto") await salvarEstados(acerto.itens,{dona:true,junto:true});
+    else if(tipo==="dona") await salvarEstados(acerto.itens,{dona:true});
+    else await salvarEstados(acerto.itens,{consultora:true});
+  };
 
-        <div style={{ marginTop: 14, borderTop: "1px solid var(--linha)", paddingTop: 12 }}>
-          {[
-            ["Se vender tudo", time.bruto, "var(--marinho)"],
-            ["Custo das peças", -time.custo, "var(--tinta-cl)"],
-            ["Comissão do time", -time.comissao, "var(--roxo)"],
-          ].map(([r, v, cor]) => (
-            <div className="oj-uso" key={r} style={{ marginBottom: 6 }}>
-              <span>{r}</span>
-              <b style={{ marginLeft: "auto", color: cor }}>
-                {v < 0 ? "− " : ""}
-                {brl(Math.abs(v))}
-              </b>
-            </div>
-          ))}
-          <div
-            className="oj-uso"
-            style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--linha)" }}
-          >
-            <b>Seu lucro</b>
-            <b style={{ marginLeft: "auto", color: "var(--marinho)", fontSize: 17 }}>
-              {brl(time.lucro)}
-            </b>
-          </div>
-        </div>
-      </div>
+  const fecharAcerto = async () => {
+    setErro(""); setSalvandoAcerto(true);
+    try {
+      if(d.lojaId) { await dados.fecharMaletaAcerto(acerto.maleta_id); await recarregar(); }
+      else {
+        if(acerto.itens.some(x=>x.estado==="pendente")) throw new Error("Ainda faltam peças para conferir.");
+        await salvar({...d,maletas:maletas.map(m=>m.id===acerto.maleta_id?{...m,status:"fechada",fechadaEm:hoje()}:m)});
+      }
+      setAcerto(null); setAberta(null);
+    } catch(e) { setErro(e.message || "Não consegui fechar o acerto."); }
+    finally { setSalvandoAcerto(false); }
+  };
 
-      {!nova && (
-        <div style={{ padding: "0 20px" }}>
-          <button className="oj-btn" onClick={() => setNova(true)}>
-            Abrir nova maleta
-          </button>
-        </div>
-      )}
+  const desfazer = async () => {
+    setSalvandoAcerto(true); setErro("");
+    try {
+      if(d.lojaId) { await dados.desfazerMaletaAcerto(acerto.maleta_id,desfazerMotivo); await recarregar(); }
+      else await salvar({...d,maletas:maletas.map(m=>m.id===acerto.maleta_id?{...m,status:"aberta",fechadaEm:null}:m)});
+      setAcerto(null); setAberta(null); setDesfazerAberto(false);
+    } catch(e) { setErro(e.message || "Não consegui desfazer o acerto."); }
+    finally { setSalvandoAcerto(false); }
+  };
 
-      {nova && (
-        <div className="oj-card">
-          <div className="oj-lbl">Para quem</div>
-          <div className="oj-chips">
-            {cons.map((c) => (
-              <button
-                key={c.id}
-                className="oj-chip"
-                data-on={consultoraId === c.id ? "1" : "0"}
-                onClick={() => setConsultoraId(c.id)}
-              >
-                {c.nome}
-              </button>
-            ))}
-          </div>
+  const resumoAcerto=acerto?{
+    voltou:acerto.itens.filter(x=>x.estado==="voltou").reduce((s,x)=>s+x.venda_centavos,0)/100,
+    vendeu:acerto.itens.filter(x=>x.estado==="vendeu").reduce((s,x)=>s+x.venda_centavos,0)/100,
+    comissao:acerto.itens.filter(x=>x.estado==="vendeu").reduce((s,x)=>s+x.comissao_centavos,0)/100,
+    sumiu:acerto.itens.filter(x=>x.estado==="sumiu").reduce((s,x)=>s+x.custo_centavos,0)/100
+  }:null;
+  if(resumoAcerto) { resumoAcerto.repasse=resumoAcerto.vendeu-resumoAcerto.comissao; resumoAcerto.lucro=resumoAcerto.vendeu-resumoAcerto.comissao-resumoAcerto.sumiu; }
 
-          <div className="oj-lbl" style={{ marginTop: 16 }}>
-            Prazo para devolver ou acertar
-          </div>
-          <div className="oj-chips">
-            {[30, 60, 90].map((n) => (
-              <button
-                key={n}
-                className="oj-chip"
-                data-on={prazo === n ? "1" : "0"}
-                onClick={() => setPrazo(n)}
-              >
-                {n} dias
-              </button>
-            ))}
-          </div>
+  const imprimirPDF=()=>{
+    if(!acerto) return;
+    const c=quem(acerto.maleta?.consultoraId);
+    const money=(n)=>"R$ "+Number(n||0).toFixed(2).replace(".",",");
+    const rows=acerto.itens.map(x=>"<tr><td>"+x.codigo+"</td><td>"+(x.nome||"")+"</td><td>"+x.unidade+"</td><td>"+x.estado+"</td><td>"+money(x.venda_centavos/100)+"</td></tr>").join("");
+    const win=window.open("","_blank");
+    if(!win) return;
+    const donaTxt=acerto.dona_confirmou_em?"confirmado em "+new Date(acerto.dona_confirmou_em).toLocaleString("pt-BR"):"pendente";
+    const consTxt=acerto.consultora_confirmou_em?"confirmado em "+new Date(acerto.consultora_confirmou_em).toLocaleString("pt-BR"):(acerto.acerto_junto?"acerto feito junto":"pendente");
+    win.document.write("<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'><title>Acerto da maleta · Luxi</title><style>@page{size:A4;margin:16mm}body{font-family:Arial,sans-serif;color:#33272b}h1{font-size:25px;margin:0 0 4px}h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#9b6671;margin:20px 0 8px}.top{border-bottom:2px solid #c48a94;padding-bottom:12px}.meta{color:#75666b;font-size:12px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}.box{border:1px solid #eadcdf;border-radius:10px;padding:10px}.v{font-size:17px;font-weight:700;margin-top:4px}table{width:100%;border-collapse:collapse;font-size:10px}th,td{padding:7px 5px;border-bottom:1px solid #eee;text-align:left}.sig{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:35px}.line{border-top:1px solid #444;padding-top:7px;font-size:11px}.small{font-size:9px;color:#75666b;margin-top:3px}</style></head><body><div class='top'><h1>Luxi · Acerto da maleta</h1><div class='meta'>"+(c?.nome||"")+" · emitido em "+new Date().toLocaleString("pt-BR")+"</div></div><h2>O que voltou, o que vendeu, o que sumiu</h2><div class='grid'><div class='box'>Voltou<div class='v'>"+money(resumoAcerto.voltou)+"</div></div><div class='box'>Vendeu<div class='v'>"+money(resumoAcerto.vendeu)+"</div></div><div class='box'>Ela te repassa<div class='v'>"+money(resumoAcerto.repasse)+"</div></div><div class='box'>Custo do que sumiu<div class='v'>"+money(resumoAcerto.sumiu)+"</div></div></div><table><thead><tr><th>Código</th><th>Peça</th><th>Un.</th><th>Estado</th><th>Venda</th></tr></thead><tbody>"+rows+"</tbody></table><h2>Assinaturas eletrônicas</h2><div class='sig'><div class='line'>Dona: "+donaTxt+"<div class='small'>Confirmação registrada no Luxi</div></div><div class='line'>Consultora: "+consTxt+"<div class='small'>Confirmação registrada no Luxi</div></div></div></body></html>");
+    win.document.close(); setTimeout(()=>win.print(),250);
+  };
 
-          <div className="oj-lbl" style={{ marginTop: 16 }}>
-            Peças que vão na maleta
-          </div>
-          {disponivel.map((p) => (
-            <div className="oj-item" key={p.id}>
-              <span className="oj-cod">{p.codigo}</span>
-              <div>
-                <div className="oj-nome">{p.nome}</div>
-                <div className="oj-meta">
-                  {p.qtd} no estoque · {brl(p.venda)}
-                </div>
-              </div>
-              <div className="oj-dir" style={{ display: "flex", gap: 6 }}>
-                <button
-                  className="oj-btn sec mini"
-                  aria-label={`Tirar uma unidade de ${p.nome || p.codigo}`}
-                  onClick={() =>
-                    setSel({ ...sel, [p.id]: Math.max(0, (sel[p.id] || 0) - 1) })
-                  }
-                >
-                  −
-                </button>
-                <span style={{ minWidth: 22, textAlign: "center", lineHeight: "32px" }}>
-                  {sel[p.id] || 0}
-                </span>
-                <button
-                  className="oj-btn sec mini"
-                  aria-label={`Colocar mais uma unidade de ${p.nome || p.codigo}`}
-                  onClick={() =>
-                    setSel({ ...sel, [p.id]: Math.min(p.qtd, (sel[p.id] || 0) + 1) })
-                  }
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          ))}
+  if(!liberado) return <div className="oj-vazio"><span className="oj-serif">Disponível no plano Equipe</span>A Maleta organiza o que cada vendedora levou, o que voltou e o que vendeu.</div>;
+  if(!cons.length) return <div className="oj-vazio"><span className="oj-serif">Cadastre uma consultora</span>A maleta é o estoque que fica com ela. Vá em Mais → Equipe e cadastre quem vende com você.</div>;
 
-          <button
-            className="oj-btn"
-            style={{ marginTop: 14 }}
-            disabled={!consultoraId || !Object.values(sel).some((q) => q > 0)}
-            onClick={abrir}
-          >
-            Entregar maleta
-          </button>
-          <button
-            className="oj-btn sec"
-            style={{ marginTop: 8 }}
-            onClick={() => {
-              setNova(false);
-              setSel({});
-            }}
-          >
-            Cancelar
-          </button>
-        </div>
-      )}
+  const ativas=maletas.filter(m=>m.status==="aberta");
+  const historico=maletas.filter(m=>m.status!=="aberta");
+  const time=ativas.reduce((acc,m)=>{
+    const custo=m.itens.reduce((t,i)=>t+i.qtd*i.custo,0);
+    const bruto=m.itens.reduce((t,i)=>t+i.qtd*i.venda,0);
+    const pct=Number(quem(m.consultoraId)?.comissao||0);
+    return {...acc,custo:acc.custo+custo,bruto:acc.bruto+bruto,comissao:acc.comissao+(bruto*pct/100),lucro:acc.lucro+bruto-custo-(bruto*pct/100)};
+  },{custo:0,bruto:0,comissao:0,lucro:0});
 
-      {ativas.map((m) => {
-        const c = quem(m.consultoraId);
-        const passados = dias(m.abertaEm);
-        const restam = m.prazo - passados;
-        const total = m.itens.reduce((s, i) => s + i.qtd * i.custo, 0);
-        return (
-          <div className="oj-card" key={m.id}>
-            <div
-              className="oj-uso"
-              style={{ alignItems: "center", gap: 10, cursor: "pointer" }}
-              role="button"
-              tabIndex={0}
-              onClick={() => setAberta(aberta === m.id ? null : m.id)}
-              onKeyDown={(e) => e.key === "Enter" && setAberta(m.id)}
-            >
-              <Avatar nome={c?.nome} foto={c?.foto} />
-              <div>
-                <div className="oj-nome">{c?.nome}</div>
-                <div className="oj-meta">
-                  {m.itens.reduce((s, i) => s + i.qtd, 0)} peça(s) · aberta há {passados}{" "}
-                  dias
-                </div>
-              </div>
-              <div style={{ marginLeft: "auto", textAlign: "right" }}>
-                <div className="oj-preco">{brl(total)}</div>
-                <span className={"oj-tag " + (restam < 0 ? "parada" : "estoque")}>
-                  {restam < 0 ? `${-restam} dias em atraso` : `faltam ${restam} dias`}
-                </span>
-              </div>
-            </div>
-
-            {aberta === m.id && (
-              <div style={{ marginTop: 12, borderTop: "1px solid var(--linha)" }}>
-                <div style={{ padding: "12px 0", borderBottom: "1px solid var(--linha)" }}>
-                  {[
-                    ["Se vender tudo", resumo(m).bruto, "var(--marinho)"],
-                    ["Custo", -resumo(m).custo, "var(--tinta-cl)"],
-                    [`Comissão de ${c?.nome} (${resumo(m).pct}%)`, -resumo(m).comissao, "var(--roxo)"],
-                    ["Seu lucro", resumo(m).lucro, "var(--marinho)"],
-                  ].map(([r, v, cor], idx) => (
-                    <div
-                      className="oj-uso"
-                      key={r}
-                      style={{ marginBottom: 6, fontWeight: idx === 3 ? 600 : 400 }}
-                    >
-                      <span>{r}</span>
-                      <b style={{ marginLeft: "auto", color: cor }}>
-                        {v < 0 ? "− " : ""}
-                        {brl(Math.abs(v))}
-                      </b>
-                    </div>
-                  ))}
-                </div>
-                {m.itens.map((i) => (
-                  <div className="oj-item" key={i.pecaId}>
-                    <span className="oj-cod">{i.codigo}</span>
-                    <div>
-                      <div className="oj-nome">{i.nome}</div>
-                      <div className="oj-meta">
-                        {i.qtd} com ela · {brl(i.venda)}
-                      </div>
-                    </div>
-                    <div className="oj-dir">
-                      {i.qtd > 0 && (
-                        <button
-                          className="oj-btn mini"
-                          onClick={() => venderDaMaleta(m, i)}
-                        >
-                          Vendeu 1
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <button
-                  className="oj-btn sec"
-                  style={{ marginTop: 12 }}
-                  onClick={() => devolver(m)}
-                >
-                  Encerrar maleta e devolver o que sobrou
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      {!ativas.length && !nova && (
-        <div className="oj-vazio">
-          <span className="oj-serif">Nenhuma maleta na rua</span>
-          Abra uma maleta para saber exatamente qual peça está com qual consultora e até
-          quando.
-        </div>
-      )}
-    </>
-  );
+  return <>
+    <div className="oj-card" data-tour-role="maleta"><div className="oj-lbl">Capital na rua</div><div className="oj-valor" style={{color:"var(--roxo)"}}>{brl(time.custo)}</div><div className="oj-meta" style={{marginTop:6}}>{ativas.length} maleta(s) aberta(s) · {ativas.reduce((s,m)=>s+m.itens.reduce((t,i)=>t+i.qtd,0),0)} peça(s) fora da sua mão)</div><div style={{marginTop:14,borderTop:"1px solid var(--linha)",paddingTop:12}}>{[["Se vender tudo",time.bruto],["Custo das peças",-time.custo],["Comissão do time",-time.comissao]].map(([r,v])=><div className="oj-uso" key={r} style={{marginBottom:6}}><span>{r}</span><b style={{marginLeft:"auto"}}>{v<0?"− ":""}{brl(Math.abs(v))}</b></div>)}<div className="oj-uso" style={{marginTop:10,paddingTop:10,borderTop:"1px solid var(--linha)"}}><b>Seu lucro</b><b style={{marginLeft:"auto"}}>{brl(time.lucro)}</b></div></div></div>
+    {!nova && <div style={{padding:"0 20px"}}><button className="oj-btn" onClick={()=>setNova(true)}>Abrir nova maleta</button></div>}
+    {nova && <div className="oj-card"><div className="oj-lbl">Para quem</div><div className="oj-chips">{cons.map(c=><button key={c.id} className="oj-chip" data-on={consultoraId===c.id?"1":"0"} onClick={()=>setConsultoraId(c.id)}>{c.nome}</button>)}</div><div className="oj-lbl" style={{marginTop:16}}>Prazo para devolver ou acertar</div><div className="oj-chips">{[30,60,90].map(n=><button key={n} className="oj-chip" data-on={prazo===n?"1":"0"} onClick={()=>setPrazo(n)}>{n} dias</button>)}</div><div className="oj-lbl" style={{marginTop:16}}>Peças que vão na maleta</div>{disponivel.map(p=><div className="oj-item" key={p.id}><span className="oj-cod">{p.codigo}</span><div><div className="oj-nome">{p.nome}</div><div className="oj-meta">{p.qtd} no estoque · {brl(p.venda)}</div></div><div className="oj-dir" style={{display:"flex",gap:6}}><button className="oj-btn sec mini" onClick={()=>setSel({...sel,[p.id]:Math.max(0,(sel[p.id]||0)-1)})}>−</button><span style={{minWidth:22,textAlign:"center",lineHeight:"32px"}}>{sel[p.id]||0}</span><button className="oj-btn sec mini" onClick={()=>setSel({...sel,[p.id]:Math.min(p.qtd,(sel[p.id]||0)+1)})}>+</button></div></div>)}<button className="oj-btn" style={{marginTop:14}} disabled={!consultoraId||!Object.values(sel).some(q=>q>0)} onClick={abrir}>Entregar maleta</button><button className="oj-btn sec" style={{marginTop:8}} onClick={()=>{setNova(false);setSel({})}}>Cancelar</button></div>}
+    {ativas.map(m=>{const c=quem(m.consultoraId);const passados=dias(m.abertaEm);const restam=m.prazo-passados;const total=m.itens.reduce((s,i)=>s+i.qtd*i.custo,0);const abertaAqui=aberta===m.id;return <div className="oj-card" key={m.id}><div className="oj-uso" style={{alignItems:"center",gap:10,cursor:"pointer"}} role="button" tabIndex={0} onClick={()=>abertaAqui?setAberta(null):carregarAcerto(m)} onKeyDown={e=>e.key==="Enter"&&(abertaAqui?setAberta(null):carregarAcerto(m))}><Avatar nome={c?.nome} foto={c?.foto}/><div><div className="oj-nome">{c?.nome}</div><div className="oj-meta">{m.itens.reduce((s,i)=>s+i.qtd,0)} peça(s) · aberta há {passados} dias</div></div><div style={{marginLeft:"auto",textAlign:"right"}}><div className="oj-preco">{brl(total)}</div><span className={"oj-tag "+(restam<0?"parada":"estoque")}>{restam<0?"Prazo de acertar venceu":"faltam "+restam+" dias"}</span></div></div>{abertaAqui&&<div style={{marginTop:12,borderTop:"1px solid var(--linha)",paddingTop:12}}>{carregandoAcerto?<Carregando texto="Abrindo o acerto…" />:acerto&&acerto.maleta_id===m.id?<><div className="oj-sec" style={{margin:"14px 0 6px"}}>{acerto.status==="fechado"?"Acerto fechado":"Acertar e zerar"}</div>{erro&&<div className="oj-erro">{erro}</div>}{acerto.status==="fechado"?<><div className="oj-aviso">Acerto feito em {new Date(acerto.fechado_em).toLocaleString("pt-BR")}. Esta maleta fica só para leitura.</div><div className="oj-grid2">{[["Voltou",acerto.resumo?.voltou||0],["Vendeu",acerto.resumo?.vendeu||0],["Ela te repassa",acerto.resumo?.repasse||0],["Custo do que sumiu",acerto.resumo?.sumiu||0]].map(([t,v])=><div className="oj-card flat" key={t}><div className="oj-lbl">{t}</div><div className="oj-preco">{brl(v)}</div></div>)}</div><button className="oj-btn sec" onClick={imprimirPDF}>PDF do acerto</button>{d.perfil.papel==="dona"&&<button className="oj-btn perigo" style={{marginTop:8}} onClick={()=>setDesfazerAberto(true)}>Desfazer acerto</button>}</>:<><div className="oj-meta" style={{marginBottom:10}}>Cada unidade fica em um lugar: voltou, vendeu ou sumiu.</div>{Object.entries(acerto.itens.reduce((g,x)=>{(g[x.codigo]??=[]).push(x);return g;},{})).map(([codigo,unidades])=><div className="oj-card flat" key={codigo} style={{margin:"8px 0"}}><div className="oj-nome">{codigo} · {unidades[0]?.nome}</div>{unidades.map((u,k)=><div className="oj-item" key={u.id}><div style={{minWidth:70}}><b>Unidade {k+1}</b><div className="oj-meta">{brl(u.venda_centavos/100)}</div></div><div className="oj-dir" style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end"}}>{["voltou","vendeu","sumiu"].map(st=><button key={st} className={"oj-btn mini "+(u.estado===st?"":"sec")} onClick={()=>mudarEstado(u,st)} disabled={salvandoAcerto}>{st==="voltou"?"Voltou":st==="vendeu"?"Vendeu":"Sumiu"}</button>)}{u.estado==="vendeu"&&!u.venda_id&&<button className="oj-link-sutil" style={{margin:0,width:"auto"}} onClick={()=>{setVendaAberta({...u,maleta_id:m.id});setVendaModalidade("Dinheiro");setVendaPago(true)}}>Registrar venda</button>}</div></div>)}</div>)}<div className="oj-card" style={{margin:"12px 0"}}><div className="oj-lbl">Resumo</div>{[["Voltou",resumoAcerto.voltou],["Vendeu",resumoAcerto.vendeu],["Ela te repassa",resumoAcerto.repasse],["Você paga de comissão",resumoAcerto.comissao],["Custo do que sumiu",resumoAcerto.sumiu],["Seu lucro neste acerto",resumoAcerto.lucro]].map(([t,v])=><div className="oj-uso" key={t} style={{marginTop:7}}><span>{t}</span><b style={{marginLeft:"auto"}}>{brl(v)}</b></div>)}</div><div className="oj-card flat" style={{margin:"12px 0"}}><div className="oj-lbl">Confirmações</div><div className="oj-meta" style={{marginTop:7}}>Dona: {acerto.dona_confirmou_em?"✓ confirmada":"pendente"} · Consultora: {acerto.consultora_confirmou_em?"✓ confirmada":(acerto.acerto_junto?"✓ feito junto":"pendente")}</div>{d.perfil.papel==="dona"&&<><button className="oj-btn sec" style={{marginTop:10}} onClick={()=>confirmar("dona")} disabled={salvandoAcerto}>Confirmar meu acerto</button><button className="oj-btn sec" style={{marginTop:8}} onClick={()=>confirmar("junto")} disabled={salvandoAcerto}>Acerto feito junto</button></>}{d.perfil.papel==="consultora"&&<button className="oj-btn sec" style={{marginTop:10}} onClick={()=>confirmar("consultora")} disabled={salvandoAcerto}>Confirmar meu acerto</button>}</div><div style={{display:"flex",gap:8,marginTop:10}}><button className="oj-btn sec mini" onClick={imprimirPDF}>PDF do acerto</button><button className="oj-btn mini" disabled={salvandoAcerto||acerto.itens.some(x=>x.estado==="pendente")||!acerto.dona_confirmou_em||(!acerto.consultora_confirmou_em&&!acerto.acerto_junto)} onClick={fecharAcerto}>{salvandoAcerto?"Fechando…":"Acertar e zerar"}</button></div></>}</>:null}</div>}</div>})}
+    {historico.length>0&&<div className="oj-sec">Histórico de acertos</div>}{historico.map(m=><div className="oj-card" key={m.id}><div className="oj-uso" style={{alignItems:"center"}}><Avatar nome={quem(m.consultoraId)?.nome} foto={quem(m.consultoraId)?.foto}/><div><div className="oj-nome">{quem(m.consultoraId)?.nome}</div><div className="oj-meta">Maleta acertada · {m.fechadaEm?new Date(m.fechadaEm).toLocaleDateString("pt-BR"):""}</div></div><button className="oj-btn sec mini" style={{marginLeft:"auto"}} onClick={()=>carregarAcerto(m)}>Abrir</button></div></div>)}
+    {vendaAberta&&<div className="oj-fundo" onClick={()=>setVendaAberta(null)}><div className="oj-modal" onClick={e=>e.stopPropagation()}><h3 className="oj-serif">Registrar venda</h3><div className="oj-meta" style={{marginBottom:12}}>Já fica no nome de {quem(acerto?.maleta?.consultoraId)?.nome||"da consultora"} e ligada à maleta.</div><input className="oj-in" placeholder="Cliente (opcional)" value={vendaCliente} onChange={e=>setVendaCliente(e.target.value)}/><div className="oj-lbl">Como te pagou?</div><div className="oj-chips">{(d.perfil.formas||["Dinheiro"]).map(m=><button key={m} className="oj-chip" data-on={vendaModalidade===m?"1":"0"} onClick={()=>setVendaModalidade(m)}>{m}</button>)}</div><button className="oj-btn sec" style={{marginTop:10}} onClick={()=>setVendaPago(!vendaPago)}>{vendaPago?"Pago":"Ficou para receber"}</button><button className="oj-btn" style={{marginTop:10}} disabled={salvandoAcerto} onClick={registrarVenda}>Registrar venda · {brl(vendaAberta.venda_centavos/100)}</button></div></div>}
+    {desfazerAberto&&<div className="oj-fundo" onClick={()=>setDesfazerAberto(false)}><div className="oj-modal" onClick={e=>e.stopPropagation()}><h3 className="oj-serif">Desfazer acerto</h3><p className="oj-meta">Isso reabre a maleta e estorna o que entrou no estoque, a comissão e o que ficou a receber. A ação fica registrada.</p><input className="oj-in" placeholder="Motivo (opcional)" value={desfazerMotivo} onChange={e=>setDesfazerMotivo(e.target.value)}/><button className="oj-btn perigo" style={{marginTop:10}} disabled={salvandoAcerto} onClick={desfazer}>Sim, desfazer acerto</button><button className="oj-btn sec" style={{marginTop:8}} onClick={()=>setDesfazerAberto(false)}>Cancelar</button></div></div>}
+  </>;
 }
 
 /* ---------------- conselheiro de negócio ---------------- */
