@@ -32,6 +32,7 @@ def rodar():
         pg=ctx.new_page(); pg.goto(srv.url); esperar_app(pg)
         pg.click(".oj-hamb"); pg.wait_for_timeout(150)
         if not pg.locator("nav.oj-lateral >> text=Maleta").count(): ruim.append("Equipe não exibe Maleta no menu")
+        pg.locator("nav.oj-lateral >> text=Equipe").click(); pg.wait_for_timeout(100)
         pg.locator("nav.oj-lateral >> text=Maleta").click(); pg.wait_for_timeout(300)
         if not pg.get_by_text("Capital na rua").count(): ruim.append("Não apareceu CAPITAL NA RUA")
         if not pg.get_by_text("Prazo de acertar venceu").count(): ruim.append("Não apareceu o aviso de prazo vencido")
