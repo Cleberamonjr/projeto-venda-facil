@@ -9,7 +9,7 @@
    Assim a cliente nunca é mandada ao WhatsApp por um pedido que não foi registrado.
    Nenhum dos dois caminhos confirma a venda: quem confirma é a vendedora, no login dela.
    ============================================================ */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import "./lona.css";
 import {
   COR_PADRAO, brl, corDoTexto, corValida, hrefWhats, linkDaLona, mensagemDeErro,
@@ -66,17 +66,16 @@ export default function Vitrine({ lona, onPedido, onAtualizar, previa = false })
   }, [itens]);
 
   /* janela do carrinho: Esc fecha, página de trás não rola, foco vai para o título */
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!aberto || previa) return undefined;
     const antes = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const tecla = (e) => { if (e.key === "Escape") setAberto(false); };
     document.addEventListener("keydown", tecla);
-    const t = setTimeout(() => tituloRef.current && tituloRef.current.focus(), 30);
+    if (tituloRef.current) tituloRef.current.focus();
     return () => {
       document.body.style.overflow = antes;
       document.removeEventListener("keydown", tecla);
-      clearTimeout(t);
     };
   }, [aberto, previa]);
 

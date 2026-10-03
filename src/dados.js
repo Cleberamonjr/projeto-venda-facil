@@ -195,7 +195,7 @@ function traduzErro(m = "") {
 }
 
 /* ---------- criar loja + assinatura em teste de 72h ---------- */
-export async function criarLoja({ nome, fornecedores, formas, margem, plano, dona }) {
+export async function criarLoja({ nome, fornecedores, formas, margem, plano, dona, whatsapp }) {
   const u = await auth.usuario();
   if (!u) throw new Error("Sessão ausente.");
 
@@ -210,6 +210,7 @@ export async function criarLoja({ nome, fornecedores, formas, margem, plano, don
     .insert({
       dona_id: u.id,
       nome,
+      whatsapp: whatsapp ? String(whatsapp).replace(/\D/g, "").slice(0, 11) : null,
       fornecedores: fornNomes, // mantém a coluna antiga preenchida (compat)
       fornecedores_json: fornArr, // formato novo com margem
       formas_pagamento: formas && formas.length ? formas : ["Dinheiro", "Débito", "Crédito", "Na confiança"],
@@ -287,32 +288,35 @@ export async function carregarTudo() {
   }
 
   // 1) é dona de alguma loja?
-  let { data: loja } = await sb
+  let { data: loja, error: lojaError } = await sb
     .from("lojas")
     .select("*")
     .eq("dona_id", u.id)
     .maybeSingle();
+  if (lojaError) throw lojaError;
 
   // 2) não é dona — está vinculada como consultora ativa em alguma loja?
   //    (o vínculo acontece em aceitarConvite; a policy de leitura de
   //    "lojas" já libera esse caso mesmo sem ser a dona.)
   let minhaConsultora = null;
   if (!loja) {
-    const { data: cons } = await sb
+    const { data: cons, error: consError } = await sb
       .from("consultoras")
       .select("*")
       .eq("usuario_id", u.id)
       .eq("ativa", true)
       .maybeSingle();
+    if (consError) throw consError;
     if (cons) {
       minhaConsultora = cons;
-      const { data: lj } = await sb.from("lojas").select("*").eq("id", cons.loja_id).maybeSingle();
+      const { data: lj, error: ljError } = await sb.from("lojas").select("*").eq("id", cons.loja_id).maybeSingle();
+      if (ljError) throw ljError;
       loja = lj;
     }
   }
   if (!loja) return { semLoja: true };
 
-  const [assin, cons, ent, pec, mal, mit, ven, sai, des, cli, col] = await comTimeout(Promise.all([
+  const [assin, cons, ent, pec, mal, mit, ven, sai, des, cli, col, rec] = await comTimeout(Promise.all([
     sb.from("assinaturas").select("*").eq("loja_id", loja.id).maybeSingle(),
     sb.from("consultoras").select("*").eq("loja_id", loja.id),
     sb.from("entradas").select("*").eq("loja_id", loja.id),
@@ -324,7 +328,15 @@ export async function carregarTudo() {
     sb.from("despesas").select("*").eq("loja_id", loja.id),
     sb.from("clientes").select("*").eq("loja_id", loja.id),
     sb.from("colecoes").select("*").eq("loja_id", loja.id),
+    sb.from("contas_receber").select("*").eq("loja_id", loja.id),
   ]), 12000, "carregar dados da loja");
+
+  const respostas = [assin, cons, ent, pec, mal, mit, ven, sai, des, cli, col, rec];
+  const falha = respostas.find((x) => x && x.error);
+  if (falha) {
+    console.error("Falha ao carregar dados da loja:", falha.error);
+    throw falha.error;
+  }
 
   const a = assin.data || {};
 
@@ -415,7 +427,8 @@ export async function carregarTudo() {
           venda: r(i.venda_centavos),
         })),
     })),
-    vendas: (ven.data || []).map((x) => ({
+    contasReceber: (rec.data || []).map((x) => ({ id:x.id, consultoraId:x.consultora_id, nome:x.nome, valor:r(x.valor_centavos), vencimento:x.vencimento, status:x.status, origem:x.origem, referenciaId:x.referencia_id, criadoEm:x.criado_em })),
+    vendas: (ven.data || []).filter((x) => !x.cancelada_em).map((x) => ({
       id: x.id,
       pecaId: x.peca_id,
       consultoraId: x.consultora_id,
@@ -431,6 +444,7 @@ export async function carregarTudo() {
       pago: x.pago,
       cobrarEm: x.cobrar_em,
       data: x.vendida_em,
+      canceladaEm: x.cancelada_em || null,
     })),
     saidas: (sai.data || []).map((x) => ({
       id: x.id,
@@ -699,6 +713,46 @@ export async function abrirMaleta(lojaId, { consultoraId, prazo, itens }) {
   return maleta.id;
 }
 
+export async function maletaAcertoDados(maletaId) {
+  const { data, error } = await sb.rpc("maleta_acerto_dados", { p_maleta: maletaId });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function salvarMaletaAcerto(maletaId, itens, donaConfirmou=false, consultoraConfirmou=false, acertoJunto=false) {
+  const { data, error } = await sb.rpc("maleta_acerto_salvar", {
+    p_maleta: maletaId, p_itens: itens, p_dona_confirmou: donaConfirmou,
+    p_consultora_confirmou: consultoraConfirmou, p_acerto_junto: acertoJunto
+  });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function fecharMaletaAcerto(maletaId) {
+  const { data, error } = await sb.rpc("maleta_acerto_fechar", { p_maleta: maletaId });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function desfazerMaletaAcerto(maletaId, motivo) {
+  const { data, error } = await sb.rpc("maleta_acerto_desfazer", { p_maleta: maletaId, p_motivo: motivo || null });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function registrarVendaMaleta(maletaId, v) {
+  const { data, error } = await sb.rpc("maleta_registrar_venda", {
+    p_maleta: maletaId, p_peca: v.pecaId, p_qtd: 1, p_valor_cent: c(v.valor),
+    p_modalidade: MODALIDADE_PARA_ENUM[v.modalidade] || v.modalidade,
+    p_cliente: v.cliente || null, p_pago: v.pago !== false, p_cobrar_em: v.cobrarEm || null
+  });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function quitarContaReceber(id) {
+  const { error } = await sb.from("contas_receber").update({ status:"recebida", recebido_em:new Date().toISOString(), atualizado_em:new Date().toISOString() }).eq("id",id);
+  if (error) throw error;
+}
+export async function reabrirMaleta(maletaId) {
+  return desfazerMaletaAcerto(maletaId, "Desfazer acerto pela dona");
+}
+
 export async function encerrarMaleta(maletaId) {
   const { data: itens } = await sb
     .from("maleta_itens")
@@ -725,6 +779,18 @@ const gerarConviteCodigo = () =>
 
 export const consultoras = {
   criar: async (lojaId, x) => {
+    const [{ data: assinatura }, { count }] = await Promise.all([
+      sb.from("assinaturas").select("plano,status").eq("loja_id",lojaId).maybeSingle(),
+      sb.from("consultoras").select("id", { count: "exact", head: true }).eq("loja_id",lojaId).eq("eh_dona",false).eq("ativa",true),
+    ]);
+    const limites = { crescimento: 5, joalheria: 10, inteligencia: 25 };
+    const limite = limites[assinatura?.plano] || 0;
+    if (!["trial","ativa"].includes(assinatura?.status) || !limite) {
+      throw new Error("A equipe está disponível no plano Equipe.");
+    }
+    if ((count || 0) >= limite) {
+      throw new Error("Você já chegou ao limite de vendedoras deste plano.");
+    }
     const { data, error } = await sb
       .from("consultoras")
       .insert({
