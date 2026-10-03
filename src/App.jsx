@@ -2081,7 +2081,8 @@ export default function OrganizeJewelry() {
               ["perfil", "Minha conta", "Plano, logo e WhatsApp"],
             ]],
           ]).filter(([grupo]) => grupo !== "Equipe" || temEquipe).map(([grupo, itens]) => {
-            const aberto = menuGrupo === grupo;
+            // "Dia a dia" só existe para a dona: para a consultora, o grupo dela ("Meu trabalho") é o que nasce aberto
+            const aberto = menuGrupo === grupo || (ehConsultora && menuGrupo === "Dia a dia" && grupo === "Meu trabalho");
             return (
               <div key={grupo} className="oj-menu-grupo">
                 <button type="button" className="oj-grupo-btn" aria-expanded={aberto}
