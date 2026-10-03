@@ -714,6 +714,31 @@ await teste('Y2. teste vencido: dados não viram plano Livre e a loja fica bloqu
   return { ok: bloqueou && preservouMensagem && naoMostrouLivre && naoMostrouProdutoNoApp, detalhe: 'bloqueou=' + bloqueou + '; preservou aviso=' + preservouMensagem + '; sem Livre=' + naoMostrouLivre };
 });
 
+await teste('Y3. Maleta: estados por unidade, dupla confirmação, estorno, contas e comissão no líquido', async () => {
+  const app = fs.readFileSync(path.join(raiz, 'src/App.jsx'), 'utf8');
+  const dados = fs.readFileSync(path.join(raiz, 'src/dados.js'), 'utf8');
+  const sql = fs.readFileSync(path.join(raiz, 'supabase/migrations/20261003_maleta_acerto.sql'), 'utf8');
+  const regras = [
+    'Cada unidade fica em um lugar: voltou, vendeu ou sumiu.',
+    'Ela te repassa',
+    'Você paga de comissão',
+    'Seu lucro neste acerto',
+    'PDF do acerto',
+    'Desfazer acerto',
+    'contas_receber',
+    'dona_confirmou_em',
+    'consultora_confirmou_em',
+    "estado text not null default 'pendente'",
+    "status='fechado'",
+    'cancelada_em',
+    'maleta_registrar_venda',
+    'comissao = vendas.reduce'
+  ];
+  const semJargao = !app.includes('encontro de contas') && !app.includes('CMV') && !app.includes('liquidação');
+  const ok = regras.every(x => app.includes(x) || dados.includes(x) || sql.includes(x)) && semJargao;
+  return { ok, detalhe: 'regras=' + regras.every(x => app.includes(x) || dados.includes(x) || sql.includes(x)) + '; sem jargão=' + semJargao };
+});
+
 const todos = resultados.every(Boolean);
 console.log(todos ? `\nTODOS OS ${resultados.length} TESTES PASSARAM` : `\n${resultados.filter((x) => !x).length} TESTE(S) FALHARAM — NÃO PUBLIQUE`);
 process.exit(todos ? 0 : 1);
