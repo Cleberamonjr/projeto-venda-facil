@@ -30,7 +30,7 @@ def rodar(fotos=False):
         check(not [c for c in st["rpc"] if c[0] == "lona_publicar"], "nada foi publicado sem o WhatsApp")
         pg.fill("#lo-zap", "(11) 99999-8888"); pg.click("button:has-text('Abrir minha loja on-line')"); pg.wait_for_selector("[data-teste=link-loja]")
         sv = [c for c in st["rpc"] if c[0] == "lona_salvar"][-1][1]["p_rascunho"]
-        check(sv["ordem"] == ["p1", "p2", "p3"], f"entraram todas as peças COM estoque (a esgotada não): {sv['ordem']}")
+        check(sv["ordem"] == ["p1", "p2"], f"entram as peças COM foto e COM estoque (a sem foto e a esgotada não): {sv['ordem']}")
         check(sv["whatsapp"] == "11999998888" and all(sv["itens"][i]["preco"] == "preco" for i in sv["ordem"]), "WhatsApp salvo e preços começam nos da loja")
         check(sv["itens"]["p2"]["centavos"] == 18900, "preço de cada peça = preço da loja")
         check(any(c[0] == "lona_publicar" for c in st["rpc"]), "publicou")
@@ -49,10 +49,10 @@ def rodar(fotos=False):
         # C) peça nova no estoque -> botão de adicionar
         st["lona"]["rascunho"]["ordem"] = ["p1"]; st["lona"]["publicado"]["ordem"] = ["p1"]
         pg.reload(); abrir_hub(pg); pg.wait_for_selector("[data-teste=link-loja]")
-        check("peças novas no estoque" in pg.inner_text(".lona-ed"), "peças novas no estoque são anunciadas")
-        pg.click("button:has-text('Adicionar 2 peças')"); pg.wait_for_selector("text=publicadas")
+        check("peça nova no estoque ainda não está" in pg.inner_text(".lona-ed"), "peça nova (com foto) no estoque é anunciada")
+        pg.click("button:has-text('Adicionar 1 peça')"); pg.wait_for_selector("text=publicada")
         sv = [c for c in st["rpc"] if c[0] == "lona_salvar"][-1][1]["p_rascunho"]
-        check(sv["ordem"] == ["p1", "p2", "p3"], f"sincronizou mantendo as que já estavam: {sv['ordem']}")
+        check(sv["ordem"] == ["p1", "p2"], f"sincronizou mantendo as que já estavam: {sv['ordem']}")
         # D) atalhos
         pg.click("button:has-text('Ver pedidos')"); pg.wait_for_selector(".lona-ed [role=tab]")
         check(pg.query_selector(".lona-ed [role=tab]") is not None, "atalho 'Ver pedidos' abre a tela de edição e pedidos")
