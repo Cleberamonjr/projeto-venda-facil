@@ -106,8 +106,8 @@ as $f$
        where m.id = p_maleta
          and public.maleta_equipe_ok(m.loja_id)
          and (
-           public.minha_loja(m.loja_id)
-           or public.minha_consultoria(m.loja_id) = m.consultora_id
+           privado.minha_loja(m.loja_id)
+           or privado.minha_consultoria(m.loja_id) = m.consultora_id
          )
     ), false);
 $f$;
