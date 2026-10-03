@@ -772,6 +772,42 @@ const VAZIO = {
   colecoes: [],
 };
 
+/* Cópia local de segurança: não é a fonte oficial dos dados.
+   Serve apenas para impedir que uma falha transitória de leitura após uma
+   atualização deixe a usuária vendo uma loja vazia. A fonte de verdade
+   continua sendo o Supabase. */
+const BACKUP_PREFIX = "luxi:backup:estoque:v1:";
+const salvarBackupSeguro = async (est, usuarioId) => {
+  if (!est?.lojaId || !usuarioId) return;
+  try {
+    const backup = {
+      lojaId: est.lojaId,
+      perfil: est.perfil,
+      entradas: est.entradas || [],
+      estoque: (est.estoque || []).map((p) => ({ ...p, fotos: [] })),
+      salvoEm: new Date().toISOString(),
+    };
+    localStorage.setItem(BACKUP_PREFIX + usuarioId, JSON.stringify(backup));
+    if (navigator.storage?.persist) {
+      try { await navigator.storage.persist(); } catch (_) {}
+    }
+  } catch (_) {
+    /* backup local nunca pode impedir o uso do banco */
+  }
+};
+const lerBackupSeguro = (usuarioId) => {
+  if (!usuarioId) return null;
+  try {
+    const bruto = localStorage.getItem(BACKUP_PREFIX + usuarioId);
+    if (!bruto) return null;
+    const backup = JSON.parse(bruto);
+    if (!backup?.lojaId || !Array.isArray(backup.estoque)) return null;
+    return backup;
+  } catch (_) {
+    return null;
+  }
+};
+
 /* Converte o objeto que vem de dados.carregarTudo() (tabelas relacionais)
    para o mesmo formato que as telas já esperam. */
 const deTabelas = (est) => ({ ...VAZIO, ...est });
@@ -1331,13 +1367,29 @@ export default function OrganizeJewelry() {
      Usado no boot, depois de criar a loja, depois de entrar e depois
      do romaneio confirmado. */
   const recarregar = async () => {
-    const est = await dados.carregarTudo();
-    if (!est || est.semLoja) {
-      setD({ ...VAZIO, perfil: null });
-      return null;
+    let usuario = null;
+    try { usuario = await dados.auth.usuario(); } catch (_) {}
+
+    try {
+      const est = await dados.carregarTudo();
+      if (!est || est.semLoja) {
+        setD({ ...VAZIO, perfil: null });
+        return null;
+      }
+      setD(deTabelas(est));
+      await salvarBackupSeguro(est, usuario?.id || usuario?.email || null);
+      return est;
+    } catch (e) {
+      /* Nunca transforma uma falha de leitura em uma loja vazia.
+         Primeiro tenta o último retrato local da MESMA conta. */
+      const backup = lerBackupSeguro(usuario?.id || usuario?.email || null);
+      if (backup?.lojaId) {
+        setD(deTabelas(backup));
+        console.warn("Luxi: banco indisponível; usando cópia local de segurança.", e);
+        return backup;
+      }
+      throw e;
     }
-    setD(deTabelas(est));
-    return est;
   };
 
   useEffect(() => {
