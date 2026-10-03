@@ -288,26 +288,29 @@ export async function carregarTudo() {
   }
 
   // 1) é dona de alguma loja?
-  let { data: loja } = await sb
+  let { data: loja, error: lojaError } = await sb
     .from("lojas")
     .select("*")
     .eq("dona_id", u.id)
     .maybeSingle();
+  if (lojaError) throw lojaError;
 
   // 2) não é dona — está vinculada como consultora ativa em alguma loja?
   //    (o vínculo acontece em aceitarConvite; a policy de leitura de
   //    "lojas" já libera esse caso mesmo sem ser a dona.)
   let minhaConsultora = null;
   if (!loja) {
-    const { data: cons } = await sb
+    const { data: cons, error: consError } = await sb
       .from("consultoras")
       .select("*")
       .eq("usuario_id", u.id)
       .eq("ativa", true)
       .maybeSingle();
+    if (consError) throw consError;
     if (cons) {
       minhaConsultora = cons;
-      const { data: lj } = await sb.from("lojas").select("*").eq("id", cons.loja_id).maybeSingle();
+      const { data: lj, error: ljError } = await sb.from("lojas").select("*").eq("id", cons.loja_id).maybeSingle();
+      if (ljError) throw ljError;
       loja = lj;
     }
   }
@@ -326,6 +329,13 @@ export async function carregarTudo() {
     sb.from("clientes").select("*").eq("loja_id", loja.id),
     sb.from("colecoes").select("*").eq("loja_id", loja.id),
   ]), 12000, "carregar dados da loja");
+
+  const respostas = [assin, cons, ent, pec, mal, mit, ven, sai, des, cli, col];
+  const falha = respostas.find((x) => x && x.error);
+  if (falha) {
+    console.error("Falha ao carregar dados da loja:", falha.error);
+    throw falha.error;
+  }
 
   const a = assin.data || {};
 
