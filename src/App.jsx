@@ -8576,8 +8576,9 @@ function Catalogo({ d }) {
   }, [d.lojaId]);
   const link = linkLona || `https://luxi.app/${slug}`;
 
-  const texto =
-    `${d.perfil.loja}\n\n` +
+  const texto = linkLona
+    ? `${d.perfil.loja}\n\nConfira as peças na nossa vitrine online e peça por lá:\n${linkLona}`
+    : `${d.perfil.loja}\n\n` +
     escolhidas
       .map(
         (p) =>

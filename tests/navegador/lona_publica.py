@@ -135,8 +135,7 @@ def rodar(fotos=False):
         check(len(ped["p_pecas"]) == 2 and ped["p_pecas"][0].endswith("1"), "enviou os ids das 2 peças")
         a = pg.get_attribute(".lona-feito a", "href"); dec = urllib.parse.unquote(a)
         check(a.startswith("https://wa.me/5511999998888?text="), "botão leva ao WhatsApp da vendedora (55 + DDD)")
-        check("AN-1001" in dec and "BR-088" in dec and "Cliente: Maria Cliente · 11988887777" in dec and "combinar a entrega" in dec, "mensagem leva peças, quem é a cliente e o pedido de entrega")
-        check("Total: R$ 129,00" in dec.replace("\xa0", " "), "mensagem leva o total")
+        check("?m=ana" in dec and "AN-1001" not in dec and "Cliente: Maria Cliente · 11988887777" in dec and "combinar a entrega" in dec, "mensagem leva o LINK da vitrine (sem lista de peças), quem é a cliente e o pedido de entrega")
         check(pg.get_attribute(".lona-feito a", "rel") == "noopener noreferrer", "link externo com noopener")
         check(pg.inner_text(".lona-barra") if pg.query_selector(".lona-barra") else True, "ok")
         pg.keyboard.press("Escape")
@@ -160,7 +159,7 @@ def rodar(fotos=False):
         estado = {"lona": LONA, "pedidos": [], "chamadas": []}
         ctx, pg = abrir(estado)
         href = urllib.parse.unquote(pg.get_attribute(".lona-peca >> nth=0 >> text=Quero essa", "href"))
-        check("AN-1001 · Anel Solitário Zircônia" in href and "Ouro 18k · aro 16" in href and "Oi! Quero essa da maleta de Ana." in href, "'Quero essa' monta a mensagem da vendedora com a peça")
+        check("?m=ana" in href and "AN-1001" not in href and "Anel" not in href, "'Quero essa' manda o link da vitrine, não o texto do produto")
         check(not [c for c in estado["chamadas"] if c[0] == "lona_criar_pedido"], "'Quero essa' não registra pedido (é só conversa)")
         ctx.close()
 

@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./lona.css";
 import {
-  COR_PADRAO, brl, corDoTexto, corValida, hrefWhats, mensagemDeErro, montarMensagem,
+  COR_PADRAO, brl, corDoTexto, corValida, hrefWhats, linkDaLona, mensagemDeErro,
   pilhaDaFonte, soDigitos, textoDoPreco, totalDoCarrinho, validarCliente,
 } from "./util.js";
 
@@ -87,13 +87,15 @@ export default function Vitrine({ lona, onPedido, onAtualizar, previa = false })
     setCarrinho((atual) => (atual.includes(id) ? atual.filter((x) => x !== id) : [...atual, id]));
   };
 
+  /* A mensagem leva o LINK da vitrine online, não a lista de peças (o pedido com as peças já fica registrado). */
+  const linkVitrine = lona.slug ? linkDaLona(lona.slug) : "";
   const mensagemDireta = useCallback(
-    (lista, fechamento, totalCent) =>
+    (_lista, fechamento) =>
       hrefWhats(
         lona.whatsapp,
-        montarMensagem({ modelo: lona.modelo, nome: lona.nome, itens: lista, totalCentavos: totalCent, fechamento }),
+        [`Oi ${lona.nome || ""}! Estou vendo a sua vitrine online:`, linkVitrine, fechamento ? `\n${fechamento}` : ""].filter(Boolean).join("\n"),
       ),
-    [lona.whatsapp, lona.modelo, lona.nome],
+    [lona.whatsapp, lona.nome, linkVitrine],
   );
 
   const fechamentoDoPedido = (origem, n, f) => {
