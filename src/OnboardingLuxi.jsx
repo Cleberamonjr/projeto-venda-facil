@@ -191,8 +191,8 @@ export function getNextBestAction(d) {
   };
   if (!colecoes.length) return {
     type: "catalogo", title: "Sua loja on-line está quase pronta",
-    description: "Organize suas peças em uma coleção e abra sua loja on-line para as clientes pedirem.",
-    cta: "Abrir loja on-line", aba: "catalogo"
+    description: "Organize suas peças em uma coleção e prepare sua Lona para as clientes pedirem.",
+    cta: "Preparar loja on-line", aba: "lona"
   };
   if (!vendas.length) return {
     type: "venda", title: "Vamos registrar sua primeira venda",
