@@ -328,9 +328,10 @@ export async function carregarTudo() {
     sb.from("despesas").select("*").eq("loja_id", loja.id),
     sb.from("clientes").select("*").eq("loja_id", loja.id),
     sb.from("colecoes").select("*").eq("loja_id", loja.id),
+    sb.from("contas_receber").select("*").eq("loja_id", loja.id),
   ]), 12000, "carregar dados da loja");
 
-  const respostas = [assin, cons, ent, pec, mal, mit, ven, sai, des, cli, col];
+  const respostas = [assin, cons, ent, pec, mal, mit, ven, sai, des, cli, col, rec];
   const falha = respostas.find((x) => x && x.error);
   if (falha) {
     console.error("Falha ao carregar dados da loja:", falha.error);
@@ -426,7 +427,8 @@ export async function carregarTudo() {
           venda: r(i.venda_centavos),
         })),
     })),
-    vendas: (ven.data || []).map((x) => ({
+    contasReceber: (rec.data || []).map((x) => ({ id:x.id, consultoraId:x.consultora_id, nome:x.nome, valor:r(x.valor_centavos), vencimento:x.vencimento, status:x.status, origem:x.origem, referenciaId:x.referencia_id, criadoEm:x.criado_em })),
+    vendas: (ven.data || []).filter((x) => !x.cancelada_em).map((x) => ({
       id: x.id,
       pecaId: x.peca_id,
       consultoraId: x.consultora_id,
@@ -442,6 +444,7 @@ export async function carregarTudo() {
       pago: x.pago,
       cobrarEm: x.cobrar_em,
       data: x.vendida_em,
+      canceladaEm: x.cancelada_em || null,
     })),
     saidas: (sai.data || []).map((x) => ({
       id: x.id,
@@ -708,6 +711,46 @@ export async function abrirMaleta(lojaId, { consultoraId, prazo, itens }) {
     await sb.from("pecas").update({ qtd: (p?.qtd || 0) - i.qtd }).eq("id", i.pecaId);
   }
   return maleta.id;
+}
+
+export async function maletaAcertoDados(maletaId) {
+  const { data, error } = await sb.rpc("maleta_acerto_dados", { p_maleta: maletaId });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function salvarMaletaAcerto(maletaId, itens, donaConfirmou=false, consultoraConfirmou=false, acertoJunto=false) {
+  const { data, error } = await sb.rpc("maleta_acerto_salvar", {
+    p_maleta: maletaId, p_itens: itens, p_dona_confirmou: donaConfirmou,
+    p_consultora_confirmou: consultoraConfirmou, p_acerto_junto: acertoJunto
+  });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function fecharMaletaAcerto(maletaId) {
+  const { data, error } = await sb.rpc("maleta_acerto_fechar", { p_maleta: maletaId });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function desfazerMaletaAcerto(maletaId, motivo) {
+  const { data, error } = await sb.rpc("maleta_acerto_desfazer", { p_maleta: maletaId, p_motivo: motivo || null });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function registrarVendaMaleta(maletaId, v) {
+  const { data, error } = await sb.rpc("maleta_registrar_venda", {
+    p_maleta: maletaId, p_peca: v.pecaId, p_qtd: 1, p_valor_cent: c(v.valor),
+    p_modalidade: MODALIDADE_PARA_ENUM[v.modalidade] || v.modalidade,
+    p_cliente: v.cliente || null, p_pago: v.pago !== false, p_cobrar_em: v.cobrarEm || null
+  });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function quitarContaReceber(id) {
+  const { error } = await sb.from("contas_receber").update({ status:"recebida", recebido_em:new Date().toISOString(), atualizado_em:new Date().toISOString() }).eq("id",id);
+  if (error) throw error;
+}
+export async function reabrirMaleta(maletaId) {
+  return desfazerMaletaAcerto(maletaId, "Desfazer acerto pela dona");
 }
 
 export async function encerrarMaleta(maletaId) {
