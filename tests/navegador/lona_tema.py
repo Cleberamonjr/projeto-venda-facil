@@ -24,7 +24,7 @@ def rodar(fotos=False):
                 pg = ctx.new_page(); pg.goto(srv.url); le.abrir_lona(pg); pg.wait_for_timeout(500)
                 for nome in ["lona com peças", "pedidos", "prévia"]:
                     if nome == "pedidos": pg.click("[role=tab]:has-text('Pedidos')"); pg.wait_for_selector("text=Maria Cliente"); pg.click(".oj-card:has-text('Joana') button:has-text('Confirmar venda')")
-                    if nome == "prévia": pg.click("[role=tab]:has-text('Minha lona')"); pg.click("button:has-text('Ver como a cliente vê')"); pg.wait_for_selector(".lona--previa .lona-peca")
+                    if nome == "prévia": pg.click("[role=tab]:has-text('Minha loja')"); pg.click("button:has-text('Ver como a cliente vê')"); pg.wait_for_selector(".lona--previa .lona-peca")
                     pg.wait_for_timeout(250); n += 1
                     for x in pg.evaluate(pc.AUDITORIA, tema):
                         if "campo com 13.33" in x and ("file" in x or "Escolher outra cor" in x): continue   # campos de arquivo/cor: não abrem teclado

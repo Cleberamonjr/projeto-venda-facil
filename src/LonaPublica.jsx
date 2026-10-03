@@ -16,7 +16,7 @@ export class ErroDaLona extends Component {
     if (this.state.erro) {
       return (
         <div className="lona" style={{ padding: "64px 24px", textAlign: "center" }}>
-          <p style={{ fontSize: 18, marginBottom: 12 }}>Não foi possível abrir esta lona.</p>
+          <p style={{ fontSize: 18, marginBottom: 12 }}>Não foi possível abrir esta loja.</p>
           <button type="button" className="lona-bt lona-bt--cor" onClick={() => window.location.reload()}>Tentar de novo</button>
         </div>
       );
@@ -43,7 +43,7 @@ export default function LonaPublica({ slug }) {
 
   useEffect(() => {
     const l = estado.lona;
-    document.title = l ? `${l.nome} · ${l.loja || "Lona"}` : "Lona";
+    document.title = l ? `${l.nome} · ${l.loja || "Loja"}` : "Loja";
     // a lona é para quem recebe o link; não precisa aparecer em buscadores
     let meta = document.querySelector('meta[name="robots"]');
     if (!meta) { meta = document.createElement("meta"); meta.setAttribute("name", "robots"); document.head.appendChild(meta); }
@@ -59,13 +59,13 @@ export default function LonaPublica({ slug }) {
   );
 
   if (estado.fase === "carregando") {
-    return <div className="lona" style={{ padding: "96px 24px", textAlign: "center", color: "#5e584f" }} role="status">Abrindo a lona…</div>;
+    return <div className="lona" style={{ padding: "96px 24px", textAlign: "center", color: "#5e584f" }} role="status">Abrindo a loja…</div>;
   }
   if (estado.fase === "naoexiste") {
     return (
       <div className="lona" style={{ padding: "96px 24px", textAlign: "center" }}>
-        <h1 style={{ fontSize: 24, marginBottom: 12 }}>Esta lona não está disponível</h1>
-        <p style={{ color: "#5e584f", lineHeight: 1.5 }}>O link pode estar errado ou a vendedora tirou a lona do ar. Peça um link novo a ela.</p>
+        <h1 style={{ fontSize: 24, marginBottom: 12 }}>Esta loja não está disponível</h1>
+        <p style={{ color: "#5e584f", lineHeight: 1.5 }}>O link pode estar errado ou a vendedora tirou a loja do ar. Peça um link novo a ela.</p>
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default function LonaPublica({ slug }) {
     return (
       <div className="lona" style={{ padding: "96px 24px", textAlign: "center" }}>
         <h1 style={{ fontSize: 22, marginBottom: 12 }}>Sem conexão</h1>
-        <p style={{ color: "#5e584f", marginBottom: 20 }}>Não deu para abrir a lona agora.</p>
+        <p style={{ color: "#5e584f", marginBottom: 20 }}>Não deu para abrir a loja agora.</p>
         <button type="button" className="lona-bt lona-bt--cor" onClick={() => carregar(false)}>Tentar de novo</button>
       </div>
     );

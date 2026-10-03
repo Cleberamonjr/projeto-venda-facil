@@ -221,7 +221,7 @@ def rodar(fotos=False):
         # ---------- 3) situações da página ----------
         estado = {"lona": None, "pedidos": [], "chamadas": []}
         ctx = novo_contexto(b, {"width": 390, "height": 844}, estado); pg = ctx.new_page(); pg.goto(srv.url + "?m=naoexiste")
-        pg.wait_for_selector("text=Esta lona não está disponível")
+        pg.wait_for_selector("text=Esta loja não está disponível")
         check(True, "lona que não existe/foi tirada do ar: mensagem educada")
         ctx.close()
         estado = {"lona": LONA, "pedidos": [], "chamadas": [], "cai_rede": True}

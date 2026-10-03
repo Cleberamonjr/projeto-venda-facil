@@ -61,8 +61,9 @@ export default function LojaOnline({ d, irPara, recarregar, Avulso }) {
   const rasc = normalizar(lona.rascunho);
   const noAr = !!lona.publicado;
   const naLona = new Set(rasc.ordem);
-  const novas = elegiveis.filter((p) => !naLona.has(p.id));
-  const visiveis = elegiveis.filter((p) => naLona.has(p.id));
+  const comFoto = elegiveis.filter((p) => fotoUsavel(p.fotos, 0)); // regra da loja: sem foto, não aparece
+  const novas = comFoto.filter((p) => !naLona.has(p.id));
+  const visiveis = comFoto.filter((p) => naLona.has(p.id));
   const semFoto = elegiveis.filter((p) => !fotoUsavel(p.fotos, 0));
   const zapUsado = soDigitos(rasc.whatsapp).length >= 10 ? soDigitos(rasc.whatsapp) : zap;
   const zapOk = soDigitos(zapUsado).length >= 10 && soDigitos(zapUsado).length <= 11;
@@ -162,7 +163,7 @@ export default function LojaOnline({ d, irPara, recarregar, Avulso }) {
             <div className="oj-linha"><b>{visiveis.length}</b> {visiveis.length === 1 ? "peça" : "peças"} à venda na loja on-line</div>
             <div className="oj-linha"><b>{abertos}</b> {abertos === 1 ? "pedido" : "pedidos"} para você tratar</div>
             {semFoto.length > 0 ? (
-              <div className="oj-linha lona-ed-alerta">{semFoto.length} {semFoto.length === 1 ? "peça está" : "peças estão"} sem foto e aparece{semFoto.length === 1 ? "" : "m"} como "foto em breve". Com foto, vende mais.</div>
+              <div className="oj-linha lona-ed-alerta">{semFoto.length} {semFoto.length === 1 ? "peça está" : "peças estão"} sem foto e <b>não aparece{semFoto.length === 1 ? "" : "m"} na loja</b>. Fotografe no Estoque para entrar{semFoto.length === 1 ? "" : "em"}.</div>
             ) : null}
             {novas.length > 0 ? (
               <>

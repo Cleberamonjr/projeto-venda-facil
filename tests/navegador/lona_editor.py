@@ -122,7 +122,7 @@ def rodar(fotos=False):
         # peças: só entram as que têm foto da web e estoque
         bt = lambda nome: pg.query_selector(f"button[aria-label='Incluir {nome}']")
         check(bt("Anel Solitário").is_enabled() and bt("Colar Riviera").is_enabled(), "peças com foto e estoque podem entrar")
-        check(bt("Brinco sem foto web").is_enabled() and "sem foto" in pg.inner_text(".lona-ed").lower(), "peça sem foto pode entrar (aparece como 'foto em breve'), e o app avisa")
+        check(not bt("Brinco sem foto web").is_enabled() and "sem foto" in pg.inner_text(".lona-ed").lower(), "REGRA: peça sem foto NÃO entra na loja, e o app diz o motivo")
         check(not bt("Pulseira esgotada").is_enabled(), "peça sem estoque é bloqueada")
         bt("Colar Riviera").click(); bt("Anel Solitário").click()
         pg.wait_for_selector("#pv-p1")
@@ -135,7 +135,7 @@ def rodar(fotos=False):
         ult = [c for c in st["rpc"] if c[0] == "lona_salvar"][-1][1]["p_rascunho"]
         check(ult["ordem"] == ["p1", "p2"] and ult["itens"]["p2"]["centavos"] == 19990, f"ordem e preço chegam ao servidor: {ult['ordem']} / {ult['itens']['p2']['centavos']}")
         # publicar
-        pg.click("button:has-text('Publicar lona')"); pg.wait_for_selector("text=Lona publicada")
+        pg.click("button:has-text('Publicar loja')"); pg.wait_for_selector("text=Loja publicada")
         check("no ar" in pg.inner_text(".oj-estado").lower(), "depois de publicar fica 'No ar'")
         link = pg.inner_text(".lona-ed-link")
         check(re.search(r"\?m=dona-teste$", link) is not None, f"link no padrão ?m=apelido: {link}")
@@ -148,6 +148,7 @@ def rodar(fotos=False):
         pv = pg.inner_text(".lona--previa")
         check("Prévia" in pv and "Colar Riviera" in pv and "R$ 199,90" in pv.replace("\xa0", " ") and "Novidades da semana" in pv, "prévia mostra o rascunho como a cliente verá")
         check(pg.query_selector(".lona--previa .lona-carrinho-btn") is None, "na prévia não há carrinho (pedidos desligados)")
+        check("Fora da loja por falta de foto" not in pv, "prévia: sem aviso quando nenhuma peça incluída está sem foto")
         pg.click("button:has-text('Esconder prévia')")
         # Pix só a dona
         pg.fill("#ln-pix", "loja@pix.com"); pg.click("button:has-text('Salvar chave')"); pg.wait_for_selector("text=Chave Pix salva")
@@ -191,13 +192,13 @@ def rodar(fotos=False):
 
         # ---- C) plano em modo leitura ----
         st = novo_estado("dona", pode_editar=False); ctx = contexto(b, {"width": 390, "height": 844}, "dona", st); pg = ctx.new_page(); pg.goto(srv.url); abrir_lona(pg)
-        check("modo leitura" in pg.inner_text(".lona-ed") and pg.is_disabled("#ln-nome") and pg.query_selector("button:has-text('Publicar lona')") is None, "plano vencido: só leitura, sem publicar")
+        check("modo leitura" in pg.inner_text(".lona-ed") and pg.is_disabled("#ln-nome") and pg.query_selector("button:has-text('Publicar loja')") is None, "plano vencido: só leitura, sem publicar")
         ctx.close()
 
         # ---- D) erro do servidor ao publicar ----
         st = novo_estado("dona"); st["falha"]["lona_publicar"] = "Informe seu WhatsApp (com DDD) para publicar"
         ctx = contexto(b, {"width": 390, "height": 844}, "dona", st); pg = ctx.new_page(); pg.goto(srv.url); abrir_lona(pg)
-        pg.click("button:has-text('Publicar lona')"); pg.wait_for_selector("[role=alert]")
+        pg.click("button:has-text('Publicar loja')"); pg.wait_for_selector("[role=alert]")
         check("WhatsApp" in pg.inner_text("[role=alert]") and "fora do ar" in pg.inner_text(".lona-ed").lower(), "erro ao publicar aparece em português e a lona segue fora do ar")
         ctx.close()
 

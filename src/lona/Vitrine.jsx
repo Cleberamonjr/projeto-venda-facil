@@ -143,7 +143,7 @@ export default function Vitrine({ lona, onPedido, onAtualizar, previa = false })
   const estilo = { "--lona-fonte": pilhaDaFonte(lona.fonte), "--lona-cor": marca, "--lona-tinta": tinta };
 
   return (
-    <article className={`lona${previa ? " lona--previa" : ""}`} style={estilo} aria-label={`Lona de ${lona.nome || "vendedora"}`}>
+    <article className={`lona${previa ? " lona--previa" : ""}`} style={estilo} aria-label={`Loja de ${lona.nome || "vendedora"}`}>
       {previa ? (
         <p className="lona-aviso-previa" role="note">Prévia: é assim que a cliente vê. Aqui os pedidos ficam desligados.</p>
       ) : (
@@ -168,7 +168,7 @@ export default function Vitrine({ lona, onPedido, onAtualizar, previa = false })
         <div className="lona-col lona-vazia">
           <p>Nenhuma peça disponível agora.</p>
           {!previa && soDigitos(lona.whatsapp).length >= 10 ? (
-            <a className="lona-bt lona-bt--cor" href={hrefWhats(lona.whatsapp, `Oi ${lona.nome || ""}! Vi sua lona. O que você tem de novo?`)} target="_blank" rel="noopener noreferrer">
+            <a className="lona-bt lona-bt--cor" href={hrefWhats(lona.whatsapp, `Oi ${lona.nome || ""}! Vi sua loja. O que você tem de novo?`)} target="_blank" rel="noopener noreferrer">
               Chamar {lona.nome} no WhatsApp
             </a>
           ) : null}

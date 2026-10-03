@@ -149,16 +149,16 @@ export default function Lona({ d, recarregar }) {
   if (!lojaId) {
     return (
       <div className="oj-vazio">
-        <span className="oj-serif">A lona fica na sua loja</span>
+        <span className="oj-serif">A loja on-line fica na sua conta</span>
         Ela funciona na conta de uma loja real. Aqui, na demonstração, não há cliente para abrir o link.
       </div>
     );
   }
-  if (fase === "carregando") return <div className="oj-vazio" role="status">Abrindo sua lona…</div>;
+  if (fase === "carregando") return <div className="oj-vazio" role="status">Abrindo sua loja on-line…</div>;
   if (fase === "erro") {
     return (
       <div className="oj-vazio">
-        <span className="oj-serif">Não deu para abrir a lona</span>
+        <span className="oj-serif">Não deu para abrir a loja on-line</span>
         {erroGeral}
         <div style={{ marginTop: 14 }}><button className="oj-btn" style={{ width: "auto" }} onClick={() => { setFase("carregando"); abrirLona(consultoraId); }}>Tentar de novo</button></div>
       </div>
@@ -224,7 +224,7 @@ export default function Lona({ d, recarregar }) {
       await salvarAgora();
       await dados.lonaPublicar(lona.id);
       await abrirLona(lona.consultora_id); await recarregarResumo();
-      setAviso({ tipo: "ok", texto: "Lona publicada! Já pode mandar o link para suas clientes." });
+      setAviso({ tipo: "ok", texto: "Loja publicada! Já pode mandar o link para suas clientes." });
     } catch (e) { setAviso({ tipo: "erro", texto: erroTexto(e) }); }
     setOcupado("");
   };
@@ -233,7 +233,7 @@ export default function Lona({ d, recarregar }) {
     try {
       await dados.lonaTirarDoAr(lona.id);
       await abrirLona(lona.consultora_id); await recarregarResumo();
-      setAviso({ tipo: "ok", texto: "Lona fora do ar. Quem tem o link verá que ela não está disponível." });
+      setAviso({ tipo: "ok", texto: "Loja fora do ar. Quem tem o link verá que ela não está disponível." });
     } catch (e) { setAviso({ tipo: "erro", texto: erroTexto(e) }); }
     setOcupado("");
   };
@@ -273,11 +273,13 @@ export default function Lona({ d, recarregar }) {
     const p = porId[id], it = rasc.itens[id];
     if (!p || !it || p.arquivada || p.qtd < 1) return [];
     const foto = fotoUsavel(p.fotos, it.foto || 0);
+    if (!foto) return []; // sem foto não aparece (igual ao que a cliente vê)
     const base = Math.round(Number(p.venda || 0) * 100);
     return [{ id, codigo: p.codigo, nome: p.nome, foto, preco: it.preco, centavos: it.preco === "preco" ? Math.max(it.centavos, base) : null,
       banho: it.banho ? p.banho : null, tamanho: it.tamanho ? p.tamanho : null, nota: it.nota || null }];
   });
 
+  const foraPrevia = rasc.ordem.map((id) => porId[id]).filter((p) => p && !p.arquivada && p.qtd > 0 && !fotoUsavel(p.fotos, (rasc.itens[p.id] || {}).foto || 0));
   const abertos = (pedidos || []).filter((p) => p.status === "aberto" || p.status === "pago").length;
   const estadoSalvo = { salvo: "Rascunho salvo", pendente: "Salvando…", salvando: "Salvando…", erro: "Não salvou. Vou tentar de novo" }[salvo];
 
@@ -285,7 +287,7 @@ export default function Lona({ d, recarregar }) {
     <div className="lona-ed">
       {ehDona && resumo.length > 1 ? (
         <div className="oj-card flat">
-          <div className="oj-meta">Lona de quem?</div>
+          <div className="oj-meta">Loja de quem?</div>
           <div className="oj-chips" role="group" aria-label="Escolher consultora">
             {resumo.map((c) => (
               <button key={c.consultora_id} className="oj-chip" data-on={c.consultora_id === consultoraId ? "1" : "0"} aria-pressed={c.consultora_id === consultoraId} onClick={() => trocarConsultora(c.consultora_id)}>
@@ -314,7 +316,7 @@ export default function Lona({ d, recarregar }) {
             <div className="oj-acoes">
               <button className="oj-bt" onClick={copiarLink}>Copiar link</button>
               <a className="oj-bt" href={link} target="_blank" rel="noopener noreferrer">Abrir</a>
-              <a className="oj-bt" href={hrefWhats("", `Veja minha lona: ${link}`)} target="_blank" rel="noopener noreferrer">Mandar no WhatsApp</a>
+              <a className="oj-bt" href={hrefWhats("", `Veja minha loja: ${link}`)} target="_blank" rel="noopener noreferrer">Mandar no WhatsApp</a>
             </div>
           </>
         ) : <div className="oj-meta" style={{ marginTop: 10 }}>Publique para ganhar o link que você manda para suas clientes.</div>}
@@ -322,7 +324,7 @@ export default function Lona({ d, recarregar }) {
         {lona.pode_editar ? (
           <div className="oj-acoes">
             <button className="oj-btn" style={{ width: "auto", flex: "1 1 180px" }} disabled={ocupado === "publicar" || (noAr && !mudou)} onClick={publicar}>
-              {ocupado === "publicar" ? "Publicando…" : noAr ? "Publicar mudanças" : "Publicar lona"}
+              {ocupado === "publicar" ? "Publicando…" : noAr ? "Publicar mudanças" : "Publicar loja"}
             </button>
             {noAr && !tirando ? <button className="oj-bt" onClick={() => setTirando(true)}>Tirar do ar</button> : null}
           </div>
@@ -337,7 +339,7 @@ export default function Lona({ d, recarregar }) {
       </div>
 
       <div className="oj-seg" style={{ gridTemplateColumns: "1fr 1fr" }} role="tablist">
-        <button role="tab" aria-selected={aba === "lona"} onClick={() => setAba("lona")}>Minha lona</button>
+        <button role="tab" aria-selected={aba === "lona"} onClick={() => setAba("lona")}>Minha loja</button>
         <button role="tab" aria-selected={aba === "pedidos"} onClick={() => setAba("pedidos")}>Pedidos{abertos > 0 ? ` (${abertos})` : ""}</button>
       </div>
 
@@ -346,7 +348,7 @@ export default function Lona({ d, recarregar }) {
           <div className="oj-card">
             <div className="oj-sec" style={{ margin: "0 0 8px", fontSize: 18 }}>Sua vitrine</div>
             <div className="oj-campo">
-              <label htmlFor="ln-nome">Nome na lona</label>
+              <label htmlFor="ln-nome">Nome na loja</label>
               <input id="ln-nome" className="oj-in" value={rasc.nome} maxLength={60} onChange={(e) => alterar((r) => ({ ...r, nome: e.target.value }))} />
             </div>
             <div className="oj-campo">
@@ -359,7 +361,7 @@ export default function Lona({ d, recarregar }) {
             </div>
             <div className="oj-campo">
               <label>Capa</label>
-              {https(rasc.capa) ? <img className="lona-ed-capa" src={rasc.capa} alt="Capa atual da lona" /> : <div className="oj-meta">Sem capa: a vitrine usa a cor escolhida.</div>}
+              {https(rasc.capa) ? <img className="lona-ed-capa" src={rasc.capa} alt="Capa atual da loja" /> : <div className="oj-meta">Sem capa: a vitrine usa a cor escolhida.</div>}
               <label className="oj-bt lona-ed-arquivo">
                 {ocupado === "capa" ? "Enviando…" : https(rasc.capa) ? "Trocar capa" : "Escolher capa"}
                 <input type="file" accept="image/*" onChange={(e) => { enviarCapa(e.target.files && e.target.files[0]); e.target.value = ""; }} />
@@ -386,7 +388,7 @@ export default function Lona({ d, recarregar }) {
           </div>
 
           <div className="oj-card">
-            <div className="oj-sec" style={{ margin: "0 0 4px", fontSize: 18 }}>Peças na lona ({incluidas.length})</div>
+            <div className="oj-sec" style={{ margin: "0 0 4px", fontSize: 18 }}>Peças na loja ({incluidas.length})</div>
             <div className="oj-meta">A cliente vê foto, nome, preço, tamanho e banho. O custo nunca aparece. Peça sem unidade em estoque some sozinha.</div>
             {incluidas.length > 1 ? (
               <div className="oj-chips" role="group" aria-label="Ordenar">
@@ -404,7 +406,7 @@ export default function Lona({ d, recarregar }) {
                 return (
                   <div key={id} className="oj-linha">
                     <div className="oj-erro" style={{ margin: 0 }}>Esta peça saiu do estoque e não aparece para a cliente.</div>
-                    <div className="oj-acoes"><button className="oj-bt" onClick={() => tirar(id)}>Tirar da lona</button></div>
+                    <div className="oj-acoes"><button className="oj-bt" onClick={() => tirar(id)}>Tirar da loja</button></div>
                   </div>
                 );
               }
@@ -418,7 +420,7 @@ export default function Lona({ d, recarregar }) {
                       <div style={{ fontWeight: 600 }}>{p.nome || p.codigo}</div>
                       <div className="oj-meta">{p.codigo} · {p.qtd} em estoque · preço da loja {brl(piso)}</div>
                       {p.qtd < 1 ? <div className="oj-meta lona-ed-alerta">Sem estoque: não aparece para a cliente</div> : null}
-                      {!foto ? <div className="oj-meta lona-ed-alerta">Sem foto: aparece como "foto em breve". Fotografe a peça no Estoque.</div> : null}
+                      {!foto ? <div className="oj-meta lona-ed-alerta">Sem foto: não aparece para a cliente. Fotografe a peça no Estoque.</div> : null}
                     </div>
                   </div>
                   <div className="lona-ed-grade">
@@ -466,13 +468,13 @@ export default function Lona({ d, recarregar }) {
             {fora.length === 0 ? <div className="oj-meta" style={{ marginTop: 10 }}>Nenhuma peça para adicionar.</div> : null}
             {fora.slice(0, 60).map((p) => {
               const foto = fotoUsavel(p.fotos, 0);
-              const motivo = p.qtd < 1 ? "Sem estoque" : "";
+              const motivo = p.qtd < 1 ? "Sem estoque" : !foto ? "Sem foto" : "";
               return (
                 <div key={p.id} className="oj-item">
                   {foto ? <img className="lona-ed-mini lona-ed-mini--p" src={foto} alt="" /> : <span className="lona-ed-mini lona-ed-mini--p lona-ed-sem" />}
                   <div className="oj-quebra" style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600 }}>{p.nome || p.codigo}</div>
-                    <div className="oj-meta">{p.codigo} · {brl(Math.round(Number(p.venda || 0) * 100))}{motivo ? ` · ${motivo}` : !foto ? " · sem foto" : ""}</div>
+                    <div className="oj-meta">{p.codigo} · {brl(Math.round(Number(p.venda || 0) * 100))}{motivo ? ` · ${motivo}` : ""}</div>
                   </div>
                   <button className="oj-bt" disabled={!!motivo} onClick={() => incluir(p)} aria-label={`Incluir ${p.nome || p.codigo}`}>Incluir</button>
                 </div>
@@ -525,6 +527,7 @@ export default function Lona({ d, recarregar }) {
             {previa ? (
               <div className="lona-ed-previa">
                 <Vitrine previa lona={{ ...rasc, loja: lona.loja_nome, pix: lona.pix_chave, itens: itensPrevia }} />
+                {foraPrevia.length > 0 ? <div className="oj-aviso lona-ed-alerta" style={{ margin: 12 }}>Fora da loja por falta de foto: {foraPrevia.map((p) => p.nome || p.codigo).join(", ")}. Fotografe no Estoque.</div> : null}
               </div>
             ) : null}
           </div>

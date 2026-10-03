@@ -118,7 +118,7 @@ export function mensagemDeErro(e) {
   if (cod === "LX410") return { texto: msg || "Algumas peças acabaram de sair.", recarregar: true };
   if (cod === "LX429") return { texto: msg || "Há muitos pedidos em aberto. Fale direto no WhatsApp.", direto: true };
   if (cod === "LX422") return { texto: msg || "Confira seus dados." };
-  if (cod === "LX404") return { texto: "Esta lona não está mais disponível.", recarregar: true };
+  if (cod === "LX404") return { texto: "Esta loja não está mais disponível.", recarregar: true };
   if (/failed to fetch|network|load failed|timeout/i.test(msg)) return { texto: "Sem conexão. Confira a internet e tente de novo." };
   return { texto: "Não deu para enviar agora. Tente de novo em instantes ou fale direto no WhatsApp." };
 }
