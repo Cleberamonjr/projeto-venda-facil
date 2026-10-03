@@ -770,6 +770,7 @@ const VAZIO = {
   consultoras: [],
   maletas: [],
   colecoes: [],
+  contasReceber: [],
 };
 
 /* Cópia local de segurança: não é a fonte oficial dos dados.
@@ -8774,6 +8775,16 @@ function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda, 
   };
 
   const receber = d.vendas.filter((v) => v.modalidade === CONFIANCA && !v.pago);
+  const repasses = (d.contasReceber || []).filter((x) => x.status === "aberta" && dentro(x.vencimento));
+  const quitarRepasse = async (x) => {
+    setErro("");
+    setQuitandoId(x.id);
+    try {
+      if (d.lojaId) { await dados.quitarContaReceber(x.id); await recarregar(); }
+      else await salvar({ ...d, contasReceber:(d.contasReceber||[]).map(y=>y.id===x.id?{...y,status:"recebida"}:y) });
+    } catch(e) { setErro(e?.message || "Não deu para registrar esse recebimento."); }
+    finally { setQuitandoId(null); }
+  };
   const quitar = async (v) => {
     setErro("");
     setQuitandoId(v.id);
@@ -8930,7 +8941,26 @@ function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda, 
       )}
 
       <div className="oj-sec">Quem me deve?</div>
-      {!receber.length ? (
+      {repasses.length > 0 && (
+        <div className="oj-card">
+          <div className="oj-lbl">Repasses das maletas</div>
+          {repasses.map((x) => (
+            <div className="oj-item" key={x.id}>
+              <div>
+                <div className="oj-nome">{x.nome}</div>
+                <div className="oj-meta">Venceu no dia do acerto · {new Date(x.vencimento).toLocaleDateString("pt-BR")}</div>
+              </div>
+              <div className="oj-dir">
+                <div className="oj-preco">{brl(x.valor)}</div>
+                <button className="oj-btn sec mini" style={{marginTop:6}} onClick={()=>quitarRepasse(x)} disabled={quitandoId===x.id}>
+                  {quitandoId===x.id ? "Registrando…" : "Recebi"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {!receber.length && !repasses.length ? (
         <div className="oj-vazio" style={{ padding: "26px 24px" }}>
           Ninguém devendo. Bom sinal.
         </div>
