@@ -2013,6 +2013,7 @@ export default function OrganizeJewelry() {
         criarDespesa={criarDespesa}
         removerDespesa={removerDespesa}
         quitarVenda={quitarVendaConfianca}
+        recarregar={recarregar}
       />
     ),
     admin: <Admin d={d} />,
@@ -8734,7 +8735,7 @@ function Mais({ irPara, mestre }) {
 }
 
 /* ---------------- contas ---------------- */
-function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda, irPara }) {
+function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda, irPara, recarregar }) {
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState("");
   const [tipo, setTipo] = useState("Fixa");
