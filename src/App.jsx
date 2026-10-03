@@ -6785,7 +6785,7 @@ function Equipe({ d, salvar, dentro, criarConsultora, atualizarConsultora, remov
   const vendas = d.vendas.filter((v) => dentro(v.data));
 
   const add = async () => {
-    if (!nome.trim() || cons.length >= 6) return;
+    if (!nome.trim() || cons.length >= plano.consultoras) return;
     setErro("");
     setSalvando(true);
     try {
@@ -6985,7 +6985,7 @@ function Equipe({ d, salvar, dentro, criarConsultora, atualizarConsultora, remov
           </div>
         ))}
 
-      {cons.length < 6 && (
+      {cons.length < plano.consultoras && (
         <div className="oj-card">
           <div className="oj-lbl">Cadastrar consultora</div>
           <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 10 }}>
