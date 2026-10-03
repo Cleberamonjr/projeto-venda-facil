@@ -4650,7 +4650,8 @@ function Painel({ d, dentro, irPara }) {
   const receita = vendas.reduce((s, v) => s + v.valor, 0);
   const custo = vendas.reduce((s, v) => s + v.custo, 0);
   const despesa = desp.reduce((s, x) => s + x.valor, 0);
-  const lucro = receita - custo - despesa;
+  const comissao = vendas.reduce((s, v) => s + (Number(v.comissao) || 0), 0);
+  const lucro = receita - custo - despesa - comissao;
 
   const porModal = MODALIDADES.map((m) => ({
     m,
@@ -4765,7 +4766,7 @@ function Painel({ d, dentro, irPara }) {
         <div className="oj-lbl">Como foi o período</div>
         <div className={"oj-valor " + (lucro >= 0 ? "ouro" : "rose")}>{brl(lucro)}</div>
         <div className="oj-meta" style={{ marginTop: 8 }}>
-          {brl(receita)} vendido · {brl(custo)} de custo · {brl(despesa)} em gastos
+          {brl(receita)} vendido · {brl(custo)} de custo · {brl(despesa)} em gastos · {brl(comissao)} de comissão
           {margemPct !== 0 ? ` · margem de ${margemPct}%` : ""}
         </div>
       </div>
@@ -8052,6 +8053,7 @@ function Dashboards({ d, dentro }) {
       const suas = vendas.filter((v) => v.consultoraId === c.id);
       const receita = suas.reduce((s, v) => s + v.valor, 0);
       const custo = suas.reduce((s, v) => s + v.custo, 0);
+      const comissao = suas.reduce((s, v) => s + (Number(v.comissao) || 0), 0);
       const inad = suas.filter((v) => !v.pago).reduce((s, v) => s + v.valor, 0);
       return {
         ...c,
@@ -8059,7 +8061,7 @@ function Dashboards({ d, dentro }) {
         vendas: suas.length,
         pecas: suas.reduce((s, v) => s + v.qtd, 0),
         ticket: suas.length ? receita / suas.length : 0,
-        margem: receita ? ((receita - custo) / receita) * 100 : 0,
+        margem: receita ? ((receita - custo - comissao) / receita) * 100 : 0,
         inad: receita ? (inad / receita) * 100 : 0,
       };
     })
