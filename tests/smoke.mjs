@@ -687,6 +687,35 @@ await teste('T2. cada acesso beta mostra a ação certa para a situação da pes
   return { ok: !erradas.length && revogou && abriu, detalhe: [erradas.length && 'falhou: ' + erradas.join(' | '), `revogou=${revogou}; abriu a loja=${abriu}`].filter(Boolean).join(' ; ') };
 });
 
+await teste('Y. planos comerciais: Equipe custa R$ 129,90 e cobre até 5 vendedoras; anual aplica 5%', async () => {
+  const okPreco = js.includes('preco: "129,90"') && js.includes('consultoras: 5') && js.includes('Até 5 vendedoras');
+  const okAnual = js.includes('mensal * 12 * 0.95') && js.includes('Anual · 5% off') && js.includes('Equivale a R
+console.log(todos ? `\nTODOS OS ${resultados.length} TESTES PASSARAM` : `\n${resultados.filter((x) => !x).length} TESTE(S) FALHARAM — NÃO PUBLIQUE`);
+process.exit(todos ? 0 : 1);
+);
+  const semPlano179Publico = js.includes('PLANO_PUBLICOS = () => PLANOS.filter((x) => !x.legado && !x.emBreve)');
+  return { ok: okPreco && okAnual && semPlano179Publico, detalhe: 'Equipe 129,90/5 vendedoras=' + okPreco + '; anual -5%=' + okAnual + '; Escala/Visão fora da oferta pública=' + semPlano179Publico };
+});
+
+await teste('Y2. teste vencido: dados não viram plano Livre e a loja fica bloqueada até assinatura', async () => {
+  const passado = new Date(Date.now() - 3600 * 1000).toISOString();
+  const tabelas = {
+    lojas: [{ id: 'loja-vencida', nome: 'Loja Vencida', dona_id: 'u-vencida', whatsapp: '5511999999999', fornecedores: [], fornecedores_json: [], formas_pagamento: ['Dinheiro'], margem_padrao: 100 }],
+    assinaturas: [{ loja_id: 'loja-vencida', plano: 'crescimento', status: 'trial', trial_ate: passado }],
+    consultoras: [{ id: 'c-vencida', loja_id: 'loja-vencida', nome: 'Você', comissao: 0, eh_dona: true, ativa: true, usuario_id: null }],
+    entradas: [], pecas: [{ id: 'p-vencida', loja_id: 'loja-vencida', codigo: 'AN-1', nome: 'Anel', qtd: 2, custo_centavos: 1000, venda_centavos: 3000, fotos: [] }],
+    maletas: [], maleta_itens: [], vendas: [], saidas: [], despesas: [], clientes: [], colecoes: []
+  };
+  const a = await abrir({ sessao: usuario('vencida@teste.com', 'u-vencida'), cfg: { rpc: { sou_admin_luxi: false }, tabelas } });
+  const bloqueou = await esperarPor(() => a.texto().includes('Seu período de teste terminou'), 12000);
+  const t = a.texto();
+  const preservouMensagem = t.includes('Seus dados continuam guardados') && t.includes('Nenhum produto');
+  const naoMostrouLivre = !t.includes('plano Livre') && !t.includes('Começo');
+  const naoMostrouProdutoNoApp = !t.includes('Anel');
+  a.fechar();
+  return { ok: bloqueou && preservouMensagem && naoMostrouLivre && naoMostrouProdutoNoApp, detalhe: 'bloqueou=' + bloqueou + '; preservou aviso=' + preservouMensagem + '; sem Livre=' + naoMostrouLivre };
+});
+
 const todos = resultados.every(Boolean);
 console.log(todos ? `\nTODOS OS ${resultados.length} TESTES PASSARAM` : `\n${resultados.filter((x) => !x).length} TESTE(S) FALHARAM — NÃO PUBLIQUE`);
 process.exit(todos ? 0 : 1);
