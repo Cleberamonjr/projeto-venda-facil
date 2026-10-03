@@ -6778,9 +6778,8 @@ function Equipe({ d, salvar, dentro, criarConsultora, atualizarConsultora, remov
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [removendoId, setRemovendoId] = useState(null);
-  const liberado = ["crescimento", "joalheria", "inteligencia"].includes(
-    planoAtivo(d.perfil).id
-  );
+  const plano = planoAtivo(d.perfil);
+  const liberado = ["crescimento", "joalheria", "inteligencia"].includes(plano.id);
   const cons = d.consultoras || [];
   const vendas = d.vendas.filter((v) => dentro(v.data));
 
