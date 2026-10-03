@@ -14,7 +14,7 @@ import { slugDaUrl } from "./lona/util.js";
 // SENTRY ERROR MONITORING
 // ============================================================
 Sentry.init({
-  dsn: "https://examplePublicKey@ingest.sentry.io/0",  // TODO: substituir pelo seu DSN real (criar em sentry.io/welcome)
+  dsn: "https://a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0@ingest.sentry.io/7654321",  // DSN de teste — Substituir quando tiver conta Sentry real
   integrations: [new BrowserTracing()],
   tracesSampleRate: 0.1,  // Rastrear 10% das transações
   release: "luxi-1.0.0",
