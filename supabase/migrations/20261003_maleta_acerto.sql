@@ -308,11 +308,17 @@ begin
     end if;
   end loop;
 
-  -- Só agora mexe no estoque: as peças estavam fora da loja desde a entrega.
+  -- A unidade voltou: sai da maleta e entra no estoque vendável.
   for v_i in select * from public.maleta_acerto_itens where acerto_id=v_a.id and estado='voltou' loop
     update public.pecas p
        set qtd=qtd+1
      where p.id=(select mi.peca_id from public.maleta_itens mi where mi.id=v_i.maleta_item_id);
+    update public.maleta_itens set qtd=greatest(0,qtd-1) where id=v_i.maleta_item_id;
+  end loop;
+
+  -- A unidade sumiu: não volta ao estoque, mas deixa de estar na maleta.
+  for v_i in select * from public.maleta_acerto_itens where acerto_id=v_a.id and estado='sumiu' loop
+    update public.maleta_itens set qtd=greatest(0,qtd-1) where id=v_i.maleta_item_id;
   end loop;
 
   -- Garante que cada venda usada no acerto está vinculada à maleta.
@@ -343,21 +349,48 @@ returns uuid
 language plpgsql volatile security definer set search_path = public
 as $f$
 declare
-  v_m public.maletas; v_c public.consultoras; v_v uuid;
-  v_comissao integer;
+  v_m public.maletas; v_c public.consultoras; v_mi public.maleta_itens; v_v uuid; v_comissao integer;
 begin
   if not public.maleta_pode_gerir(p_maleta) then raise exception 'Sem permissão' using errcode='LX403'; end if;
   select * into v_m from public.maletas where id=p_maleta for update;
+  if not found then raise exception 'Maleta não encontrada' using errcode='LX404'; end if;
   select * into v_c from public.consultoras where id=v_m.consultora_id;
   if v_m.status <> 'aberta' then raise exception 'Maleta já acertada' using errcode='LX409'; end if;
-  if p_qtd < 1 or p_qtd > 1 then raise exception 'Registre uma unidade por vez' using errcode='LX422'; end if;
-  v_comissao := round(coalesce(p_valor_cent,0) * coalesce(v_c.comissao,0) / 100);
-  insert into public.vendas(loja_id,peca_id,consultora_id,maleta_id,codigo,nome,qtd,valor_centavos,custo_centavos,comissao_centavos,modalidade,cliente,pago,cobrar_em)
-  select v_m.loja_id,p.id,v_m.consultora_id,p_maleta,p.codigo,p.nome,1,p_valor_cent,p.custo_centavos,v_comissao,
-         p_modalidade::modalidade,p_cliente,p_pago,p_cobrar_em
-    from public.pecas p where p.id=p_peca and p.loja_id=v_m.loja_id and not p.arquivada;
-  if not found then raise exception 'Peça não encontrada' using errcode='LX404'; end if;
-  select id into v_v from public.vendas where maleta_id=p_maleta and peca_id=p_peca order by vendida_em desc limit 1;
+  if p_qtd <> 1 then raise exception 'Registre uma unidade por vez' using errcode='LX422'; end if;
+
+  select * into v_mi from public.maleta_itens
+   where maleta_id=p_maleta and peca_id=p_peca and qtd>0
+   order by id limit 1 for update;
+  if not found then raise exception 'Não há mais unidades desta peça na maleta' using errcode='LX422'; end if;
+
+  v_comissao := round(coalesce(p_valor_cent,0)::numeric * coalesce(v_c.comissao,0) / 100)::int;
+
+  insert into public.vendas(
+    loja_id,peca_id,consultora_id,maleta_id,codigo,nome,qtd,valor_centavos,
+    custo_centavos,comissao_centavos,modalidade,cliente,pago,cobrar_em
+  )
+  select v_m.loja_id,p.id,v_m.consultora_id,p_maleta,p.codigo,p.nome,1,p_valor_cent,
+         p.custo_centavos,v_comissao,p_modalidade::modalidade,p_cliente,p_pago,p_cobrar_em
+    from public.pecas p
+   where p.id=p_peca and p.loja_id=v_m.loja_id and not p.arquivada
+  returning id into v_v;
+
+  if v_v is null then raise exception 'Peça não encontrada' using errcode='LX404'; end if;
+
+  -- A unidade continua fora do estoque da loja e agora sai da quantidade física da maleta.
+  update public.maleta_itens set qtd=qtd-1 where id=v_mi.id;
+
+  -- Se o acerto já estava aberto, marca uma unidade como vendida imediatamente.
+  update public.maleta_acerto_itens
+     set estado='vendeu',venda_id=v_v,
+         venda_centavos=p_valor_cent,custo_centavos=v_mi.custo_centavos,
+         comissao_centavos=v_comissao,atualizado_em=now()
+   where id=(
+     select id from public.maleta_acerto_itens
+      where acerto_id=(select id from public.maleta_acertos where maleta_id=p_maleta)
+        and maleta_item_id=v_mi.id and estado='pendente'
+      order by unidade limit 1);
+
   return v_v;
 end $f$;
 
