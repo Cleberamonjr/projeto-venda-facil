@@ -2213,6 +2213,7 @@ export default function OrganizeJewelry() {
               <button
                 key={k}
                 className="oj-atalho"
+                data-tour-role={k === "painel" ? "inicio" : k === "estoque" ? "pecas" : k === "vendas" ? "vendas" : k === "clientes" ? "clientes" : undefined}
                 data-on={aba === k ? "1" : "0"}
                 onClick={() => irPara(k)}
               >
@@ -2223,7 +2224,7 @@ export default function OrganizeJewelry() {
           </div>
         )}
 
-        <h1 className="oj-h1 oj-serif">{titulos[aba][0]}</h1>
+        <h1 className="oj-h1 oj-serif" data-tour-role={aba === "lona" ? "lona-screen" : aba === "conselho" ? "conselheira-screen" : undefined}>{titulos[aba][0]}</h1>
         <div className="oj-sub">{titulos[aba][1]}</div>
         {aba !== "admin" && aba !== "lona" && aba !== "catalogo" && (
           <Filtro
