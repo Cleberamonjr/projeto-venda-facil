@@ -47,7 +47,15 @@ def rodar():
         if pg.get_by_text("PDF do acerto").count()!=1: ruim.append("PDF do acerto não apareceu")
         if pg.get_by_text("encontro de contas").count(): ruim.append("Interface usou jargão proibido")
         if pg.get_by_text("CMV").count() or pg.get_by_text("liquidação").count(): ruim.append("Interface usou jargão proibido")
-        ctx.close(); b.close()
+        ctx.close()
+        # Solo não vê a operação de Maleta.
+        tabelas_solo=dict(tabelas)
+        tabelas_solo["assinaturas"]=[{"loja_id":"L1","plano":"inicio","status":"ativa","trial_ate":None}]
+        ctx2,_=preparar_contexto(b,{"width":390,"height":844},tabelas=tabelas_solo,rpc=rpc)
+        pg2=ctx2.new_page(); pg2.goto(srv.url); esperar_app(pg2)
+        if pg2.locator("nav.oj-lateral >> text=Maleta").count():
+            ruim.append("Solo exibiu Maleta no menu")
+        ctx2.close(); b.close()
     srv.parar()
     print(("✅" if not ruim else "❌")+" QA Maleta: "+("TUDO OK" if not ruim else "; ".join(ruim)))
     return len(ruim)
