@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import * as dados from "./dados.js";
 import Lona from "./Lona.jsx";
+import LojaOnline from "./LojaOnline.jsx";
 import { WHATSAPP_SUPORTE, linkSuporte } from "./contato.js";
 
 /* ============================================================
@@ -1868,7 +1869,7 @@ export default function OrganizeJewelry() {
     ),
     vendas: <Vendas d={d} dentro={dentro} quitarVenda={quitarVendaConfianca} />,
     conselho: <Conselheiro d={d} dentro={dentro} />,
-    catalogo: <Catalogo d={d} />,
+    catalogo: <LojaOnline d={d} irPara={irPara} recarregar={recarregar} Avulso={<Catalogo d={d} />} />,
     lona: <Lona d={d} recarregar={recarregar} />,
     clientes: (
       <Clientes
@@ -1946,8 +1947,8 @@ export default function OrganizeJewelry() {
     estoque: ["Suas peças", "Tudo que você tem e o que tá parado na gaveta"],
     vendas: ["Suas vendas", "O que já vendeu e o que ainda vão te pagar"],
     conselho: ["Dicas pra você", "O que seus números estão pedindo agora"],
-    catalogo: ["Seu catálogo", "Monta e manda no zap num toque"],
-    lona: ["Sua lona", "Sua vitrine: a cliente escolhe e pede sem login"],
+    catalogo: ["Sua loja on-line", "O link para suas clientes verem as peças e pedirem"],
+    lona: ["Editar loja e pedidos", "Capa, preços, Pix e os pedidos das clientes"],
     clientes: ["Suas clientes", "Quem compra sempre, quem sumiu e quem deve"],
     maleta: ["Quem tá com o quê", "Suas peças que estão na rua pra vender"],
     graficos: ["Seus números", "Um raio-x do que tá bombando (ou não)"],
@@ -2031,8 +2032,8 @@ export default function OrganizeJewelry() {
                   ["estoque", "Catálogo", "O que existe na loja"],
                   ["vendas", "Minhas vendas", "O que eu vendi"],
                   ["clientes", "Minhas clientes", "Quem compra comigo"],
-                  ["catalogo", "Catálogo", "Enviar no WhatsApp"],
-                  ["lona", "Minha lona", "Vitrine e pedidos"],
+                  ["catalogo", "Loja on-line", "Link para suas clientes"],
+                  ["lona", "Editar loja e pedidos", "Capa, preços e pedidos"],
                 ]],
                 ["Conta", [["perfil", "Minha conta", "Dados e acesso"]]],
               ]
@@ -2042,8 +2043,8 @@ export default function OrganizeJewelry() {
               ["estoque", "Estoque", "Peças e reposição"],
               ["vendas", "Vendas", "Histórico e recebimentos"],
               ["clientes", "Clientes", "Quem compra e quanto gasta"],
-              ["catalogo", "Catálogo", "Enviar no WhatsApp"],
-              ["lona", "Lona", "Vitrine e pedidos"],
+              ["catalogo", "Loja on-line", "Link para suas clientes"],
+              ["lona", "Editar loja e pedidos", "Capa, preços e pedidos"],
             ]],
             ["Equipe", [
               ["maleta", "Maleta", "O que está com quem"],
@@ -2189,7 +2190,7 @@ export default function OrganizeJewelry() {
 
         <h1 className="oj-h1 oj-serif">{titulos[aba][0]}</h1>
         <div className="oj-sub">{titulos[aba][1]}</div>
-        {aba !== "admin" && aba !== "lona" && (
+        {aba !== "admin" && aba !== "lona" && aba !== "catalogo" && (
           <Filtro
             periodo={periodo}
             setPeriodo={setPeriodo}
@@ -2204,7 +2205,7 @@ export default function OrganizeJewelry() {
       <Aviso d={d} irPara={irPara} />
 
       <div className="oja" key={aba}>
-        {["catalogo", "clientes", "maleta", "graficos", "equipe", "contas", "admin", "perfil", "integracoes"].includes(aba) && (
+        {["catalogo", "lona", "clientes", "maleta", "graficos", "equipe", "contas", "admin", "perfil", "integracoes"].includes(aba) && (
           <div style={{ padding: "12px 20px 0" }}>
             <button className="oj-btn sec mini" onClick={() => irPara("painel")}>
               ‹ Voltar ao painel
@@ -7583,7 +7584,7 @@ function Perfil({ d, salvar, irPara, tema, setTema }) {
           value={p.whatsapp || ""}
           onChange={(e) => set("whatsapp", e.target.value)}
         />
-        <div className="oj-lbl" style={{ marginTop: 14 }}>Endereço da sua loja online</div>
+        <div className="oj-lbl" style={{ marginTop: 14 }}>Apelido da loja</div>
         <input
           className="oj-in"
           placeholder="minhaloja"
@@ -7593,7 +7594,8 @@ function Perfil({ d, salvar, irPara, tema, setTema }) {
           }
         />
         <div className="oj-meta" style={{ marginTop: 6 }}>
-          Sua vitrine: <b>luxi.app/{p.slug || "minhaloja"}</b>
+          O link para suas clientes pedirem fica em{" "}
+          <button type="button" className="oj-link-sutil" style={{ display: "inline", width: "auto", minHeight: 0 }} onClick={() => irPara("catalogo")}>Loja on-line</button>.
         </div>
       </div>
 
@@ -8574,7 +8576,6 @@ function Catalogo({ d }) {
     }).catch(() => {});
     return () => { vivo = false; };
   }, [d.lojaId]);
-  const link = linkLona || `https://luxi.app/${slug}`;
 
   const texto = linkLona
     ? `${d.perfil.loja}\n\nConfira as peças na nossa vitrine online e peça por lá:\n${linkLona}`
@@ -8585,8 +8586,7 @@ function Catalogo({ d }) {
           `${p.nome}${p.banho ? ` · ${p.banho}` : ""}\nCód. ${p.codigo} — ${brl(p.venda)}`
       )
       .join("\n\n") +
-    `\n\nVeja todas as peças e monte seu pedido:\n${link}\n\n` +
-    `Me chame para garantir a sua.`;
+    `\n\nMe chame para garantir a sua.`;
 
   const numero = (d.perfil.whatsapp || "").replace(/\D/g, "");
   const abrirWhats = () => {
@@ -8618,8 +8618,8 @@ function Catalogo({ d }) {
     <>
       <div className="oj-card flat">
         <div className="oj-meta" style={{ lineHeight: 1.6 }}>
-          Escolha as peças e envie direto pelo WhatsApp. Vai com foto do código, preço e
-          o link da sua loja para a cliente montar o pedido sozinha.
+          Escolha as peças e envie direto pelo WhatsApp, com nome, código e preço de cada uma.
+          Para a cliente ver tudo e pedir sozinha, mande o link da sua loja on-line.
         </div>
         {!d.perfil.whatsapp && (
           <div className="oj-meta" style={{ marginTop: 8, color: "var(--alerta)" }}>
@@ -8711,8 +8711,8 @@ function Mais({ irPara, mestre }) {
     ["graficos", "Análises", "Vendas por banho, despesas e equipe"],
     ["maleta", "Maleta", "O que está com cada consultora"],
     ["clientes", "Clientes", "Histórico e quanto cada uma já gastou"],
-    ["catalogo", "Catálogo", "Monte e envie no WhatsApp"],
-    ["lona", "Lona", "Vitrine para suas clientes"],
+    ["catalogo", "Loja on-line", "Link para suas clientes pedirem"],
+    ["lona", "Editar loja e pedidos", "Capa, preços, Pix e pedidos"],
     ["equipe", "Equipe", "Consultoras e comissões"],
     ["contas", "Contas", "Despesas, plano e a receber"],
   ];

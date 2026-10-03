@@ -54,6 +54,7 @@ export default function Vitrine({ lona, onPedido, onAtualizar, previa = false })
   const [erro, setErro] = useState(null);
   const [feito, setFeito] = useState(null);
   const [copiado, setCopiado] = useState(false);
+  const [busca, setBusca] = useState("");
   const tituloRef = useRef(null);
 
   /* se uma peça saiu da vitrine (atualização), tira do carrinho */
@@ -79,6 +80,8 @@ export default function Vitrine({ lona, onPedido, onAtualizar, previa = false })
     };
   }, [aberto, previa]);
 
+  const q = busca.trim().toLowerCase();
+  const visiveis = q ? itens.filter((i) => [i.nome, i.codigo, i.banho].some((x) => String(x || "").toLowerCase().includes(q))) : itens;
   const noCarrinho = itens.filter((i) => carrinho.includes(i.id));
   const { total, acombinar } = totalDoCarrinho(noCarrinho);
 
@@ -171,8 +174,15 @@ export default function Vitrine({ lona, onPedido, onAtualizar, previa = false })
           ) : null}
         </div>
       ) : (
+        <>
+        {itens.length > 8 ? (
+          <div className="lona-col lona-busca">
+            <input type="search" aria-label="Buscar peça" placeholder="Buscar peça" value={busca} onChange={(e) => setBusca(e.target.value)} />
+          </div>
+        ) : null}
+        {visiveis.length === 0 ? <p className="lona-col lona-sutil" style={{ padding: "24px 20px" }}>Nenhuma peça com esse nome.</p> : null}
         <ul className="lona-col lona-lista">
-          {itens.map((it) => {
+          {visiveis.map((it) => {
             const meta = [it.banho, it.tamanho].filter(Boolean).join(" · ");
             const preco = textoDoPreco(it);
             const dentro = carrinho.includes(it.id);
@@ -180,7 +190,9 @@ export default function Vitrine({ lona, onPedido, onAtualizar, previa = false })
               <li key={it.id} className="lona-peca">
                 {https(it.foto) ? (
                   <img className="lona-foto" src={it.foto} alt={it.nome || it.codigo} width="800" height="800" loading="lazy" decoding="async" />
-                ) : null}
+                ) : (
+                  <div className="lona-foto lona-foto--vazia" role="img" aria-label={`${it.nome || it.codigo}: foto em breve`}><span>Foto em breve</span></div>
+                )}
                 <div className="lona-linha">
                   <h2 className="lona-peca-nome">{it.nome || it.codigo}</h2>
                   {preco ? <p className="lona-preco">{preco}</p> : null}
@@ -201,9 +213,10 @@ export default function Vitrine({ lona, onPedido, onAtualizar, previa = false })
             );
           })}
         </ul>
+        </>
       )}
 
-      <footer className="lona-col lona-rodape">{lona.loja ? `${lona.loja}. ` : ""}Vitrine Luxi.</footer>
+      <footer className="lona-col lona-rodape">{lona.loja ? `${lona.loja}. ` : ""}Loja on-line.</footer>
 
       {!previa && carrinho.length > 0 && !aberto ? (
         <div className="lona-barra" role="region" aria-label="Carrinho">
@@ -279,6 +292,7 @@ export default function Vitrine({ lona, onPedido, onAtualizar, previa = false })
                       Seu WhatsApp (com DDD)
                       <input id="lona-fone" value={fone} inputMode="tel" autoComplete="tel" onChange={(e) => setFone(soDigitos(e.target.value).slice(0, 11))} />
                     </label>
+                    <p className="lona-sutil">Usamos seu nome e WhatsApp só para este pedido.</p>
 
                     {temPix ? (
                       <section className="lona-bloco">

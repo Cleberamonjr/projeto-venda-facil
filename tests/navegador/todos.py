@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
-import editor, csp, login, suporte, painel_celular, lona_publica, lona_editor, lona_tema
+import editor, csp, login, suporte, painel_celular, lona_publica, lona_editor, lona_tema, loja_online
 falhas = editor.rodar(salvar_fotos=False)
 print("\n--- política de segurança (BLOQUEANDO) ---")
 ruim = csp.relatar(csp.rodar(csp.politica_completa()))
@@ -18,6 +18,8 @@ print("\n--- lona: tela da dona e da consultora no app ---")
 ruim_lona_ed = lona_editor.rodar()
 print("\n--- lona no app: 3 larguras x 2 temas (contraste, toque, texto espremido) ---")
 ruim_lona_tema = lona_tema.rodar()
-todos_ok = not (falhas or ruim or ruim_login or ruim_suporte or ruim_celular or ruim_lona_pub or ruim_lona_ed or ruim_lona_tema)
+print("\n--- loja on-line (antigo catálogo) ---")
+ruim_loja = loja_online.rodar()
+todos_ok = not (ruim_loja or falhas or ruim or ruim_login or ruim_suporte or ruim_celular or ruim_lona_pub or ruim_lona_ed or ruim_lona_tema)
 print("\nNAVEGADOR REAL: TUDO OK" if todos_ok else "\nNAVEGADOR REAL: HÁ PROBLEMAS")
 sys.exit(0 if todos_ok else 1)

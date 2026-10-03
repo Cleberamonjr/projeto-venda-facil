@@ -29,6 +29,7 @@ def contexto(browser, vp, papel, st):
     sessao = {"access_token": "a.b.c", "refresh_token": "r", "token_type": "bearer", "expires_at": int(time.time()) + 3600, "expires_in": 3600, "user": USUARIO}
     ctx.add_init_script(f"localStorage.setItem('{CHAVE_SESSAO}', {json.dumps(json.dumps(sessao))});")
     tabelas = montar_lojas(papel)
+    tabelas['lojas'][0]['whatsapp'] = st.get('whatsapp_loja', '')
     def tratar(route, request):
         caminho = urllib.parse.urlparse(request.url).path
         cab = {"access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "*"}
@@ -97,7 +98,7 @@ def novo_estado(papel="dona", pode_editar=True):
 
 def abrir_lona(pg):
     esperar_app(pg); pg.click(".oj-hamb"); pg.wait_for_timeout(250)
-    pg.click("nav.oj-lateral >> text=" + ("Minha lona" if pg.query_selector("nav.oj-lateral >> text=Minha lona") else "Lona"))
+    pg.click("nav.oj-lateral >> text=Editar loja e pedidos")
     pg.wait_for_selector(".lona-ed")
 
 def rodar(fotos=False):
@@ -121,7 +122,7 @@ def rodar(fotos=False):
         # peças: só entram as que têm foto da web e estoque
         bt = lambda nome: pg.query_selector(f"button[aria-label='Incluir {nome}']")
         check(bt("Anel Solitário").is_enabled() and bt("Colar Riviera").is_enabled(), "peças com foto e estoque podem entrar")
-        check(not bt("Brinco sem foto web").is_enabled() and "Sem foto na internet" in pg.inner_text(".lona-ed"), "peça sem foto da web é bloqueada, com o motivo")
+        check(bt("Brinco sem foto web").is_enabled() and "sem foto" in pg.inner_text(".lona-ed").lower(), "peça sem foto pode entrar (aparece como 'foto em breve'), e o app avisa")
         check(not bt("Pulseira esgotada").is_enabled(), "peça sem estoque é bloqueada")
         bt("Colar Riviera").click(); bt("Anel Solitário").click()
         pg.wait_for_selector("#pv-p1")
@@ -203,8 +204,8 @@ def rodar(fotos=False):
         # ---- E) o resto do app continua abrindo; celular pequeno ----
         st = novo_estado("dona"); ctx = contexto(b, {"width": 320, "height": 640}, "dona", st); pg = ctx.new_page(); pg.goto(srv.url); abrir_lona(pg)
         check(pg.evaluate("document.documentElement.scrollWidth <= innerWidth"), "320px: não rola para o lado")
-        pg.click(".oj-hamb"); pg.click("nav.oj-lateral >> text=Catálogo"); pg.wait_for_timeout(500)
-        check(pg.query_selector(".oj-vazio, .oj-card") is not None, "Catálogo continua abrindo")
+        pg.click(".oj-hamb"); pg.click("nav.oj-lateral >> text=Loja on-line"); pg.wait_for_timeout(700)
+        check(pg.query_selector(".oj-vazio, .oj-card") is not None, "Loja on-line abre")
         ctx.close(); b.close()
     srv.parar()
     print(f"OK: {len(ok)} verificações passaram")

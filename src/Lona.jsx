@@ -14,11 +14,11 @@ import {
 
 const https = (u) => typeof u === "string" && /^https:\/\//.test(u);
 const indicesFoto = (fotos) => (Array.isArray(fotos) ? fotos : []).map((f, i) => (https(f) ? i : -1)).filter((i) => i >= 0);
-const normalizar = (r) => ({
+export const normalizar = (r) => ({
   nome: "", frase: "", fonte: "helvetica", cor: "#1a1a1a", whatsapp: "", modelo: MODELO_PADRAO, capa: null,
   links: [], ordem: [], itens: {}, ...(r || {}),
 });
-const novoItem = (p) => ({ preco: "preco", centavos: Math.round(Number(p.venda || 0) * 100), tamanho: true, banho: true, nota: "", foto: indicesFoto(p.fotos)[0] ?? 0 });
+export const novoItem = (p) => ({ preco: "preco", centavos: Math.round(Number(p.venda || 0) * 100), tamanho: true, banho: true, nota: "", foto: indicesFoto(p.fotos)[0] ?? 0 });
 const erroTexto = (e) => (e && e.message) || "Não deu certo. Tente de novo.";
 
 function rotuloDoPedido(p) {
@@ -273,7 +273,6 @@ export default function Lona({ d, recarregar }) {
     const p = porId[id], it = rasc.itens[id];
     if (!p || !it || p.arquivada || p.qtd < 1) return [];
     const foto = fotoUsavel(p.fotos, it.foto || 0);
-    if (!foto) return [];
     const base = Math.round(Number(p.venda || 0) * 100);
     return [{ id, codigo: p.codigo, nome: p.nome, foto, preco: it.preco, centavos: it.preco === "preco" ? Math.max(it.centavos, base) : null,
       banho: it.banho ? p.banho : null, tamanho: it.tamanho ? p.tamanho : null, nota: it.nota || null }];
@@ -419,7 +418,7 @@ export default function Lona({ d, recarregar }) {
                       <div style={{ fontWeight: 600 }}>{p.nome || p.codigo}</div>
                       <div className="oj-meta">{p.codigo} · {p.qtd} em estoque · preço da loja {brl(piso)}</div>
                       {p.qtd < 1 ? <div className="oj-meta lona-ed-alerta">Sem estoque: não aparece para a cliente</div> : null}
-                      {!foto ? <div className="oj-meta lona-ed-alerta">Sem foto na internet: abra a peça no Estoque e salve de novo</div> : null}
+                      {!foto ? <div className="oj-meta lona-ed-alerta">Sem foto: aparece como "foto em breve". Fotografe a peça no Estoque.</div> : null}
                     </div>
                   </div>
                   <div className="lona-ed-grade">
@@ -458,16 +457,22 @@ export default function Lona({ d, recarregar }) {
           <div className="oj-card">
             <div className="oj-sec" style={{ margin: "0 0 4px", fontSize: 18 }}>Adicionar peças</div>
             <input className="oj-in" placeholder="Buscar por código, nome ou banho" aria-label="Buscar peça" value={busca} onChange={(e) => setBusca(e.target.value)} />
+            {fora.some((p) => p.qtd > 0) ? (
+              <button type="button" className="oj-bt" style={{ marginTop: 10 }} onClick={() => alterar((r) => {
+                const novas = estoque.filter((p) => p.qtd > 0 && !r.ordem.includes(p.id));
+                return { ...r, ordem: [...r.ordem, ...novas.map((p) => p.id)], itens: { ...r.itens, ...Object.fromEntries(novas.map((p) => [p.id, novoItem(p)])) } };
+              })}>Incluir todas as peças com estoque ({fora.filter((p) => p.qtd > 0).length})</button>
+            ) : null}
             {fora.length === 0 ? <div className="oj-meta" style={{ marginTop: 10 }}>Nenhuma peça para adicionar.</div> : null}
             {fora.slice(0, 60).map((p) => {
               const foto = fotoUsavel(p.fotos, 0);
-              const motivo = p.qtd < 1 ? "Sem estoque" : !foto ? "Sem foto na internet" : "";
+              const motivo = p.qtd < 1 ? "Sem estoque" : "";
               return (
                 <div key={p.id} className="oj-item">
                   {foto ? <img className="lona-ed-mini lona-ed-mini--p" src={foto} alt="" /> : <span className="lona-ed-mini lona-ed-mini--p lona-ed-sem" />}
                   <div className="oj-quebra" style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600 }}>{p.nome || p.codigo}</div>
-                    <div className="oj-meta">{p.codigo} · {brl(Math.round(Number(p.venda || 0) * 100))}{motivo ? ` · ${motivo}` : ""}</div>
+                    <div className="oj-meta">{p.codigo} · {brl(Math.round(Number(p.venda || 0) * 100))}{motivo ? ` · ${motivo}` : !foto ? " · sem foto" : ""}</div>
                   </div>
                   <button className="oj-bt" disabled={!!motivo} onClick={() => incluir(p)} aria-label={`Incluir ${p.nome || p.codigo}`}>Incluir</button>
                 </div>

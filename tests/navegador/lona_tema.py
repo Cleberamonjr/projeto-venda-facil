@@ -31,6 +31,14 @@ def rodar(fotos=False):
                         if ".lona--previa" in x or ".lona " in x: continue   # a prévia é a vitrine (sempre clara) e tem teste próprio
                         ruim.append(f"[{tema} {w}px · {nome}] {x}")
                     if fotos and w == 390 and tema == "escuro": pg.screenshot(path=f"/tmp/shots/lona-{nome.split()[0]}-escuro.png")
+                # tela "Loja on-line" (hub), fechada e aberta
+                for aberta in (False, True):
+                    if aberta: st["lona"]["publicado"] = st["lona"]["rascunho"]
+                    pg.click(".oj-hamb"); pg.wait_for_timeout(250); pg.click("nav.oj-lateral >> text=Loja on-line"); pg.wait_for_selector(".lona-ed"); pg.reload() if False else None
+                    pg.wait_for_timeout(500); n += 1
+                    for x in pg.evaluate(pc.AUDITORIA, tema):
+                        if "campo com 13.33" in x: continue
+                        ruim.append(f"[{tema} {w}px · loja on-line {'aberta' if aberta else 'fechada'}] {x}")
                 ctx.close()
         b.close()
     srv.parar()

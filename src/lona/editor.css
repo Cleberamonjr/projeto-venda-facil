@@ -32,3 +32,10 @@
 .oj[data-theme="escuro"] .lona-ed .oj-link-sutil{color:#E8A6AA}
 .lona-ed-alerta{color:#9A4A22}
 .oj[data-theme="escuro"] .lona-ed-alerta{color:#F2A98A}
+
+/* envio avulso (antigo Catálogo) recolhido: sem cartão duplo, para não espremer o texto no celular pequeno */
+.lona-ed .lona-ed-avulso{margin:14px 14px 0}
+.lona-ed .lona-ed-avulso .oj-card{margin-left:0;margin-right:0}
+.lona-ed-avulso summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600;color:var(--tinta)}
+.lona-ed-avulso .oj-meta[style*="--alerta"]{color:#9A4A22 !important}
+.oj[data-theme="escuro"] .lona-ed-avulso .oj-meta[style*="--alerta"]{color:#F2A98A !important}

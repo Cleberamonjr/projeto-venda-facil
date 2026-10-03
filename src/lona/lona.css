@@ -86,3 +86,7 @@
 /* prévia dentro do editor */
 .lona--previa{min-height:0}
 .lona-aviso-previa{padding:8px 14px;background:#fff3c4;color:#4d3b00;font-size:13px;text-align:center}
+
+.lona-foto--vazia{display:flex;align-items:center;justify-content:center;background:#e9e4dd;color:#5e584f;font-size:14px;letter-spacing:.04em}
+.lona-busca{padding-top:20px}
+.lona-busca input{display:block;width:100%;height:48px;padding:0 14px;border-radius:10px;border:1.5px solid var(--lona-linha);background:#fff;color:var(--lona-texto);font-size:16px}
