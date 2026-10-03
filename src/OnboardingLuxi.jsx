@@ -31,7 +31,7 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
   const [etapa, setEtapa] = useState(0);
   const [tipo, setTipo] = useState("");
   const [f, setF] = useState({
-    nome: "", email: "", senha: "", senha2: "", loja: "", whatsapp: "", instagram: "",
+    nome: "", email: "", senha: "", senha2: "", loja: "", whatsapp: "",
     plano: "crescimento",
     fornecedores: [{ nome: "", margem: "100" }],
     formas: ["Dinheiro", "Débito", "Crédito", "Na confiança"],
@@ -147,8 +147,7 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
         <p className="ob-copy">Qual nome você quer ver na sua Luxi?</p>
         <div className="oj-campo"><label>Nome da loja</label><input className="oj-in" autoComplete="organization" value={f.loja} onChange={e=>alterar("loja",e.target.value)} placeholder="Ex.: Ateliê Rosa" /></div>
         <div className="oj-campo"><label>WhatsApp comercial <small>(opcional)</small></label><input className="oj-in" type="tel" inputMode="tel" autoComplete="tel" value={f.whatsapp} onChange={e=>alterar("whatsapp",e.target.value)} placeholder="Ex.: +55 11 99999-9999" /></div>
-        <div className="oj-campo"><label>Instagram <small>(opcional)</small></label><input className="oj-in" autoCapitalize="none" value={f.instagram} onChange={e=>alterar("instagram",e.target.value)} placeholder="@sualoja" /></div>
-        <div className="ob-note">O WhatsApp e o Instagram ajudam a preparar seus canais de atendimento e apresentação. Você pode configurar ou alterar tudo depois.</div>
+        <div className="ob-note">O WhatsApp ajuda a preparar seu canal de atendimento e sua loja on-line. Você pode configurar ou alterar isso depois.</div>
         {erro && <div className="oj-erro ob-error">{erro}</div>}
         <Botao onClick={avancar} disabled={processando}>Continuar</Botao>
       </>}
