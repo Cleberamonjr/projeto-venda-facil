@@ -88,9 +88,9 @@ function venderNoPeriodo(vendas, inicio, fim) {
 
 function calcularPeriodo(vendas, inicio, fim) {
   const vs = venderNoPeriodo(vendas, inicio, fim);
-  const faturamento = vs.reduce((s, v) => s + N(v.valor) * Math.max(1, N(v.qtd)), 0);
+  const faturamento = vs.reduce((s, v) => s + N(v.valor), 0);
   const pecas = vs.reduce((s, v) => s + Math.max(1, N(v.qtd)), 0);
-  const custo = vs.reduce((s, v) => s + N(v.custo) * Math.max(1, N(v.qtd)), 0);
+  const custo = vs.reduce((s, v) => s + N(v.custo), 0);
   const clientes = new Set(vs.map((v) => String(v.cliente || "").trim().toLowerCase()).filter(Boolean));
   return {
     vendas: vs.length,
@@ -134,7 +134,7 @@ function produtosMaisVendidos(vendas, inicio, fim) {
       faturamento: 0,
     };
     atual.qtd += Math.max(1, N(v.qtd));
-    atual.faturamento += N(v.valor) * Math.max(1, N(v.qtd));
+    atual.faturamento += N(v.valor);
     mapa.set(chave, atual);
   });
   return [...mapa.values()].sort((a, b) => b.qtd - a.qtd);
@@ -152,7 +152,7 @@ function clientesHistorico(d, agora) {
     if (!dt) return;
     const item = mapa.get(chave) || { nome, compras: 0, valor: 0, ultimaCompra: null };
     item.compras += 1;
-    item.valor += N(v.valor) * Math.max(1, N(v.qtd));
+    item.valor += N(v.valor);
     if (!item.ultimaCompra || dt > item.ultimaCompra) item.ultimaCompra = dt;
     mapa.set(chave, item);
   });
@@ -389,7 +389,7 @@ function construirRecomendacoes(s) {
 
 function criarMensagem(s, recomendacoes) {
   const nome = nomePrimeiro(s?.perfil?.nome || "");
-  const saudacao = nome ? `Bom dia, ${nome} 🌷` : "Dei uma olhadinha na sua loja 🌷";
+  const saudacao = nome ? `Oi, ${nome} 🌷` : "Dei uma olhadinha na sua loja 🌷";
 
   if (!recomendacoes.length) {
     return {
