@@ -1999,7 +1999,8 @@ export default function OrganizeJewelry() {
         d={d}
         salvar={salvar}
         quitarVenda={quitarVendaConfianca}
-        contexto={contextoNavegacao}\n        cadastrarCliente={async (cli) => {
+        contexto={contextoNavegacao}
+        cadastrarCliente={async (cli) => {
           if (d.lojaId) {
             await dados.salvarCliente(d.lojaId, cli);
             await recarregar();
@@ -5484,7 +5485,8 @@ function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, cri
     )
     .filter((p) => !banho || p.banho === banho)
     .filter((p) => !colecaoFiltro || p.colecaoId === colecaoFiltro)
-    .filter((p) => dentro(p.entradaEm))\n    .filter((p) => !focoEstoque || idsFoco.has(String(p.id || p.codigo || "").trim()));
+    .filter((p) => dentro(p.entradaEm))
+    .filter((p) => !focoEstoque || idsFoco.has(String(p.id || p.codigo || "").trim()));
 
   const banhosUsados = [...new Set(d.estoque.filter((p) => p.qtd > 0).map((p) => p.banho).filter(Boolean))];
 
@@ -5511,7 +5513,15 @@ function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, cri
 
   return (
     <>
-      {focoEstoque && (\n        <div className="oj-card" style={{ background: "linear-gradient(135deg,#FFF8FA,#F7EBEE)", borderColor: "var(--rose)" }}>\n          <div className="oj-lbl">A partir da Conselheira</div>\n          <div className="oj-nome" style={{ fontSize: 18, fontWeight: 600, marginTop: 5 }}>{contexto?.foco === "repor" ? "Eu trouxe esse produto para você conferir a reposição." : "Eu trouxe aqui o estoque que merece sua atenção."}</div>\n          <div className="oj-meta" style={{ lineHeight: 1.5, marginTop: 5 }}>Você chegou nesta tela a partir de uma recomendação da Conselheira.</div>\n        </div>\n      )}\n\n      <Recompra d={d} />
+      {focoEstoque && (
+        <div className="oj-card" style={{ background: "linear-gradient(135deg,#FFF8FA,#F7EBEE)", borderColor: "var(--rose)" }}>
+          <div className="oj-lbl">A partir da Conselheira</div>
+          <div className="oj-nome" style={{ fontSize: 18, fontWeight: 600, marginTop: 5 }}>{contexto?.foco === "repor" ? "Eu trouxe esse produto para você conferir a reposição." : "Eu trouxe aqui o estoque que merece sua atenção."}</div>
+          <div className="oj-meta" style={{ lineHeight: 1.5, marginTop: 5 }}>Você chegou nesta tela a partir de uma recomendação da Conselheira.</div>
+        </div>
+      )}
+
+      <Recompra d={d} />
 
       <div className="oj-estoque-acoes">
         {!ehConsultora && (
@@ -7488,7 +7498,9 @@ function RedefinirSenha({ emailInicial = "" }) {
     const em = email.trim().toLowerCase();
     if (!em.includes("@")) return setErro("Digite o e-mail da cliente.");
     if (senha && senha.length < 8) return setErro("A senha temporária precisa ter ao menos 8 caracteres.");
-    if (!window.confirm(`Redefinir a senha de ${em}?\n\nOs acessos atuais dela serão encerrados e, ao entrar com a senha temporária, o app vai pedir que ela crie uma senha nova.`)) return;
+    if (!window.confirm(`Redefinir a senha de ${em}?
+
+Os acessos atuais dela serão encerrados e, ao entrar com a senha temporária, o app vai pedir que ela crie uma senha nova.`)) return;
     setOcupada(true);
     try {
       const r = await dados.redefinirSenhaCliente(em, senha.trim() || undefined);
@@ -7503,7 +7515,9 @@ function RedefinirSenha({ emailInicial = "" }) {
   };
 
   const mensagem = res
-    ? `Oi! Sua senha temporária do Luxi é: ${res.senha}\n\nEntre em ${window.location.origin} com o seu e-mail e essa senha. O app vai pedir para você criar uma senha nova só sua.`
+    ? `Oi! Sua senha temporária do Luxi é: ${res.senha}
+
+Entre em ${window.location.origin} com o seu e-mail e essa senha. O app vai pedir para você criar uma senha nova só sua.`
     : "";
   const copiar = async () => {
     try {
@@ -8790,15 +8804,25 @@ function Catalogo({ d }) {
   }, [d.lojaId]);
 
   const texto = linkLona
-    ? `${d.perfil.loja}\n\nConfira as peças na nossa vitrine online e peça por lá:\n${linkLona}`
-    : `${d.perfil.loja}\n\n` +
+    ? `${d.perfil.loja}
+
+Confira as peças na nossa vitrine online e peça por lá:
+${linkLona}`
+    : `${d.perfil.loja}
+
+` +
     escolhidas
       .map(
         (p) =>
-          `${p.nome}${p.banho ? ` · ${p.banho}` : ""}\nCód. ${p.codigo} — ${brl(p.venda)}`
+          `${p.nome}${p.banho ? ` · ${p.banho}` : ""}
+Cód. ${p.codigo} — ${brl(p.venda)}`
       )
-      .join("\n\n") +
-    `\n\nMe chame para garantir a sua.`;
+      .join("
+
+") +
+    `
+
+Me chame para garantir a sua.`;
 
   const numero = (d.perfil.whatsapp || "").replace(/\D/g, "");
   const abrirWhats = () => {
