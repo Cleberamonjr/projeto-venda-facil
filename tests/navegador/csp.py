@@ -54,7 +54,7 @@ def percorrer_menu(pg):
     for i in range(n):
         garantir_menu(pg, True)
         rotulo = pg.evaluate(f"document.querySelectorAll('nav.oj-lateral button')[{i}]?.textContent || ''")
-        if re.search(r"Sair|Baixar o app|Tour da Luxi", rotulo): continue
+        if re.search(r"Sair|Baixar o app|Aprender a usar", rotulo): continue
         pg.evaluate(f"document.querySelectorAll('nav.oj-lateral button')[{i}]?.click()"); pg.wait_for_timeout(450)
     garantir_menu(pg, False)
 

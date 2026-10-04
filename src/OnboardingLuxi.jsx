@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { TrilhaLuxi } from "./ajuda/Ajuda.jsx";
 import * as dados from "./dados.js";
 
 const TIPOS = [
@@ -210,6 +211,7 @@ export function ProximoPasso({ d, irPara }) {
   const acao = getNextBestAction(d);
   return (
     <div className="ob-next ob-next-dashboard">
+      <EstilosOnboarding />
       <div className="ob-next-copy">
         <span>Próximo passo</span><b>{acao.title}</b><small>{acao.description}</small>
       </div>
@@ -284,7 +286,7 @@ export function OnboardingOperacional({ d, onImportar, irPara, onConcluir }) {
   }).length;
   const acao = useMemo(() => getNextBestAction(d), [d]);
 
-  if (modo === "tour") return <TourLuxi irPara={irPara} onConcluir={onConcluir} />;
+  if (modo === "tour") return <TrilhaLuxi irPara={irPara} onConcluir={onConcluir} primeiraVez />;
 
   if (etapa === 0) return (
     <div className="ob-overlay"><EstilosOnboarding /><div className="ob-sheet">

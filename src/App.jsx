@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import * as dados from "./dados.js";
 import Lona from "./Lona.jsx";
+import { AjudaLuxi, MensagemDoDia } from "./ajuda/Ajuda.jsx";
 import LojaOnline from "./LojaOnline.jsx";
 import { WHATSAPP_SUPORTE, linkSuporte } from "./contato.js";
 import { Cadastro as CadastroNovo, OnboardingOperacional, ProximoPasso } from "./OnboardingLuxi.jsx";
@@ -2090,6 +2091,9 @@ export default function OrganizeJewelry() {
         </div>
       )}
 
+      {!menu && <AjudaLuxi aba={aba} irPara={irPara} />}
+      <MensagemDoDia pausar={menu || !!modal || onboardingOperacional || !!d.perfil.tour || !!d.perfil.mestre || !d.perfil} />
+
       {d.perfil.tour && (
         <TourDemo
           onSair={() => salvar({ ...d, perfil: { ...d.perfil, tour: false } })}
@@ -2182,8 +2186,8 @@ export default function OrganizeJewelry() {
             <button type="button" className="oj-tour-menu"
               onClick={() => { setMenu(false); setOnboardingOperacional(true); }}>
               <span>
-                Tour da Luxi
-                <small>Rever como a Luxi funciona</small>
+                Aprender a usar
+                <small>Aulas curtas, passo a passo</small>
               </span>
             </button>
           </div>

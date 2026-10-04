@@ -28,6 +28,7 @@ def contexto(browser, vp, papel, st):
     ctx = browser.new_context(viewport=vp, service_workers="block")
     sessao = {"access_token": "a.b.c", "refresh_token": "r", "token_type": "bearer", "expires_at": int(time.time()) + 3600, "expires_in": 3600, "user": USUARIO}
     ctx.add_init_script(f"localStorage.setItem('{CHAVE_SESSAO}', {json.dumps(json.dumps(sessao))});")
+    ctx.add_init_script("localStorage.setItem('luxi:msgdia', (function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');})(new Date()));")   # "mensagem do dia" já vista hoje
     tabelas = montar_lojas(papel)
     tabelas['lojas'][0]['whatsapp'] = st.get('whatsapp_loja', '')
     def tratar(route, request):

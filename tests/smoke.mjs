@@ -52,6 +52,7 @@ async function abrir({ url = 'https://comluxijewelry.pages.dev/', sessao = null,
   const w = dom.window;
   w.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} });
   w.scrollTo = () => {};
+  { const d = new Date(); w.localStorage.setItem('luxi:msgdia', d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')); } // "mensagem do dia" já vista
   if (sessao) {
     w.localStorage.setItem(CHAVE_SESSAO, JSON.stringify({
       access_token: 'a.b.c', refresh_token: 'r', token_type: 'bearer',
