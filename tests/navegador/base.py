@@ -64,7 +64,7 @@ def loja_padrao(n_pecas=0):
         "pecas": pecas,
     }
 
-def preparar_contexto(browser, viewport, tabelas=None, rpc=None, logado=True, capturas=None, sw="block", login_falha=False, **kw):
+def preparar_contexto(browser, viewport, tabelas=None, rpc=None, logado=True, capturas=None, sw="block", login_falha=False, registrar_rpc=False, **kw):
     """Cria um contexto de navegador com o Supabase simulado. `capturas` (lista) recebe as gravações."""
     ctx = browser.new_context(viewport=viewport, service_workers=sw, **kw)
     rpc = {"sou_admin_luxi": False, "meu_acesso_beta": None, **(rpc or {})}
@@ -90,7 +90,13 @@ def preparar_contexto(browser, viewport, tabelas=None, rpc=None, logado=True, ca
         if caminho.startswith("/storage/v1/object/") and metodo == "POST":
             capturas.append(("storage", caminho, None)); return j({"Key": caminho})
         m = re.match(r"/rest/v1/rpc/([a-z_]+)", caminho)
-        if m: return j(rpc.get(m.group(1)))
+        if m:
+            if registrar_rpc: capturas.append((m.group(1), "RPC", request.post_data))   # só quando o teste pede: os outros contam gravações de tabela
+            v = rpc.get(m.group(1))
+            if callable(v):   # resposta que depende do que foi enviado (um servidor de verdade guarda o que recebe)
+                try: v = v(json.loads(request.post_data or "{}"))
+                except Exception: v = None
+            return j(v)
         m = re.match(r"/rest/v1/([a-z_]+)", caminho)
         if m:
             if metodo in ("POST", "PATCH", "DELETE"):
