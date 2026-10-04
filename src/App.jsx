@@ -8460,11 +8460,6 @@ function Conselheiro({ d, dentro, irPara }) {
       </div>
     );
 
-  const cardConselheira =
-  const executarConselheira = (r) => {
-    const destino = r?.destino;
-    if (destino && irPara) irPara(destino);
-  };
   const cardConselheira = d.perfil.papel === "consultora" && !d.perfil.mestre ? null : (
     <div className="oj-card" style={{
       border: "1.5px solid var(--rose-metal)",
