@@ -8460,7 +8460,7 @@ function Conselheiro({ d, dentro, irPara }) {
       </div>
     );
 
-  const cardConselheira =a = useMemo(() => analisarLoja(d), [d]);
+  const cardConselheira =
   const executarConselheira = (r) => {
     const destino = r?.destino;
     if (destino && irPara) irPara(destino);
