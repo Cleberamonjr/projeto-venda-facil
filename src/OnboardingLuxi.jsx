@@ -53,7 +53,11 @@ export function Cadastro({ onPronto, onMestre, contaLogada, criarConta, tentarEn
 
   const avancar = async () => {
     setErro("");
-    if (etapa === 1 && !tipo) return setErro("Escolha uma opção para continuar.");
+    if (etapa === 1) {
+      if (!tipo) return setErro("Escolha uma opção para continuar.");
+      setEtapa(2);
+      return;
+    }
     if (etapa === 2) {
       if (!contaLogada) {
         if (!f.nome.trim() || !f.email.trim() || f.senha.length < 6 || f.senha !== f.senha2)
