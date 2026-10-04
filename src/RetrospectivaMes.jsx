@@ -39,6 +39,18 @@ function formatDelta(current, previous, kind = "number") {
 }
 
 function nivelLoja(d) {
+  const declarado = String(
+    d?.perfil?.nivelLoja ||
+    d?.perfil?.nivel_loja ||
+    d?.perfil?.estagioLoja ||
+    ""
+  ).toLowerCase();
+
+  if (declarado.includes("profissional")) return "Profissional";
+  if (declarado.includes("consolid")) return "Consolidada";
+  if (declarado.includes("crescimento") || declarado.includes("crescendo")) return "Em crescimento";
+  if (declarado.includes("constru")) return "Em construção";
+
   const clientes = (d.clientes || []).length;
   const vendas = (d.vendas || []).length;
   const estoque = (d.estoque || []).length;
@@ -47,6 +59,41 @@ function nivelLoja(d) {
   if (clientes < 150 || vendas < 300) return "Consolidada";
   return "Profissional";
 }
+
+const PERFIL_NIVEL = {
+  "Em construção": {
+    tituloPositivo: "Você está construindo uma base — e ela já está começando a aparecer.",
+    tituloNeutro: "Seu mês foi de construção.",
+    tituloNegativo: "Seu mês pediu consistência, não pressa.",
+    foco: "Construir uma base de clientes e descobrir o que realmente vende.",
+    acao: "Eu priorizaria relacionamento e giro antes de aumentar o estoque.",
+    conselho: "Nesta fase, cada cliente que compra e volta vale mais do que tentar parecer uma loja grande."
+  },
+  "Em crescimento": {
+    tituloPositivo: "Você entrou numa fase boa: agora precisamos transformar movimento em crescimento previsível.",
+    tituloNeutro: "Sua loja está ganhando corpo.",
+    tituloNegativo: "Seu crescimento perdeu ritmo — e eu quero entender onde ele travou.",
+    foco: "Aumentar recorrência, ticket médio e giro sem perder controle.",
+    acao: "Eu escolheria uma ou duas alavancas para trabalhar, em vez de tentar mexer em tudo.",
+    conselho: "Você já tem movimento suficiente para começar a repetir o que funciona."
+  },
+  "Consolidada": {
+    tituloPositivo: "Você não está apenas vendendo: sua loja está criando consistência.",
+    tituloNeutro: "Sua operação mostrou estabilidade.",
+    tituloNegativo: "Sua loja já tem base. Por isso, uma queda merece ser investigada.",
+    foco: "Aumentar rentabilidade e recorrência sem depender de esforço extra.",
+    acao: "Eu olharia para clientes recorrentes, margem e produtos campeões antes de buscar volume a qualquer custo.",
+    conselho: "Nesta fase, crescer não é fazer tudo maior. É fazer o que funciona com mais eficiência."
+  },
+  "Profissional": {
+    tituloPositivo: "Sua loja já opera em outro nível — agora o jogo é eficiência e rentabilidade.",
+    tituloNeutro: "Sua operação manteve um nível profissional de consistência.",
+    tituloNegativo: "Como sua operação já tem escala, essa queda merece uma análise mais profunda.",
+    foco: "Proteger margem, recorrência e previsibilidade.",
+    acao: "Eu analisaria concentração de receita, margem por produto e comportamento das clientes recorrentes.",
+    conselho: "Você já não precisa de mais movimento a qualquer preço. Precisa de movimento rentável e previsível."
+  }
+};
 
 function analisarMes(d, alvo, anterior) {
   const vendas = (d.vendas || []).filter(v => inMonth(v.data, alvo.getFullYear(), alvo.getMonth()));
@@ -126,7 +173,8 @@ function analisarMes(d, alvo, anterior) {
     vendas, vendasAnt, receita, receitaAnt, custo, custoAnt, despesa, despesaAnt, lucro, lucroAnt,
     clientes: clientes.size, clientesAnt: clientesAnt.size, ticket, ticketAnt, margem, margemAnt,
     qtdPecas, qtdPecasAnt, crescimento, causa, destaques, pontos, nivel: nivelLoja(d),
-    paradas, valorParado
+    paradas, valorParado,
+    perfilNivel: PERFIL_NIVEL[nivelLoja(d)] || PERFIL_NIVEL["Em construção"]
   };
 }
 
@@ -190,9 +238,9 @@ export default function RetrospectivaMes({ d, autoAbrir = false }) {
 
       <div className="luxi-retro-card luxi-retro-story">
         <div className="luxi-retro-label">💗 Minha leitura</div>
-        <h3>{neutra ? "Seu resultado ficou praticamente estável." : positiva ? "Você avançou este mês." : "Este mês pediu mais atenção."}</h3>
+        <h3>{neutra ? analise.perfilNivel.tituloNeutro : positiva ? analise.perfilNivel.tituloPositivo : analise.perfilNivel.tituloNegativo}</h3>
         <p>{analise.causa}</p>
-        <p className="luxi-retro-note">Você está no estágio <b>{analise.nivel.toLowerCase()}</b>. Então eu não vou comparar sua loja com uma operação maior. Vou comparar você com você mesma.</p>
+        <p className="luxi-retro-note">Você está no estágio <b>{analise.nivel.toLowerCase()}</b>. {analise.perfilNivel.conselho}</p>
       </div>
 
       <div className="luxi-retro-card">
@@ -219,8 +267,14 @@ export default function RetrospectivaMes({ d, autoAbrir = false }) {
 
       <div className="luxi-retro-card luxi-retro-next">
         <div className="luxi-retro-label">💡 Meu foco para o próximo mês</div>
-        <h3>{analise.valorParado > 0 ? "Primeiro, faça o estoque girar." : analise.clientes < analise.clientesAnt ? "Primeiro, vamos recuperar clientes." : analise.crescimento < 0 ? "Primeiro, vamos recuperar o ritmo de vendas." : "Agora, vamos transformar crescimento em recorrência."}</h3>
-        <p>{analise.valorParado > 0 ? "Eu começaria pelas peças que já estão há mais tempo na sua loja. Não quero que você coloque dinheiro novo onde ainda existe dinheiro parado." : "Eu escolheria uma ação simples e repetível. Loja saudável não cresce só em um mês bom; cresce quando consegue repetir o que funcionou."}</p>
+        <h3>{analise.valorParado > 0 ? "Meu primeiro foco: fazer o estoque girar." : analise.clientes < analise.clientesAnt ? "Meu primeiro foco: recuperar clientes." : analise.crescimento < 0 ? "Meu primeiro foco: recuperar o ritmo." : "Meu foco: transformar esse avanço em rotina."}</h3>
+        <p>{analise.valorParado > 0 ? "Eu começaria pelas peças que já estão há mais tempo na sua loja. Não quero que você coloque dinheiro novo onde ainda existe dinheiro parado." : analise.perfilNivel.acao + " " + analise.perfilNivel.foco + "."}</p>
+      </div>
+
+      <div className="luxi-retro-card luxi-retro-stage">
+        <div className="luxi-retro-label">🌷 Um conselho meu para esta fase</div>
+        <h3>`${analise.perfilNivel.foco}`</h3>
+        <p>${analise.perfilNivel.acao}</p>
       </div>
 
       <div className="luxi-retro-footer">
