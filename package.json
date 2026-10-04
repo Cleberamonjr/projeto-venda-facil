@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "verificar": "vite build && node tests/funcao-conta.mjs && node tests/funcao-redefinir.mjs && node tests/funcao-csp.mjs && node tests/funcao-excluir.mjs && node tests/ajuda-conteudo.mjs && node tests/smoke.mjs",
+    "verificar": "vite build && node tests/funcao-conta.mjs && node tests/funcao-redefinir.mjs && node tests/funcao-csp.mjs && node tests/funcao-excluir.mjs && node tests/ajuda-conteudo.mjs && node tests/funcao-stripe.mjs && node tests/funcao-stripe-precos.mjs && node tests/smoke.mjs",
     "publicar": "node scripts/publicar.mjs"
   },
   "dependencies": {

@@ -361,7 +361,9 @@ export async function carregarTudo() {
       papel: minhaConsultora ? "consultora" : "dona",
       consultoraId: minhaConsultora?.id || null,
       plano: a.plano || "livre",
-      assinado: a.status === "ativa",
+      // "atrasada" ainda é assinante (carência: só leitura de 7 a 15 dias de atraso; a partir de 15 o acesso é pausado no App)
+      assinado: a.status === "ativa" || a.status === "atrasada",
+      gateway: a.gateway || null,
       trialAte: a.trial_ate,
       atrasoDesde: a.atraso_desde,
       status: a.status,
@@ -1115,3 +1117,21 @@ export async function adicionarFotoPeca(lojaId, peca, blob) {
   if (e2) throw new Error("A foto subiu, mas não consegui ligá-la à peça. Tente de novo.");
   return url;
 }
+
+/* ---------- cobrança (Stripe) ----------
+   O preço é decidido no servidor; aqui só pedimos "plano + período" e recebemos o endereço do pagamento seguro.
+   Erros voltam com um código: "nao_configurado" (o pagamento on-line ainda não foi ativado) deixa o app cair no atendimento. */
+async function chamarCobranca(funcao, corpo) {
+  const { data, error } = await sb.functions.invoke(funcao, { body: corpo || {} });
+  if (error) {
+    let c = null;
+    try { c = await error.context.json(); } catch (_) { /* sem corpo */ }
+    const e = new Error((c && c.mensagem) || "Não consegui abrir o pagamento agora. Confira a internet e tente de novo.");
+    e.code = (c && c.codigo) || "rede";
+    throw e;
+  }
+  if (!data || !data.url) { const e = new Error((data && data.mensagem) || "Não consegui abrir o pagamento agora."); e.code = (data && data.codigo) || "erro"; throw e; }
+  return data.url;
+}
+export const stripeAssinar = ({ plano, periodo }) => chamarCobranca("stripe-assinar", { plano, periodo });
+export const stripePortal = () => chamarCobranca("stripe-portal", {});

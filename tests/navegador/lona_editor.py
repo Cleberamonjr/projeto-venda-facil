@@ -31,6 +31,7 @@ def contexto(browser, vp, papel, st):
     ctx.add_init_script("localStorage.setItem('luxi:msgdia', (function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');})(new Date()));")   # "mensagem do dia" já vista hoje
     tabelas = montar_lojas(papel)
     tabelas['lojas'][0]['whatsapp'] = st.get('whatsapp_loja', '')
+    st['tabelas'] = tabelas   # os testes podem mudar o que o "servidor" devolve (ex.: assinatura vencida)
     def tratar(route, request):
         caminho = urllib.parse.urlparse(request.url).path
         cab = {"access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "*"}
@@ -42,6 +43,13 @@ def contexto(browser, vp, papel, st):
             st["envios"].append(caminho); return j({"Key": caminho})
         if caminho.startswith("/auth/v1/user"): return j(USUARIO)
         if caminho.startswith("/auth/v1/"): return j({})
+        mfn = re.match(r"/functions/v1/([a-z-]+)", caminho)
+        if mfn and mfn.group(1) in st.get("fn", {}):   # funções de borda simuladas pelo teste: (status, corpo) ou uma função que decide
+            corpo_fn = json.loads(request.post_data or "{}") if request.post_data else {}
+            st.setdefault("chamadas_fn", []).append((mfn.group(1), corpo_fn))
+            r = st["fn"][mfn.group(1)]
+            status_fn, resp_fn = r(corpo_fn) if callable(r) else r
+            return j(resp_fn, status_fn)
         if caminho.startswith("/functions/v1/ler-romaneio"):
             st["leituras"] = st.get("leituras", 0) + 1
             return j(st.get("romaneio", {"erro": "sem simulação"}))

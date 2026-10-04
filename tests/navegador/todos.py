@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
-import editor, csp, login, suporte, painel_celular, lona_publica, lona_editor, lona_tema, romaneio, loja_online, maleta_acerto, ajuda
+import editor, csp, login, suporte, painel_celular, lona_publica, lona_editor, lona_tema, romaneio, loja_online, maleta_acerto, ajuda, pagamento
 falhas = editor.rodar(salvar_fotos=False)
 print("\n--- política de segurança (BLOQUEANDO) ---")
 ruim = csp.relatar(csp.rodar(csp.politica_completa()))
@@ -26,6 +26,8 @@ print("\n--- romaneio: preço, banho, pedra e foto na conferência + foto de pe�
 ruim_romaneio = romaneio.rodar()
 print("\n--- ajuda: botão no canto, busca, trilha de lições, mensagem do dia, acessibilidade ---")
 ruim_ajuda = ajuda.rodar()
-todos_ok = not (ruim_ajuda or ruim_romaneio or ruim_loja or ruim_maleta or falhas or ruim or ruim_login or ruim_suporte or ruim_celular or ruim_lona_pub or ruim_lona_ed or ruim_lona_tema)
+print("\n--- cobrança: teste vencido -> pagamento seguro (Stripe), volta do pagamento, carência, gerenciar assinatura ---")
+ruim_pagamento = pagamento.rodar()
+todos_ok = not (ruim_pagamento or ruim_ajuda or ruim_romaneio or ruim_loja or ruim_maleta or falhas or ruim or ruim_login or ruim_suporte or ruim_celular or ruim_lona_pub or ruim_lona_ed or ruim_lona_tema)
 print("\nNAVEGADOR REAL: TUDO OK" if todos_ok else "\nNAVEGADOR REAL: HÁ PROBLEMAS")
 sys.exit(0 if todos_ok else 1)

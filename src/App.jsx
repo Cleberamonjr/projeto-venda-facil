@@ -983,6 +983,21 @@ const PRECO_LEITURA_AVULSA = 0.9;
    Cole aqui o link de cada plano gerado no painel da Yampi:
    Vendas > Link de Pagamento > +Novo Link.
    Deixe "" enquanto não tiver o link — o app mostra instrução de contato. */
+/* Abre o pagamento seguro (Stripe). Só se o pagamento on-line ainda não foi ativado (ou a internet caiu) usa a forma antiga:
+   link manual ou atendimento por WhatsApp, para ninguém ficar sem caminho de pagar. Devolve { ok } ou { erro }. */
+async function irParaPagamento(plano, periodo) {
+  try {
+    window.location.assign(await dados.stripeAssinar({ plano: plano.id, periodo }));
+    return { ok: true };
+  } catch (e) {
+    if (e.code === "nao_configurado" || e.code === "rede") {
+      const alt = LINKS_PAGAMENTO[plano.id] || (WHATSAPP_SUPORTE ? linkSuporte("Oi! Quero assinar o plano " + plano.nome + " da Luxi.") : "");
+      if (alt) { window.location.assign(alt); return { ok: true, alternativo: true }; }
+    }
+    return { erro: e.message || "Não consegui abrir o pagamento agora." };
+  }
+}
+
 const LINKS_PAGAMENTO = {
   inicio: "",       // Solo R$ 69,90
   controle: "",     // legado: redirecionado para Solo
@@ -1324,6 +1339,23 @@ export default function OrganizeJewelry() {
   // true = existe sessão Supabase válida (mesmo que ainda sem loja criada)
   const [contaLogada, setContaLogada] = useState(false);
   const [onboardingOperacional, setOnboardingOperacional] = useState(false);
+  // Volta do pagamento (?pagamento=ok): a Stripe avisa o servidor por conta própria e isso leva segundos. Conferimos de 3 em 3 s por até 1 minuto.
+  const [voltaPagamento, setVoltaPagamento] = useState(() => { try { return new URLSearchParams(window.location.search).get("pagamento"); } catch (_) { return null; } });
+  const [pagamentoDemora, setPagamentoDemora] = useState(false);
+  useEffect(() => {
+    if (!voltaPagamento) return undefined;
+    const limpar = () => { try { window.history.replaceState({}, "", window.location.pathname); } catch (_) { /* ok */ } };
+    if (voltaPagamento !== "ok" || d.perfil?.assinado) { limpar(); setVoltaPagamento(null); return undefined; }
+    if (!d.lojaId) return undefined; // ainda carregando a conta
+    let n = 0;
+    const id = setInterval(async () => {
+      n += 1;
+      try { await recarregar(); } catch (_) { /* tenta de novo */ }
+      if (n >= 20) { clearInterval(id); setPagamentoDemora(true); }
+    }, 3000);
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voltaPagamento, d.perfil?.assinado, d.lojaId]);
 
   /* Convite de consultora: chega como ?convite=CODIGO num link de
      WhatsApp. Fica guardado até ser aceito (ou cancelado) — depois de
@@ -2056,11 +2088,13 @@ export default function OrganizeJewelry() {
       ];
   const temEquipe = !ehConsultora && ["crescimento", "joalheria", "inteligencia"].includes(planoAtivo(d.perfil).id);
 
-  const acessoLiberado = d.perfil?.mestre || d.perfil?.assinado || emTeste(d.perfil);
+  const acessoLiberado = d.perfil?.mestre || (d.perfil?.assinado && !(d.perfil?.status === "atrasada" && diasAtraso(d.perfil) >= 15)) || emTeste(d.perfil);
   if (!acessoLiberado) {
     return (
       <AcessoEncerrado
         perfil={d.perfil}
+        confirmando={voltaPagamento === "ok"}
+        demorou={pagamentoDemora}
         sair={async () => {
           try { await dados.auth.sair(); } catch (e) { console.error("Falha ao sair", e); }
           setContaLogada(false);
@@ -4609,8 +4643,10 @@ function CadastroLegado({ onPronto, onMestre, contaLogada, criarConta, tentarEnt
   );
 }
 
-function AcessoEncerrado({ perfil, sair }) {
+function AcessoEncerrado({ perfil, sair, confirmando = false, demorou = false }) {
   const [periodo, setPeriodo] = useState("mensal");
+  const [abrindo, setAbrindo] = useState(null);
+  const [erroPag, setErroPag] = useState("");
   return (
     <div className="oj">
       <style>{CSS}</style>
@@ -4621,6 +4657,14 @@ function AcessoEncerrado({ perfil, sair }) {
         <p className="oj-sub" style={{ marginTop: 10, fontSize: 15, lineHeight: 1.6 }}>
           Seus dados continuam guardados. Para voltar a usar a loja, escolha um dos planos abaixo e faça a assinatura.
         </p>
+        {confirmando && (
+          <div className="oj-aviso" role="status" style={{ margin: "16px 0 0" }}>
+            {demorou
+              ? "Seu pagamento ainda não apareceu por aqui. Às vezes leva alguns minutos. Se a loja não abrir sozinha, fale com a gente pelo WhatsApp que resolvemos."
+              : "Recebemos a volta do pagamento. Estamos confirmando e liberando a sua loja… leva alguns segundos."}
+          </div>
+        )}
+        {erroPag && <div className="oj-erro" role="alert" style={{ margin: "16px 0 0" }}>{erroPag}</div>}
         <div className="oj-card flat" style={{ margin: "20px 0 16px" }}>
           <div className="oj-lbl">Sua loja está preservada</div>
           <div className="oj-meta" style={{ marginTop: 8, lineHeight: 1.6 }}>
@@ -4631,14 +4675,17 @@ function AcessoEncerrado({ perfil, sair }) {
         {PLANO_PUBLICOS().map((p) => (
           <CartaoPlano key={p.id} p={p} escolhido={false} periodo={periodo}
             botao={
-              <button className="oj-btn" style={{ marginTop: 12 }} onClick={() => {
-                const link = LINKS_PAGAMENTO[p.id];
-                if (link) window.open(link, "_blank", "noopener");
-                else if (WHATSAPP_SUPORTE) window.open(linkSuporte("Oi! Quero assinar o plano " + p.nome + " da Luxi."), "_blank", "noopener");
+              <button className="oj-btn" style={{ marginTop: 12 }} disabled={!!abrindo || confirmando} onClick={async () => {
+                setErroPag(""); setAbrindo(p.id);
+                const r = await irParaPagamento(p, periodo);
+                if (r.erro) setErroPag(r.erro);
+                setAbrindo(null);
               }}>
-                {periodo === "anual"
-                  ? "Assinar " + p.nome + " · R$ " + dinheiroPlano(precoAnual(p).total) + "/ano"
-                  : "Assinar " + p.nome + " · R$ " + p.preco + "/mês"}
+                {abrindo === p.id
+                  ? "Abrindo o pagamento seguro…"
+                  : periodo === "anual"
+                    ? "Assinar " + p.nome + " · R$ " + dinheiroPlano(precoAnual(p).total) + "/ano"
+                    : "Assinar " + p.nome + " · R$ " + p.preco + "/mês"}
               </button>
             }
           />
@@ -7657,6 +7704,9 @@ function Perfil({ d, salvar, irPara, tema, setTema }) {
   const set = (campo, v) => salvar({ ...d, perfil: { ...p, [campo]: v } });
 
   const [pagando, setPagando] = useState(null); // plano em processo de pagamento
+  const [abrindoPag, setAbrindoPag] = useState(false);
+  const [erroPag, setErroPag] = useState("");
+  const [abrindoPortal, setAbrindoPortal] = useState(false);
   const [periodoPlano, setPeriodoPlano] = useState("mensal");
   const [novaSenha, setNovaSenha] = useState("");
   const [repetirSenha, setRepetirSenha] = useState("");
@@ -7842,6 +7892,27 @@ function Perfil({ d, salvar, irPara, tema, setTema }) {
         )}
       </div>
 
+      {d.perfil?.gateway === "stripe" && d.perfil?.assinado && (
+        <div className="oj-card" style={{ margin: "0 20px 14px" }}>
+          <div className="oj-lbl">Sua assinatura</div>
+          <div className="oj-meta" style={{ margin: "8px 0 10px", lineHeight: 1.55 }}>
+            Troque o cartão, veja as faturas ou cancele quando quiser, na área segura da Stripe.
+          </div>
+          <button
+            className="oj-btn sec"
+            disabled={abrindoPortal}
+            onClick={async () => {
+              setErroPag(""); setAbrindoPortal(true);
+              try { window.location.assign(await dados.stripePortal()); }
+              catch (e) { setErroPag(e.message); setAbrindoPortal(false); }
+            }}
+          >
+            {abrindoPortal ? "Abrindo…" : "Gerenciar assinatura"}
+          </button>
+          {erroPag && !pagando && <div className="oj-erro" role="alert" style={{ marginTop: 8 }}>{erroPag}</div>}
+        </div>
+      )}
+
       <div className="oj-sec">Mudar de plano</div>
       <SeletorCobranca valor={periodoPlano} onChange={setPeriodoPlano} />
       <div style={{ padding: "0 20px" }}>
@@ -7894,6 +7965,11 @@ function Perfil({ d, salvar, irPara, tema, setTema }) {
                   <div className="oj-meta" style={{ marginBottom: 16, lineHeight: 1.6 }}>
                     {verificando ? (
                       <>Confirmando seu pagamento… isso leva alguns segundos. Pode deixar aberto.</>
+                    ) : !temLink && !WHATSAPP_SUPORTE ? (
+                      <>
+                        Pagamento seguro por cartão de crédito, pela Stripe. A assinatura do {pl.nome} renova sozinha
+                        {periodoPlano === "anual" ? " todo ano" : " todo mês"} e você cancela quando quiser em “Gerenciar assinatura”.
+                      </>
                     ) : temLink ? (
                       <>
                         Abrimos o pagamento seguro numa nova aba. Pague com Pix ou cartão
@@ -7919,17 +7995,34 @@ function Perfil({ d, salvar, irPara, tema, setTema }) {
                     </div>
                   ) : (
                     <>
+                      <button
+                        className="oj-btn"
+                        disabled={abrindoPag}
+                        onClick={async () => {
+                          setErroPag(""); setAbrindoPag(true);
+                          const r = await irParaPagamento(pl, periodoPlano);
+                          if (r.erro) setErroPag(r.erro);
+                          setAbrindoPag(false);
+                        }}
+                      >
+                        {abrindoPag
+                          ? "Abrindo o pagamento seguro…"
+                          : `Pagar com cartão · ${periodoPlano === "anual" ? `R$ ${dinheiroPlano(precoAnual(pl).total)}/ano` : `R$ ${pl.preco}/mês`}`}
+                      </button>
+                      {erroPag && <div className="oj-erro" role="alert" style={{ marginTop: 8 }}>{erroPag}</div>}
                       {temLink && (
                         <button
-                          className="oj-btn"
+                          className="oj-btn sec"
+                          style={{ marginTop: 8 }}
                           onClick={() => window.open(LINKS_PAGAMENTO[pagando], "_blank", "noopener")}
                         >
-                          Abrir o pagamento
+                          Outra forma de pagar (link)
                         </button>
                       )}
                       {!temLink && WHATSAPP_SUPORTE && (
                         <button
-                          className="oj-btn"
+                          className="oj-btn sec"
+                          style={{ marginTop: 8 }}
                           onClick={() =>
                             window.open(
                               `https://wa.me/${WHATSAPP_SUPORTE}?text=${encodeURIComponent(

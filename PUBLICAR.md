@@ -78,3 +78,15 @@ prende `position:fixed` e esconde a peça fora da janela.
 - **Testes:** `tests/navegador/lona_publica.py` (vitrine), `lona_editor.py` (tela no app), `lona_tema.py` (3 larguras × 2 temas); todos entram em `todos.py`. Os testes de banco rodaram com dados fictícios desfeitos ao fim (não ficaram no repositório).
 - **Loja on-line** (`src/LojaOnline.jsx`, menu "Loja on-line", antigo Catálogo): abre a loja com um toque, mostra o link, manda só o link por WhatsApp, anuncia peças novas e sem foto. O envio avulso de peças continua recolhido no fim. O endereço falso `luxi.app/…` não existe mais em lugar nenhum; teste `loja_online.py` garante.
 - **Peça sem foto aparece** na vitrine como "Foto em breve" (nas lojas reais nenhuma peça tinha foto). Migração `20261003_lona_foto_opcional.sql`.
+
+## Cobrança (Stripe)
+**Como funciona:** o app chama `stripe-assinar` (função de borda; o PREÇO é decidido no servidor, Solo R$ 69,90 e Equipe R$ 129,90, anual = 12 meses com 5% off) e leva a pessoa ao Checkout da Stripe. A Stripe avisa `webhook-stripe`, que (só com assinatura válida) chama `public.stripe_aplicar` e atualiza `assinaturas` (ativa / atrasada / cancelada). "Gerenciar assinatura" usa `stripe-portal`.
+**Enquanto os segredos não existirem**, `stripe-assinar` responde 503 `nao_configurado` e o app cai no atendimento por WhatsApp (nada quebra).
+
+**O que só o dono da conta Stripe faz (não dá para fazer por código):**
+1. Criar/ativar a conta Stripe com cobrança em **BRL** e assinaturas (cartão). Ativar o **Portal do cliente** (Configurações > Billing > Portal do cliente).
+2. Supabase > Edge Functions > **Secrets**: `STRIPE_SECRET_KEY` (chave secreta `sk_live_…`, ou `sk_test_…` para testar) e `STRIPE_WEBHOOK_SECRET` (`whsec_…`). **Nunca cole chave em conversa, código ou commit.**
+3. Stripe > Desenvolvedores > **Webhooks** > novo endpoint: `https://eraxjtfedswksiyigasf.supabase.co/functions/v1/webhook-stripe` com os eventos: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`.
+4. Testar primeiro em modo teste (cartão 4242 4242 4242 4242) e só depois trocar para as chaves reais.
+
+**Regras que não podem mudar sem teste:** evento repetido não reaplica; assinatura `cancelada` só volta com nova compra; `atrasada` tem carência (somente leitura de 7 a 15 dias; a partir de 15 o acesso pausa). Testes: `tests/funcao-stripe.mjs`, `tests/funcao-stripe-precos.mjs`, `tests/navegador/pagamento.py` e o teste do banco em `tests/banco/stripe_aplicar.sql`.

@@ -1,0 +1,4 @@
+-- Cobrança: função public.stripe_aplicar no banco real (dados fictícios, desfeito no fim). Rode no SQL Editor do Supabase.
+-- Cobre: só service_role chama; compra com teste vencido; evento repetido; plano "em breve" recusado; renovação; falha de cartão e carência;
+-- cancelamento; evento atrasado não ressuscita; nova compra reativa; evento de cliente desconhecido; id malformado.
+-- (versão completa executada em 04/10/2026: 19 de 19.) Ids de evento reais têm formato evt_ + 14 ou mais caracteres.
