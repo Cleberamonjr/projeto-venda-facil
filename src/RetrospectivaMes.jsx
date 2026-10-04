@@ -273,8 +273,8 @@ export default function RetrospectivaMes({ d, autoAbrir = false }) {
 
       <div className="luxi-retro-card luxi-retro-stage">
         <div className="luxi-retro-label">🌷 Um conselho meu para esta fase</div>
-        <h3>`${analise.perfilNivel.foco}`</h3>
-        <p>${analise.perfilNivel.acao}</p>
+        <h3>{analise.perfilNivel.foco}</h3>
+        <p>{analise.perfilNivel.acao}</p>
       </div>
 
       <div className="luxi-retro-footer">
