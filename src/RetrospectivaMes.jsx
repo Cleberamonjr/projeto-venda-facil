@@ -123,7 +123,7 @@ function analisarMes(d, alvo, anterior) {
   if (despesa > receita * 0.3 && receita > 0) pontos.push({ tipo: "Despesas", titulo: "As despesas consumiram " + ((despesa / receita) * 100).toFixed(0) + "% da receita", texto: "Eu revisaria as maiores despesas antes de assumir novos custos." });
 
   return {
-    vendas, receita, receitaAnt, custo, custoAnt, despesa, despesaAnt, lucro, lucroAnt,
+    vendas, vendasAnt, receita, receitaAnt, custo, custoAnt, despesa, despesaAnt, lucro, lucroAnt,
     clientes: clientes.size, clientesAnt: clientesAnt.size, ticket, ticketAnt, margem, margemAnt,
     qtdPecas, qtdPecasAnt, crescimento, causa, destaques, pontos, nivel: nivelLoja(d),
     paradas, valorParado
