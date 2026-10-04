@@ -1315,6 +1315,7 @@ export default function OrganizeJewelry() {
   const [minimoAbertura, setMinimoAbertura] = useState(false);
   const [precisaNovaSenha, setPrecisaNovaSenha] = useState(false);
   const [aba, setAba] = useState("painel");
+  const [contextoNavegacao, setContextoNavegacao] = useState(null);
   const [fescala, setFescala] = useState(() => {
     const s = Number(localStorage.getItem("luxi:fescala"));
     return s >= 0.9 && s <= 1.6 ? s : 1;
@@ -1526,8 +1527,13 @@ export default function OrganizeJewelry() {
     return () => clearTimeout(t);
   }, [minimoAbertura, carregando]);
 
-  const irPara = (k) => {
-    if (k === aba) return;
+  const irPara = (k, contexto = null) => {
+    setContextoNavegacao(contexto);
+    if (k === aba) {
+      if (contexto) setTrocando(true);
+      setTimeout(() => setTrocando(false), contexto ? 180 : 0);
+      return;
+    }
     setTrocando(true);
     setAba(k);
     setTimeout(() => setTrocando(false), 420);
@@ -1984,7 +1990,7 @@ export default function OrganizeJewelry() {
         tema={tema}
       />
     ),
-    vendas: <Vendas d={d} dentro={dentro} quitarVenda={quitarVendaConfianca} />,
+    vendas: <Vendas d={d} dentro={dentro} quitarVenda={quitarVendaConfianca} contexto={contextoNavegacao} />,
     conselho: <Conselheiro d={d} dentro={dentro} irPara={irPara} />,
     catalogo: <LojaOnline d={d} irPara={irPara} recarregar={recarregar} Avulso={<Catalogo d={d} />} />,
     lona: <Lona d={d} recarregar={recarregar} />,
@@ -1993,7 +1999,7 @@ export default function OrganizeJewelry() {
         d={d}
         salvar={salvar}
         quitarVenda={quitarVendaConfianca}
-        cadastrarCliente={async (cli) => {
+        contexto={contextoNavegacao}\n        cadastrarCliente={async (cli) => {
           if (d.lojaId) {
             await dados.salvarCliente(d.lojaId, cli);
             await recarregar();
@@ -5399,7 +5405,7 @@ function EditorPeca({ peca, onSalvar, onFechar, colecoes, criarColecao, tema = "
   );
 }
 
-function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, criarColecao, dentro, abrir, tema }) {
+function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, criarColecao, dentro, abrir, tema, contexto }) {
   // Consultora só pode VER o estoque e Vender — incluir, editar, excluir
   // e registrar saída são ações da dona (é assim que o banco protege
   // isso: essas escritas em `pecas` exigem pode_escrever, que só a dona
@@ -5478,7 +5484,7 @@ function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, cri
     )
     .filter((p) => !banho || p.banho === banho)
     .filter((p) => !colecaoFiltro || p.colecaoId === colecaoFiltro)
-    .filter((p) => dentro(p.entradaEm));
+    .filter((p) => dentro(p.entradaEm))\n    .filter((p) => !focoEstoque || idsFoco.has(String(p.id || p.codigo || "").trim()));
 
   const banhosUsados = [...new Set(d.estoque.filter((p) => p.qtd > 0).map((p) => p.banho).filter(Boolean))];
 
@@ -5505,7 +5511,7 @@ function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, cri
 
   return (
     <>
-      <Recompra d={d} />
+      {focoEstoque && (\n        <div className="oj-card" style={{ background: "linear-gradient(135deg,#FFF8FA,#F7EBEE)", borderColor: "var(--rose)" }}>\n          <div className="oj-lbl">A partir da Conselheira</div>\n          <div className="oj-nome" style={{ fontSize: 18, fontWeight: 600, marginTop: 5 }}>{contexto?.foco === "repor" ? "Eu trouxe esse produto para você conferir a reposição." : "Eu trouxe aqui o estoque que merece sua atenção."}</div>\n          <div className="oj-meta" style={{ lineHeight: 1.5, marginTop: 5 }}>Você chegou nesta tela a partir de uma recomendação da Conselheira.</div>\n        </div>\n      )}\n\n      <Recompra d={d} />
 
       <div className="oj-estoque-acoes">
         {!ehConsultora && (
@@ -7150,7 +7156,7 @@ function Avatar({ nome, foto, tamanho = 42 }) {
 }
 
 /* ---------------- clientes (CRM) ---------------- */
-function Clientes({ d, salvar, quitarVenda, cadastrarCliente }) {
+function Clientes({ d, salvar, quitarVenda, cadastrarCliente, contexto }) {
   const [aberto, setAberto] = useState(null);
   const [form, setForm] = useState(false);
   const [nc, setNc] = useState({ nome: "", telefone: "", cpf: "", endereco: "" });
@@ -7195,7 +7201,14 @@ function Clientes({ d, salvar, quitarVenda, cadastrarCliente }) {
       mapa[k].vendas.push(v);
     });
 
-  const lista = Object.values(mapa).sort((a, b) => b.gasto - a.gasto);
+  const focoReativacao = contexto?.foco === "reativar";
+  const nomesFoco = new Set((contexto?.clientes || []).map((c) => String(c.nome || "").trim().toLowerCase()));
+  const listaBase = Object.values(mapa);
+  const lista = focoReativacao
+    ? listaBase
+        .filter((c) => nomesFoco.has(String(c.nome || "").trim().toLowerCase()))
+        .sort((a, b) => b.gasto - a.gasto)
+    : listaBase.sort((a, b) => b.gasto - a.gasto);
 
   const quitar = async (v) => {
     setErro("");
@@ -7207,6 +7220,15 @@ function Clientes({ d, salvar, quitarVenda, cadastrarCliente }) {
     } finally {
       setQuitando(null);
     }
+  };
+
+  const abrirWhatsApp = (cliente) => {
+    const telefone = String(cliente.telefone || "").replace(/\\D/g, "");
+    if (!telefone) return;
+    const texto = focoReativacao
+      ? `Oi, ${cliente.nome.split(" ")[0]}! 🌷 Lembrei de você e queria te mostrar algumas novidades que chegaram. Quer que eu separe algumas opções para você?`
+      : `Oi, ${cliente.nome.split(" ")[0]}! 🌷`;
+    window.open(`https://wa.me/${telefone}?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
   };
 
   const total = lista.reduce((s, c) => s + c.gasto, 0);
@@ -9194,8 +9216,8 @@ function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda, 
 }
 
 /* ---------------- vendas ---------------- */
-function Vendas({ d, dentro, quitarVenda }) {
-  const lista = d.vendas.filter((v) => dentro(v.data)).reverse();
+function Vendas({ d, dentro, quitarVenda, contexto }) {
+  const idsVendasFoco = new Set((contexto?.vendas || []).map((v) => String(v.id || "").trim()));\n  const lista = d.vendas.filter((v) => dentro(v.data)).filter((v) => contexto?.foco === "vendas" ? (!idsVendasFoco.size || idsVendasFoco.has(String(v.id || "").trim())) : true).reverse();
   const quem = (cid) => (d.consultoras || []).find((c) => c.id === cid)?.nome;
   const [quitandoId, setQuitandoId] = useState(null);
   const [erro, setErro] = useState("");
