@@ -5,6 +5,7 @@ import Lona from "./Lona.jsx";
 import { AjudaLuxi, MensagemDoDia } from "./ajuda/Ajuda.jsx";
 import LojaOnline from "./LojaOnline.jsx";
 import RetrospectivaMes from "./RetrospectivaMes.jsx";
+import { analisarLoja } from "./conselheiraEngine.js";
 import { WHATSAPP_SUPORTE, linkSuporte } from "./contato.js";
 import { Cadastro as CadastroNovo, OnboardingOperacional, ProximoPasso } from "./OnboardingLuxi.jsx";
 
@@ -1984,7 +1985,7 @@ export default function OrganizeJewelry() {
       />
     ),
     vendas: <Vendas d={d} dentro={dentro} quitarVenda={quitarVendaConfianca} />,
-    conselho: <Conselheiro d={d} dentro={dentro} />,
+    conselho: <Conselheiro d={d} dentro={dentro} irPara={irPara} />,
     catalogo: <LojaOnline d={d} irPara={irPara} recarregar={recarregar} Avulso={<Catalogo d={d} />} />,
     lona: <Lona d={d} recarregar={recarregar} />,
     clientes: (
@@ -4702,6 +4703,44 @@ function AcessoEncerrado({ perfil, sair, confirmando = false, demorou = false })
 
 /* ---------------- painel ---------------- */
 function Painel({ d, dentro, irPara }) {
+  const cardConselheira = d.perfil.papel === "consultora" && !d.perfil.mestre ? null : (
+    <div className="oj-card" style={{
+      border: "1.5px solid var(--rose-metal)",
+      background: "linear-gradient(135deg, var(--bege), var(--rose-cl))",
+      boxShadow: "0 6px 20px rgba(165,107,119,.10)"
+    }}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div style={{width:38,height:38,borderRadius:"50%",background:"var(--rose)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>✦</div>
+        <div>
+          <div className="oj-lbl" style={{color:"var(--rose-esc)"}}>A CONSELHEIRA</div>
+          <div style={{fontSize:19,fontWeight:600,marginTop:2}}>O que eu faria agora</div>
+        </div>
+      </div>
+      <div className="oj-meta" style={{marginTop:10,lineHeight:1.55}}>
+        {leituraConselheira.mensagem.texto}
+      </div>
+      <div style={{marginTop:14,display:"grid",gap:10}}>
+        {leituraConselheira.recomendacoes.map((r) => (
+          <div key={r.id} style={{background:"rgba(255,255,255,.72)",border:"1px solid var(--linha)",borderRadius:14,padding:13}}>
+            <div style={{fontSize:15,fontWeight:600,lineHeight:1.35}}>{r.titulo}</div>
+            <div className="oj-meta" style={{marginTop:5,lineHeight:1.5}}>{r.resumo}</div>
+            <div style={{fontSize:13.5,lineHeight:1.55,marginTop:7}}>{r.leitura}</div>
+            {r.destino && (
+              <button className="oj-btn sec mini" style={{marginTop:10}} onClick={() => executarConselheira(r)}>
+                {r.acao} ›
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      {!leituraConselheira.recomendacoes.length && (
+        <div className="oj-meta" style={{marginTop:12}}>Eu continuo observando. Quando aparecer uma oportunidade realmente importante, eu te aviso.</div>
+      )}
+      <div style={{marginTop:12,fontSize:11.5,color:"var(--tinta-cl)"}}>
+        Estou usando os dados reais da sua loja e priorizando o que merece sua atenção primeiro.
+      </div>
+    </div>
+  );
   const vendas = d.vendas.filter((v) => dentro(v.data));
   const saidas = d.saidas.filter((s) => dentro(s.data));
   const desp = d.despesas.filter((x) => dentro(x.data));
@@ -8444,7 +8483,12 @@ function Maleta({ d, salvar, recarregar }) {
 }
 
 /* ---------------- conselheiro de negócio ---------------- */
-function Conselheiro({ d, dentro }) {
+function Conselheiro({ d, dentro, irPara }) {
+  const leituraConselheira = useMemo(() => analisarLoja(d), [d]);
+  const executarConselheira = (r) => {
+    const destino = r?.destino;
+    if (destino && irPara) irPara(destino);
+  };
   if (d.perfil.papel === "consultora" && !d.perfil.mestre)
     return (
       <div className="oj-vazio">
@@ -8627,6 +8671,7 @@ function Conselheiro({ d, dentro }) {
 
   return (
     <>
+      {cardConselheira}
       <div className="oj-card">
         <div className="oj-lbl">Resultado do período</div>
         <div className={"oj-valor " + (lucro >= 0 ? "ouro" : "rose")}>{brl(lucro)}</div>
