@@ -4,6 +4,7 @@ import * as dados from "./dados.js";
 import Lona from "./Lona.jsx";
 import { AjudaLuxi, MensagemDoDia } from "./ajuda/Ajuda.jsx";
 import LojaOnline from "./LojaOnline.jsx";
+import RetrospectivaMes from "./RetrospectivaMes.jsx";
 import { WHATSAPP_SUPORTE, linkSuporte } from "./contato.js";
 import { Cadastro as CadastroNovo, OnboardingOperacional, ProximoPasso } from "./OnboardingLuxi.jsx";
 
@@ -704,6 +705,8 @@ img{max-width:100%;height:auto}
 }
 
 @media (prefers-reduced-motion:reduce){.oja{animation:none}}
+/* Retrospectiva mensal da Conselheira Luxi */
+.luxi-retro-wrap{max-width:860px;margin:0 auto;padding:4px 0 30px}.luxi-retro-hero{padding:20px 4px 18px}.luxi-retro-kicker{font-size:10px;letter-spacing:.13em;color:var(--rose-esc);font-weight:700}.luxi-retro-hero h2{font-size:29px;line-height:1.12;margin:7px 0;color:var(--tinta)}.luxi-retro-hero p{margin:0;color:var(--tinta-cl);line-height:1.55}.luxi-retro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.luxi-retro-metric{background:var(--bege-2);border:1px solid var(--linha);border-radius:16px;padding:15px}.luxi-retro-metric span{display:block;font-size:11px;color:var(--tinta-cl);margin-bottom:6px}.luxi-retro-metric strong{display:block;font-size:23px;color:var(--marinho)}.luxi-retro-metric small{display:block;margin-top:6px;color:var(--tinta-cl);line-height:1.35}.luxi-retro-card{margin-top:12px;padding:18px;border:1px solid var(--linha);border-radius:18px;background:var(--bege);box-shadow:0 2px 8px rgba(80,50,60,.04)}.luxi-retro-card h3{font-size:21px;line-height:1.25;margin:7px 0;color:var(--tinta)}.luxi-retro-card p{color:var(--tinta-cl);line-height:1.6;margin:7px 0}.luxi-retro-label{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--rose-esc);text-transform:uppercase}.luxi-retro-note{padding-top:10px;border-top:1px solid var(--linha);font-size:13px}.luxi-retro-item{padding:12px 0;border-top:1px solid var(--linha)}.luxi-retro-item:first-of-type{border-top:0}.luxi-retro-item div{display:flex;align-items:center;gap:9px}.luxi-retro-item b{font-size:16px;color:var(--tinta)}.luxi-retro-item span{font-size:10px;color:var(--rose-esc);border:1px solid var(--linha);border-radius:20px;padding:3px 7px}.luxi-retro-item p{font-size:13px;margin-left:0}.luxi-retro-item.atencao b{color:var(--alerta)}.luxi-retro-next{background:var(--rose-cl);border-color:var(--rose-metal)}.luxi-retro-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 4px;color:var(--tinta-cl);font-size:12px}.luxi-retro-footer button{border:0;border-radius:999px;padding:11px 15px;background:var(--rose-btn);color:#fff;font-weight:600;cursor:pointer}.luxi-retro-overlay{position:fixed;inset:0;z-index:9999;background:rgba(35,20,25,.52);display:flex;align-items:center;justify-content:center;padding:18px}.luxi-retro-modal{position:relative;width:min(900px,100%);max-height:92vh;overflow:auto;background:var(--bege);border-radius:24px;padding:18px;box-shadow:0 20px 70px rgba(0,0,0,.25)}.luxi-retro-close{position:absolute;right:15px;top:13px;width:34px;height:34px;border:0;border-radius:50%;background:var(--bege-2);color:var(--tinta);font-size:24px;cursor:pointer}.luxi-retro-modal .luxi-retro-wrap{padding-top:12px}@media(max-width:650px){.luxi-retro-grid{grid-template-columns:repeat(2,1fr)}.luxi-retro-hero h2{font-size:25px}.luxi-retro-footer{align-items:stretch;flex-direction:column}.luxi-retro-footer button{width:100%}.luxi-retro-overlay{padding:8px}.luxi-retro-modal{max-height:96vh;border-radius:18px;padding:12px}.luxi-retro-card{padding:15px}}
 `;
 
 /* ---------------- utilidades ---------------- */
@@ -2350,6 +2353,7 @@ export default function OrganizeJewelry() {
       </div>
 
       <Aviso d={d} irPara={irPara} />
+      {!somenteLeitura(d.perfil) && !d.perfil?.mestre && <RetrospectivaMes d={d} autoAbrir />}
 
       {onboardingOperacional && (
         <OnboardingOperacional
