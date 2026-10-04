@@ -7233,7 +7233,7 @@ function Clientes({ d, salvar, quitarVenda, cadastrarCliente, contexto }) {
   };
 
   const abrirWhatsApp = (cliente) => {
-    const telefone = String(cliente.telefone || "").replace(/\\D/g, "");
+    const telefone = String(cliente.telefone || "").replace(/\D/g, "");
     if (!telefone) return;
     const texto = focoReativacao
       ? `Oi, ${cliente.nome.split(" ")[0]}! 🌷 Lembrei de você e queria te mostrar algumas novidades que chegaram. Quer que eu separe algumas opções para você?`
@@ -8485,7 +8485,17 @@ function Conselheiro({ d, dentro, irPara }) {
   const leituraConselheira = useMemo(() => analisarLoja(d), [d]);
   const executarConselheira = (r) => {
     const destino = r?.destino;
-    if (destino && irPara) irPara(destino);
+    if (!destino || !irPara) return;
+    if (r.id === "reativacao-clientes") {
+      return irPara("clientes", { foco: "reativar", clientes: r.dados?.clientes || [] });
+    }
+    if (r.id === "estoque-parado") {
+      return irPara("estoque", { foco: "estoque-parado", produtos: r.dados?.produtos || [] });
+    }
+    if (r.id === "repor-campeao") {
+      return irPara("estoque", { foco: "repor", produtos: r.dados?.produto ? [r.dados.produto] : [] });
+    }
+    return irPara(destino);
   };
   if (d.perfil.papel === "consultora" && !d.perfil.mestre)
     return (
