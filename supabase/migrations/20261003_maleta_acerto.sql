@@ -246,8 +246,8 @@ begin
     if not found then raise exception 'Peça do acerto não encontrada' using errcode='LX404'; end if;
   end loop;
 
-  v_owner := privado.minha_loja(v_m.loja_id);
-  v_cons := privado.minha_consultoria(v_m.loja_id) = v_m.consultora_id;
+  v_owner := coalesce(privado.minha_loja(v_m.loja_id), false);   -- (reforço) coalesce: NULL nunca pode virar permissão
+  v_cons := coalesce(privado.minha_consultoria(v_m.loja_id) = v_m.consultora_id, false);
 
   if p_acerto_junto and not v_owner then raise exception 'Só a dona pode marcar acerto feito junto' using errcode='LX403'; end if;
   if p_dona_confirmou and not v_owner then raise exception 'Só a dona pode confirmar' using errcode='LX403'; end if;
@@ -332,7 +332,7 @@ begin
     values(v_m.loja_id,v_m.consultora_id,v_a.id,
            'Repasse de ' || coalesce((select nome from public.consultoras where id=v_m.consultora_id),'consultora'),
            v_a.repasse_centavos,current_date)
-    on conflict (referencia_id) do nothing;
+    on conflict (referencia_id) where referencia_id is not null do nothing;   -- (corrigido) o índice é parcial: sem repetir a condição o Postgres recusa (42P10) e o acerto com repasse nunca fecha
   end if;
 
   update public.maletas set status='fechada', fechada_em=now() where id=p_maleta;
@@ -357,6 +357,8 @@ begin
   select * into v_c from public.consultoras where id=v_m.consultora_id;
   if v_m.status <> 'aberta' then raise exception 'Maleta já acertada' using errcode='LX409'; end if;
   if p_qtd <> 1 then raise exception 'Registre uma unidade por vez' using errcode='LX422'; end if;
+  -- (acrescentado) valor nunca negativo: igual à regra do registrar_venda principal
+  if p_valor_cent is null or p_valor_cent < 0 or p_valor_cent > 100000000 then raise exception 'Valor da venda inválido' using errcode='LX422'; end if;
 
   select * into v_mi from public.maleta_itens
    where maleta_id=p_maleta and peca_id=p_peca and qtd>0
@@ -404,6 +406,8 @@ begin
   if not public.maleta_pode_gerir(p_maleta) then raise exception 'Sem permissão' using errcode='LX403'; end if;
   select * into v_m from public.maletas where id=p_maleta for update;
   if not found then raise exception 'Maleta não encontrada' using errcode='LX404'; end if;
+  -- (acrescentado) desfazer um acerto fechado mexe em dinheiro e estoque: só a dona (a tela já mostra o botão só para ela)
+  if not coalesce(privado.minha_loja(v_m.loja_id), false) then raise exception 'Só a dona da loja pode desfazer um acerto' using errcode='LX403'; end if;
   select * into v_a from public.maleta_acertos where maleta_id=p_maleta for update;
   if not found or v_a.status <> 'fechado' then raise exception 'Só é possível desfazer um acerto fechado' using errcode='LX422'; end if;
   -- Retira do estoque somente o que entrou por este acerto.
