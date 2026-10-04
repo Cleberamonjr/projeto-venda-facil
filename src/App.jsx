@@ -1988,6 +1988,7 @@ export default function OrganizeJewelry() {
         dentro={dentro}
         abrir={setModal}
         tema={tema}
+        contexto={contextoNavegacao}
       />
     ),
     vendas: <Vendas d={d} dentro={dentro} quitarVenda={quitarVendaConfianca} contexto={contextoNavegacao} />,
