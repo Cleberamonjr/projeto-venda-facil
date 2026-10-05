@@ -926,7 +926,7 @@ const PLANOS = [
       "Tudo do Solo, para até 3.000 códigos",
       "Equipe: o que está com cada pessoa e até quando",
       "Até 5 vendedoras com comissão e vendas separadas",
-      "Conselheiro de negócio com ações práticas",
+      "Conselheira de negócio com ações práticas",
       "Assistente de recompra",
       "100 romaneios lidos por foto, todo mês",
     ],
@@ -1993,7 +1993,7 @@ export default function OrganizeJewelry() {
       />
     ),
     vendas: <Vendas d={d} dentro={dentro} quitarVenda={quitarVendaConfianca} contexto={contextoNavegacao} />,
-    conselho: <Conselheiro d={d} dentro={dentro} irPara={irPara} />,
+    conselho: <Conselheira d={d} dentro={dentro} irPara={irPara} />,
     catalogo: <LojaOnline d={d} irPara={irPara} recarregar={recarregar} Avulso={<Catalogo d={d} />} />,
     lona: <Lona d={d} recarregar={recarregar} />,
     clientes: (
@@ -2198,7 +2198,7 @@ export default function OrganizeJewelry() {
               ["equipe", "Equipe", "Consultoras e comissões"],
             ]],
             ["Análise", [
-              ["conselho", "Conselheiro", "O que fazer agora"],
+              ["conselho", "Conselheira", "O que fazer agora"],
               ["graficos", "Análises", "Giro, despesas e KPIs"],
             ]],
             ["Conta", [
@@ -2686,7 +2686,7 @@ function TourDemo({ onSair, irPara }) {
       aba: "conselho",
       titulo: "Uma sócia que lê seus números",
       texto:
-        "O Conselheiro olha seus dados e te diz o que fazer: qual peça está parada, quem te deve, onde está seu dinheiro. Não é relatório — é conselho.",
+        "O Conselheira olha seus dados e te diz o que fazer: qual peça está parada, quem te deve, onde está seu dinheiro. Não é relatório — é conselho.",
     },
     {
       aba: "painel",
@@ -8524,7 +8524,7 @@ function Maleta({ d, salvar, recarregar }) {
 }
 
 /* ---------------- conselheiro de negócio ---------------- */
-function Conselheiro({ d, dentro, irPara }) {
+function Conselheira({ d, dentro, irPara }) {
   const leituraConselheira = useMemo(() => analisarLoja(d), [d]);
   const executarConselheira = (r) => {
     const destino = r?.destino;
@@ -8544,7 +8544,7 @@ function Conselheiro({ d, dentro, irPara }) {
     return (
       <div className="oj-vazio">
         <span className="oj-serif">Área da administradora</span>
-        O Conselheiro mostra a saúde financeira da loja inteira — margem, capital parado
+        O Conselheira mostra a saúde financeira da loja inteira — margem, capital parado
         e inadimplência. Ele fica disponível para quem administra a loja.
       </div>
     );
@@ -9136,7 +9136,7 @@ function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda, 
         <div className="oj-lbl">Limite de inadimplência</div>
         <div className="oj-meta" style={{ margin: "8px 0 4px", lineHeight: 1.55 }}>
           O Luxi considera zero como referência de negócio saudável. Se você
-          convive com um percentual, defina aqui — o Conselheiro só avisa quando passar.
+          convive com um percentual, defina aqui — o Conselheira só avisa quando passar.
         </div>
         <NumInput
           valor={d.perfil.limiteInadimplencia ?? 0}
