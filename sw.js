@@ -1,1 +1,8 @@
-if(!self.define){let e,i={};const n=(n,c)=>(n=new URL(n+".js",c).href,i[n]||new Promise(i=>{if("document"in self){const e=document.createElement("script");e.src=n,e.onload=i,document.head.appendChild(e)}else e=n,importScripts(n),i()}).then(()=>{let e=i[n];if(!e)throw new Error(`Module ${n} didn’t register its module`);return e}));self.define=(c,s)=>{const r=e||("document"in self?document.currentScript.src:"")||location.href;if(i[r])return;let o={};const d=e=>n(e,r),f={module:{uri:r},exports:o,require:d};i[r]=Promise.all(c.map(e=>f[e]||d(e))).then(e=>(s(...e),o))}}define(["./workbox-9407a438"],function(e){"use strict";e.setCacheNameDetails({prefix:"luxi-v271-1791216674802"}),self.addEventListener("message",e=>{e.data&&"SKIP_WAITING"===e.data.type&&self.skipWaiting()}),e.precacheAndRoute([{url:"logo-venda-facil.jpg",revision:"d7f08800071136551dba77495856902c"},{url:"index.html",revision:"3fc35771c8a740618525f7452dd1aace"},{url:"icone-512.png",revision:"ce65ddf203c778d2f83cbb90959029a2"},{url:"icone-192.png",revision:"288cce29cfbb5506dacc38984c5de73d"},{url:"fundo-login.jpg",revision:"a313903f4040376dbb4ecf25e2b3f041"},{url:"assets/index-Ds2BDAuJ-1791216674802.css",revision:null},{url:"assets/index-CM_UuHqx-1791216674802.js",revision:null},{url:"icone-192.png",revision:"288cce29cfbb5506dacc38984c5de73d"},{url:"icone-512.png",revision:"ce65ddf203c778d2f83cbb90959029a2"},{url:"manifest.webmanifest",revision:"8bd5bb79fbfd011ec84d4cf6c3f66953"}],{}),e.cleanupOutdatedCaches()});
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const chaves = await caches.keys();
+    await Promise.all(chaves.map((c) => caches.delete(c)));
+    await self.registration.unregister();
+  })());
+});

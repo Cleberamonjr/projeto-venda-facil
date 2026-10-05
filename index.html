@@ -1,3 +1,205 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/><meta name="theme-color" content="#F4F0E8"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="default"/><meta name="apple-mobile-web-app-title" content="Venda Fácil"/><meta name="mobile-web-app-capable" content="yes"/><link rel="apple-touch-icon" href="./icone-192.png"/><title>Venda Fácil</title><style>body{margin:0;background:#F4F0E8}</style>  <script type="module" crossorigin src="./assets/index-CM_UuHqx-1791216674802.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-Ds2BDAuJ-1791216674802.css">
-<link rel="manifest" href="./manifest.webmanifest"></head><body><div id="root"></div></body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#F4F0E8"/>
+<title>Venda Fácil</title>
+<style>
+  :root { --mar:#F4F0E8; --mar2:#FFFDF9; --ouro:#8C3D48; --prata:#3A2428; --mudo:#8A736E; --linha:#E4D5CF; --pedra:#F4F0E8; --rosa:#C4A48A; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#EFE8E0; color:var(--prata); font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+  button, input, textarea, select { font:inherit; font-size:16px; }
+  .tel { width:min(430px,100%); min-height:100vh; margin:0 auto; background:var(--mar); }
+  header { display:flex; align-items:center; justify-content:space-between; padding:18px 18px 8px; }
+  .marca { display:flex; gap:10px; align-items:center; }
+  header img { width:46px; height:46px; border-radius:14px; object-fit:cover; }
+  header b { display:block; letter-spacing:-.03em; font-size:17px; }
+  header small { color:var(--mudo); }
+  main { padding:6px 18px 112px; }
+  h1 { font-size:32px; line-height:1.05; letter-spacing:-.045em; font-weight:560; margin:12px 0 6px; }
+  .sub { color:var(--mudo); margin:0 0 18px; line-height:1.45; }
+  .acao { min-height:50px; width:100%; border:0; border-radius:14px; background:#6E2433; color:#F4F0E8; font-weight:700; }
+  .fantasma { min-height:46px; width:100%; margin-top:8px; border:1px solid var(--linha); border-radius:14px; background:transparent; color:var(--mudo); }
+  .sair { width:auto; min-height:38px; padding:0 12px; margin:0; }
+  .campo { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+  .campo span { font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:var(--mudo); }
+  .campo input, .campo textarea { min-height:48px; border:1px solid var(--linha); border-radius:12px; background:var(--mar2); color:var(--prata); padding:10px 12px; }
+  .nums { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .num { background:var(--mar2); border:1px solid var(--linha); border-radius:18px; padding:16px; }
+  .num b { display:block; font-size:22px; letter-spacing:-.04em; margin-top:6px; }
+  .num span { color:var(--mudo); font-size:13px; }
+  .lista { display:flex; flex-direction:column; gap:12px; }
+  .item { display:grid; grid-template-columns:72px 1fr; gap:12px; background:var(--mar2); border:1px solid var(--linha); border-radius:16px; padding:10px; }
+  .item img, .vazio { width:72px; height:72px; border-radius:12px; object-fit:cover; background:#1c335c; }
+  .ouro { color:#6E2433; }
+  .abas { position:sticky; bottom:0; display:grid; grid-template-columns:repeat(5,1fr); border-top:1px solid var(--linha); background:#F4F0E8; padding-bottom:env(safe-area-inset-bottom); }
+  .abas button { min-height:58px; border:0; background:transparent; color:var(--mudo); font-size:11px; }
+  .abas button.on { color:#6E2433; font-weight:700; }
+  .loja { background:var(--pedra); color:#2B241C; min-height:100vh; }
+  .loja header, .loja .abas { background:var(--pedra); color:#2B241C; border-color:#E4DCCF; }
+  .capa { padding:28px 20px 8px; position:relative; }
+  .saco { position:absolute; top:18px; right:16px; width:44px; height:44px; border:0; background:transparent; color:#2B241C; padding:0; }
+  .saco svg { width:26px; height:26px; stroke:currentColor; fill:none; stroke-width:1.4; }
+  .gaveta { position:fixed; inset:0; background:rgba(43,36,28,.28); display:flex; align-items:flex-end; z-index:5; }
+  .gaveta .folha { width:min(430px,100%); margin:0 auto; background:var(--pedra); border-radius:18px 18px 0 0; padding:18px 16px 28px; }
+  .capa h1 { font-family:Georgia, "Times New Roman", serif; font-weight:500; font-size:40px; margin:0; }
+  .grade { display:grid; gap:18px; padding:8px 16px 40px; }
+  .produto { background:#fffdf9; border-radius:18px; overflow:hidden; box-shadow:0 1px 0 rgba(43,36,28,.04); }
+  .produto img, .produto .vazio { width:100%; height:280px; object-fit:cover; background:#E7E0D6; }
+  .produto div { padding:14px 14px 16px; }
+  .produto b { font-size:18px; }
+  .preco { font-family:Georgia, serif; font-size:22px; margin:6px 0; }
+  .qtd { display:flex; align-items:center; gap:10px; }
+  .qtd button { width:36px; height:36px; border-radius:50%; border:1px solid #E4DCCF; background:#fff; }
+  .pedido { background:#fffdf9; border-radius:16px; padding:14px; margin-bottom:10px; }
+</style>
+</head>
+<body>
+<div class="tel" id="app"></div>
+<script>
+const chave = "vf-loja";
+const zero = () => ({ sessao:false, loja:{ nome:"", pix:"", cor:"#6E2433", zap:"", endereco:"" }, pecas:[], pedidos:[] });
+function ler() {
+  const atual = JSON.parse(localStorage.getItem(chave) || "null") || zero();
+  const antiga = JSON.parse(localStorage.getItem("vf-casa") || "null");
+  if (antiga && antiga.pecas && antiga.pecas.length && !atual.pecas.length) atual.pecas = antiga.pecas;
+  const q = new URLSearchParams(location.search).get("c");
+  if (q) {
+    try {
+      const vinda = JSON.parse(decodeURIComponent(escape(atob(q))));
+      if (vinda.loja) atual.loja = { ...atual.loja, ...vinda.loja };
+      if (vinda.pecas) atual.pecas = vinda.pecas;
+    } catch (err) {}
+  }
+  return atual;
+}
+let e = ler();
+let tela = "inicio";
+let foto = "";
+let carrinho = {};
+let sacoAberto = false;
+const cliente = new URLSearchParams(location.search).get("loja") === "1";
+const brl = (n) => Number(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const salvar = () => { localStorage.setItem(chave, JSON.stringify(e)); desenhar(); };
+const recentes = () => [...e.pecas].sort((a,b) => b.id - a.id);
+function desenhar() {
+  document.getElementById("app").className = cliente ? "tel loja" : "tel";
+  document.getElementById("app").innerHTML = cliente ? vistaCliente() : (!e.sessao ? login() : casa());
+  ligar();
+}
+function login() {
+  return `<header><div class="marca"><img src="logo-venda-facil.jpg" alt=""/><div><b>Venda Fácil</b><small>Entrar na loja</small></div></div></header>
+    <main><h1>Entrar</h1><p class="sub">A chave Pix fica na loja, não aqui.</p>
+    <form id="entrar"><label class="campo"><span>E-mail</span><input name="email" type="email" required></label>
+    <label class="campo"><span>Senha</span><input name="senha" type="password" required></label>
+    <button class="acao">Entrar</button></form></main>`;
+}
+function casa() {
+  const miolo = { inicio: inicio(), pecas: pecas(), pedidos: pedidos(), painel: painel(), loja: dadosLoja() }[tela];
+  const portas = [["inicio","Início"],["pecas","Peças"],["pedidos","Pedidos"],["painel","Painel"],["loja","Loja"]];
+  return `<header><div class="marca"><img src="logo-venda-facil.jpg" alt=""/><div><b>${e.loja.nome || "Sua loja"}</b><small>Venda Fácil</small></div></div><button class="fantasma sair" id="sair">Sair</button></header>
+    <main>${miolo}</main><nav class="abas">${portas.map(([id,n])=>`<button data-t="${id}" class="${tela===id?"on":""}">${n}</button>`).join("")}</nav>`;
+}
+function inicio() {
+  return `<h1>Nova peça</h1><p class="sub">A mais recente aparece primeiro na vitrine.</p>
+    <form id="peca"><label class="campo"><span>Nome</span><input name="nome" required></label>
+    <label class="campo"><span>Descrição</span><textarea name="descricao" rows="2"></textarea></label>
+    <label class="campo"><span>Quanto pagou</span><input name="custo" inputmode="decimal" required></label>
+    <label class="campo"><span>Por quanto vende</span><input name="venda" inputmode="decimal" required></label>
+    <label class="campo"><span>Foto</span><input id="foto" type="file" accept="image/*"></label>
+    ${foto ? `<img src="${foto}" alt="" style="width:100%;height:200px;object-fit:cover;border-radius:16px;margin-bottom:12px"/>` : ""}
+    <button class="acao">Colocar na vitrine</button></form>`;
+}
+function pecas() {
+  if (!recentes().length) return `<h1>Peças</h1><p class="sub">Nenhuma ainda.</p>`;
+  return `<h1>Estoque</h1><p class="sub">Da mais recente para a mais antiga.</p><div class="lista">${recentes().map(p=>`<article class="item">${p.foto?`<img src="${p.foto}"/>`:`<div class="vazio"></div>`}<div><b>${p.nome}</b><div class="sub">${p.descricao||""}</div><div>Pagou ${brl(p.custo)} · <b class="ouro">${brl(p.venda)}</b></div></div></article>`).join("")}</div>`;
+}
+function pedidos() {
+  if (!e.pedidos.length) return `<h1>Pedidos</h1><p class="sub">O pedido da cliente cai aqui.</p>`;
+  return `<h1>Pedidos</h1>${e.pedidos.map(p=>`<article class="num"><b>${p.cliente}</b><span>${brl(p.total)} · ${p.pago?"Pago":"Não pago"}</span><button class="acao" style="margin-top:10px" data-pago="${p.id}" data-v="${p.pago?0:1}">${p.pago?"Marcar não pago":"Marcar pago"}</button></article>`).join("")}`;
+}
+function painel() {
+  const estoque = e.pecas.reduce((s,p)=>s+Number(p.qtd||1),0);
+  const vendido = e.pedidos.filter(p=>p.pago).reduce((s,p)=>s+p.total,0);
+  const fiado = e.pedidos.filter(p=>!p.pago).reduce((s,p)=>s+p.total,0);
+  const lucro = e.pecas.reduce((s,p)=>s+(p.venda-p.custo)*Number(p.qtd||1),0);
+  const devedores = e.pedidos.filter(p=>!p.pago);
+  return `<h1>Painel</h1><p class="sub">Só o resultado. As peças ficam no estoque.</p>
+    <div class="nums">
+      <div class="num"><span>Lucro previsto</span><b>${brl(lucro)}</b></div>
+      <div class="num"><span>Peças no estoque</span><b>${estoque}</b></div>
+      <div class="num"><span>Vendido</span><b>${brl(vendido)}</b></div>
+      <div class="num"><span>Fiando</span><b>${brl(fiado)}</b></div>
+    </div>
+    <h2 style="font-size:18px;margin:22px 0 8px">Quem falta pagar</h2>
+    ${devedores.length ? devedores.map(p=>`<div class="num"><b>${p.cliente}</b><span>${brl(p.total)}</span></div>`).join("") : `<p class="sub">Ninguém ficou devendo.</p>`}`;
+}
+function lojaAtual() {
+  const form = document.getElementById("loja");
+  if (!form) return e.loja;
+  const fd = new FormData(form);
+  return { nome: fd.get("nome") || "", pix: fd.get("pix") || "", cor: fd.get("cor") || "#6E2433", zap: fd.get("zap") || "", endereco: fd.get("endereco") || "" };
+}
+function linkDaLoja() {
+  const loja = lojaAtual();
+  const pacote = { loja, pecas: recentes().map(p => ({ id:p.id, nome:p.nome, descricao:p.descricao, venda:p.venda, custo:p.custo, qtd:p.qtd, foto: (p.foto && p.foto.length < 80000) ? p.foto : "" })) };
+  const c = btoa(unescape(encodeURIComponent(JSON.stringify(pacote))));
+  return location.origin + location.pathname + "?loja=1&c=" + encodeURIComponent(c);
+}
+function dadosLoja() {
+  const link = linkDaLoja();
+  const vitrine = recentes().length ? `<h2 style="font-size:18px;margin:22px 0 8px">Na vitrine agora</h2><div class="lista">${recentes().map(p=>`<article class="item">${p.foto?`<img src="${p.foto}"/>`:`<div class="vazio"></div>`}<div><b>${p.nome}</b><div class="ouro">${brl(p.venda)}</div></div></article>`).join("")}</div>` : `<p class="sub">Nenhuma peça do estoque entrou na vitrine.</p>`;
+  return `<h1>Sua loja</h1><p class="sub">${recentes().length} peça(s) do estoque, da mais recente à mais antiga.</p>
+    <form id="loja"><label class="campo"><span>Nome da loja</span><input name="nome" value="${e.loja.nome}" required></label>
+    <label class="campo"><span>Chave Pix</span><input name="pix" value="${e.loja.pix}" placeholder="Opcional"></label>
+    <label class="campo"><span>Cor que combina com o off-white</span><input name="cor" id="cor" type="color" value="${e.loja.cor||"#6E2433"}"></label>
+    <div id="amostra" style="height:54px;border-radius:14px;background:${e.loja.cor||"#6E2433"};color:#F4F0E8;display:grid;place-items:center;margin-bottom:12px">${e.loja.nome || "Sua loja"}</div>
+    <label class="campo"><span>WhatsApp</span><input name="zap" value="${e.loja.zap}" placeholder="Opcional"></label>
+    <label class="campo"><span>Endereço</span><input name="endereco" value="${e.loja.endereco}" placeholder="Opcional"></label>
+    <button class="acao">Salvar loja</button></form>
+    <a id="link-loja" class="fantasma" style="display:grid;place-items:center;text-decoration:none" href="https://wa.me/?text=${encodeURIComponent((e.loja.nome||"Minha loja") + "\n" + link)}">Mandar o link</a>${vitrine}`;
+}
+function itensSaco() { return recentes().filter(p => carrinho[p.id]); }
+function totalSaco() { return itensSaco().reduce((s,p)=>s+p.venda*carrinho[p.id],0); }
+function vistaCliente() {
+  const cor = e.loja.cor || "#6E2433";
+  const gaveta = sacoAberto ? `<div class="gaveta" id="fechar-saco"><div class="folha"><b>Seu carrinho</b>${itensSaco().map(p=>`<div class="qtd" style="justify-content:space-between;margin:12px 0"><span>${p.nome}</span><span>${brl(p.venda * carrinho[p.id])}</span></div>`).join("") || "<p>Nenhuma peça ainda.</p>"}<div class="preco" style="color:${cor}">${brl(totalSaco())}</div><button class="acao" id="pedir" style="background:${cor}">Garantir as minhas peças</button></div></div>` : "";
+  return `<div class="capa" style="border-top:8px solid ${cor}"><button class="saco" id="abrir-saco" aria-label="Carrinho"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V7a3 3 0 016 0v1"/></svg></button><div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:${cor}">${e.loja.nome || "Loja"}</div><h1 style="color:${cor}">${e.loja.nome || "Loja"}</h1><p>${e.loja.endereco || "Escolha e mande o pedido."}</p>${e.loja.zap ? `<p>WhatsApp ${e.loja.zap}</p>` : ""}</div>
+    <div class="grade">${recentes().map(p=>`<article class="produto">${p.foto?`<img src="${p.foto}"/>`:`<div class="vazio"></div>`}<div><b>${p.nome}</b><div style="color:#6e655b">${p.descricao||""}</div><div class="preco" style="color:${cor}">${brl(p.venda)}</div>
+      <div class="qtd"><button data-menos="${p.id}">−</button><b>${carrinho[p.id]||0}</b><button data-mais="${p.id}">+</button></div></div></article>`).join("") || "<p style='padding:0 16px'>A vitrine ainda está vazia.</p>"}
+      <div style="padding:0 16px 24px"><button class="acao" id="pedir" style="background:${cor}">Garantir as minhas peças</button>
+      ${e.loja.pix ? `<p>Pix: ${e.loja.pix}</p>` : ""}
+      ${e.loja.zap ? `<p>WhatsApp: ${e.loja.zap}</p>` : ""}
+      ${e.pedidos.map(p=>`<article class="pedido"><b>Pedido</b><div>${brl(p.total)} · ${p.pago?"Pago":"Não pago"}</div><button class="fantasma" data-pago="${p.id}" data-v="${p.pago?0:1}">${p.pago?"Marcar não pago":"Já paguei"}</button></article>`).join("")}</div></div>${gaveta}`;
+}
+function ligar() {
+  document.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { tela = b.dataset.t; desenhar(); });
+  const entrar = document.getElementById("entrar");
+  if (entrar) entrar.onsubmit = (ev) => { ev.preventDefault(); e.sessao = true; tela = "inicio"; salvar(); };
+  const sair = document.getElementById("sair");
+  if (sair) sair.onclick = () => { e.sessao = false; desenhar(); };
+  const fotoInput = document.getElementById("foto");
+  if (fotoInput) fotoInput.onchange = () => { const f = fotoInput.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { foto = r.result; desenhar(); }; r.readAsDataURL(f); };
+  const peca = document.getElementById("peca");
+  if (peca) peca.onsubmit = (ev) => { ev.preventDefault(); const fd = new FormData(peca); e.pecas.push({ id:Date.now(), nome:fd.get("nome"), descricao:fd.get("descricao"), custo:Number(String(fd.get("custo")).replace(",",".")), venda:Number(String(fd.get("venda")).replace(",",".")), qtd:1, foto }); foto=""; tela="pecas"; salvar(); };
+  const loja = document.getElementById("loja");
+  if (loja) {
+    const aplicar = () => { e.loja = lojaAtual(); const amostra = document.getElementById("amostra"); if (amostra) { amostra.style.background = e.loja.cor; amostra.textContent = e.loja.nome || "Sua loja"; } const link = document.getElementById("link-loja"); if (link) link.href = "https://wa.me/?text=" + encodeURIComponent((e.loja.nome || "Minha loja") + "\n" + linkDaLoja()); };
+    loja.oninput = aplicar;
+    loja.onsubmit = (ev) => { ev.preventDefault(); aplicar(); salvar(); };
+  }
+  document.querySelectorAll("[data-mais]").forEach(b => b.onclick = () => { carrinho[b.dataset.mais]=(carrinho[b.dataset.mais]||0)+1; desenhar(); });
+  document.querySelectorAll("[data-menos]").forEach(b => b.onclick = () => { carrinho[b.dataset.menos]=Math.max(0,(carrinho[b.dataset.menos]||0)-1); desenhar(); });
+  const abrir = document.getElementById("abrir-saco");
+  if (abrir) abrir.onclick = () => { sacoAberto = true; desenhar(); };
+  const fechar = document.getElementById("fechar-saco");
+  if (fechar) fechar.onclick = (ev) => { if (ev.target.id === "fechar-saco") { sacoAberto = false; desenhar(); } };
+  const pedir = document.getElementById("pedir");
+  if (pedir) pedir.onclick = () => { if (!itensSaco().length) { sacoAberto = true; desenhar(); return; } e.pedidos.unshift({ id:Date.now(), cliente:"Cliente da vitrine", total:totalSaco(), pago:false }); carrinho={}; sacoAberto=false; salvar(); };
+  document.querySelectorAll("[data-pago]").forEach(b => b.onclick = () => { e.pedidos = e.pedidos.map(p => p.id===Number(b.dataset.pago)?{...p,pago:b.dataset.v==="1"}:p); salvar(); });
+}
+desenhar();
+</script>
+</body>
+</html>
