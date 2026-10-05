@@ -114,30 +114,30 @@ export default function CasaFacil({ d, salvarPeca, registrarVenda, quitarVenda, 
   return (
     <div className="vf">
       <style>{`
-        .vf{min-height:100%;background:#0E1A33;color:#F4F1EA;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
+        .vf{min-height:100%;background:#F4F0E8;color:#3A2428;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
         .vf-topo{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 6px}
-        .vf-logo{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#0E1A33}
+        .vf-logo{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#F4F0E8}
         .vf-nome{font-size:20px;letter-spacing:-.04em;font-weight:650}
         .vf-sub{color:var(--tinta-cl);font-size:12px}
         .vf main{padding:8px 18px 108px}
         .vf h1{font-size:30px;line-height:1.12;letter-spacing:-.04em;font-weight:560;margin:8px 0}
         .vf p{color:var(--tinta-cl);line-height:1.4}
         .vf button,.vf input,.vf select{font:inherit;font-size:16px}
-        .vf-acao{min-height:50px;width:100%;border:0;border-radius:13px;background:#C6A15B;color:#0E1A33;font-weight:650}
+        .vf-acao{min-height:50px;width:100%;border:0;border-radius:13px;background:#6E2433;color:#F4F0E8;font-weight:650}
         .vf-fantasma{min-height:48px;width:100%;margin-top:8px;border:1px solid var(--linha);border-radius:13px;background:transparent;color:var(--tinta-cl)}
         .vf-campo{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
         .vf-campo span{font-size:13px;color:var(--tinta-cl)}
-        .vf-campo input,.vf-campo select{min-height:48px;border:1px solid #2A4068;border-radius:12px;background:#132544;padding:0 12px;color:#F4F1EA}
-        .vf-card{background:#132544;border:1px solid #2A4068;border-radius:16px;padding:4px 14px}
+        .vf-campo input,.vf-campo select{min-height:48px;border:1px solid #E4D5CF;border-radius:12px;background:#FFFDF9;padding:0 12px;color:#3A2428}
+        .vf-card{background:#FFFDF9;border:1px solid #E4D5CF;border-radius:16px;padding:4px 14px}
         .vf-peca{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--linha)}
         .vf-peca:last-child{border-bottom:0}
         .vf-foto{width:56px;height:56px;border-radius:12px;background:var(--bege-2);flex:0 0 auto;background-size:cover;background-position:center}
-        .vf-aviso{background:#17305C;color:#F4F1EA;border-radius:14px;padding:12px 14px;margin:12px 0}
-        .vf-abas{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid #2A4068;background:#0E1A33;padding-bottom:env(safe-area-inset-bottom)}
+        .vf-aviso{background:#F7EFEA;color:#3A2428;border-radius:14px;padding:12px 14px;margin:12px 0}
+        .vf-abas{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid #E4D5CF;background:#F4F0E8;padding-bottom:env(safe-area-inset-bottom)}
         .vf-abas button{min-height:56px;border:0;background:transparent;color:var(--tinta-cl)}
-        .vf-abas button.on{background:#17305C;color:#C6A15B;font-weight:700}
+        .vf-abas button.on{background:#F7EFEA;color:#6E2433;font-weight:700}
         .vf-menu{position:fixed;inset:0;background:rgba(43,26,29,.28);display:flex;justify-content:flex-end;z-index:30}
-        .vf-lado{width:min(320px,88%);height:100%;background:#0E1A33;padding:22px 18px}
+        .vf-lado{width:min(320px,88%);height:100%;background:#F4F0E8;padding:22px 18px}
         .vf-lado button{width:100%;text-align:left;min-height:48px;border:0;border-bottom:1px solid var(--linha);background:transparent;color:var(--tinta)}
       `}</style>
       <header className="vf-topo">
