@@ -580,6 +580,8 @@ const CSS = `
 /* atalhos rápidos do cabeçalho — agilidade no dia a dia */
 .oj-atalhos{display:flex;gap:7px;margin-top:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .oj-atalhos::-webkit-scrollbar{display:none}
+.oj-atalho-vender{background:var(--rose-brand);color:#fff;border-color:transparent}
+.oj-atalho-vender span{color:#fff}
 .oj-atalho{
   display:inline-flex;align-items:center;gap:6px;flex-shrink:0;
   padding:8px 14px;border-radius:100px;border:1px solid var(--linha);
@@ -2158,8 +2160,8 @@ export default function OrganizeJewelry() {
           <div className="topo">
             <Marca size={34} animar={false} />
             <div>
-              <div className="oj-nome-marca oj-serif" style={{ fontSize: 24 }}>
-                Luxi
+              <div className="oj-nome-marca oj-serif" style={{ fontSize: 22 }}>
+                Venda Fácil
               </div>
               <div className="oj-loja">parceira de {d.perfil.loja}</div>
             </div>
@@ -2176,10 +2178,10 @@ export default function OrganizeJewelry() {
             ? [
                 ["Meu trabalho", [
                   ["maleta", "Minha maleta", "As peças que estão comigo"],
-                  ["estoque", "Catálogo", "O que existe na loja"],
+                  ["estoque", "Peças", "Foto, preço e quantidade"],
                   ["vendas", "Minhas vendas", "O que eu vendi"],
                   ["clientes", "Minhas clientes", "Quem compra comigo"],
-                  ["catalogo", "Loja on-line", "Link para suas clientes"],
+                  ["catalogo", "Loja", "Link para o WhatsApp"],
                   ["lona", "Editar loja e pedidos", "Capa, preços e pedidos"],
                 ]],
                 ["Conta", [["perfil", "Minha conta", "Dados e acesso"]]],
@@ -2187,10 +2189,10 @@ export default function OrganizeJewelry() {
             : [
             ["Dia a dia", [
               ["painel", "Painel", "O mês em um olhar"],
-              ["estoque", "Estoque", "Peças e reposição"],
+              ["estoque", "Peças", "Foto, preço e quantidade"],
               ["vendas", "Vendas", "Histórico e recebimentos"],
               ["clientes", "Clientes", "Quem compra e quanto gasta"],
-              ["catalogo", "Loja on-line", "Link para suas clientes"],
+              ["catalogo", "Loja", "Link para o WhatsApp"],
               ["lona", "Editar loja e pedidos", "Capa, preços e pedidos"],
             ]],
             ["Equipe", [
@@ -2309,7 +2311,7 @@ export default function OrganizeJewelry() {
           </button>
           <Marca size={46} animar={false} />
           <div>
-            <div className="oj-nome-marca oj-serif">Luxi</div>
+            <div className="oj-nome-marca oj-serif">Venda Fácil</div>
             <div className="oj-loja">parceira de {d.perfil.loja}</div>
           </div>
           {/* Ação principal: vender — sempre à mão no cabeçalho */}
@@ -2325,23 +2327,22 @@ export default function OrganizeJewelry() {
           )}
         </div>
 
-        {/* Atalhos rápidos — os acessos do dia a dia, sem abrir o menu */}
-        {!ehConsultora && (
+        {/* Quatro portas do dia. Vender não troca de tela: abre a venda que já existe. */}
+        {!d.perfil?.mestre && (
           <div className="oj-atalhos" role="tablist">
             {[
-              ["painel", "Início", <path d="M3 11l9-8 9 8M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />],
-              ["estoque", "Peças", <><path d="M6 3h12l4 6-10 12L2 9z" /><path d="M2 9h20" /></>],
-              ["vendas", "Vendas", <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" />],
-              ["clientes", "Clientes", <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0113 0M16 5.5a3.5 3.5 0 010 6.5M22 20a6.5 6.5 0 00-4-6" /></>],
-            ].map(([k, rot, icone]) => (
+              ["painel", "Início", () => irPara("painel"), aba === "painel"],
+              ["estoque", "Peças", () => irPara("estoque"), aba === "estoque"],
+              ["vender", "Vender", () => { if (!somenteLeitura(d.perfil)) setModal({ tipo: "escolher-venda" }); }, false],
+              ["catalogo", "Loja", () => irPara("catalogo"), aba === "catalogo"],
+            ].map(([k, rot, acao, on]) => (
               <button
                 key={k}
-                className="oj-atalho"
-                data-tour-role={k === "painel" ? "inicio" : k === "estoque" ? "pecas" : k === "vendas" ? "vendas" : k === "clientes" ? "clientes" : undefined}
-                data-on={aba === k ? "1" : "0"}
-                onClick={() => irPara(k)}
+                className={"oj-atalho" + (k === "vender" ? " oj-atalho-vender" : "")}
+                data-tour-role={k === "painel" ? "inicio" : k === "estoque" ? "pecas" : k === "catalogo" ? "loja" : "vender"}
+                data-on={on ? "1" : "0"}
+                onClick={acao}
               >
-                <svg viewBox="0 0 24 24" className="oj-atalho-ico">{icone}</svg>
                 <span>{rot}</span>
               </button>
             ))}
@@ -2363,7 +2364,7 @@ export default function OrganizeJewelry() {
       </div>
 
       <Aviso d={d} irPara={irPara} />
-      {!somenteLeitura(d.perfil) && !d.perfil?.mestre && <RetrospectivaMes d={d} autoAbrir />}
+      {false && !somenteLeitura(d.perfil) && !d.perfil?.mestre && <RetrospectivaMes d={d} />}
 
       {onboardingOperacional && (
         <OnboardingOperacional
@@ -2428,7 +2429,7 @@ export default function OrganizeJewelry() {
 function Marca({ size = 132, animar = true }) {
   const a = (c) => (animar ? c : "");
   return (
-    <svg width={size} height={size} viewBox="0 0 120 120" aria-label="Luxi">
+    <svg width={size} height={size} viewBox="0 0 120 120" aria-label="Venda Fácil">
       <defs>
         <linearGradient id="rose" x1="0.1" y1="0.95" x2="0.9" y2="0.05">
           <stop offset="0%" stopColor="#A56B77" />
@@ -2477,8 +2478,8 @@ function Abertura({ saindo }) {
     <div className={"oj-splash" + (saindo ? " saindo" : "")}>
       <Marca size={250} />
       <div className="oj-wm">
-        <div className="n">Luxi</div>
-        <div className="assinatura">✦ Gestão Leve ✦</div>
+        <div className="n">Venda Fácil</div>
+        <div className="assinatura">a peça no WhatsApp</div>
       </div>
     </div>
   );
@@ -2837,8 +2838,8 @@ function Login({ onMestre, voltar, onEntrar, verPlanos, irCadastro, onDemo, loja
             ) : (
               <>
                 <Marca size={88} animar={false} />
-                <div className="oj-login-nome">Luxi</div>
-                <div className="oj-login-tag">Gestão Leve</div>
+                <div className="oj-login-nome">Venda Fácil</div>
+                <div className="oj-login-tag">no WhatsApp</div>
               </>
             )}
             <div className="oj-login-sub">
@@ -2846,9 +2847,9 @@ function Login({ onMestre, voltar, onEntrar, verPlanos, irCadastro, onDemo, loja
                 `Que bom te ver de novo`
               ) : (
                 <>
-                  A leveza na gestão
+                  Manda a peça.
                   <br />
-                  que faz o seu negócio brilhar.
+                  Registra a venda.
                 </>
               )}
             </div>
