@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import * as dados from "./dados.js";
 import Lona from "./Lona.jsx";
 import { AjudaLuxi, MensagemDoDia } from "./ajuda/Ajuda.jsx";
+import CasaFacil from "./CasaFacil.jsx";
 import LojaOnline from "./LojaOnline.jsx";
 import RetrospectivaMes from "./RetrospectivaMes.jsx";
 import { analisarLoja } from "./conselheiraEngine.js";
@@ -2117,6 +2118,31 @@ export default function OrganizeJewelry() {
           setTela("login");
         }}
       />
+    );
+  }
+
+  if (!d.perfil?.mestre) {
+    return (
+      <div className="oj" data-theme={tema}>
+        <style>{CSS}</style>
+        <CasaFacil
+          d={d}
+          salvarPeca={salvarPeca}
+          registrarVenda={registrarVendaPeca}
+          quitarVenda={quitarVendaConfianca}
+          recarregar={recarregar}
+          abrirRomaneio={() => setModal({ tipo: "romaneio" })}
+          sair={async () => {
+            try { await dados.auth.sair(); } catch (e) { console.error("Falha ao sair", e); }
+            setContaLogada(false);
+            setD(VAZIO);
+            setTela("login");
+          }}
+        />
+        {modal?.tipo === "romaneio" && (
+          <Romaneio d={d} recarregar={recarregar} criarColecao={criarColecao} fechar={() => setModal(null)} />
+        )}
+      </div>
     );
   }
 
