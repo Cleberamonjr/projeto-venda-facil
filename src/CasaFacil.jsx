@@ -33,6 +33,8 @@ export default function CasaFacil({ d, salvarPeca, registrarVenda, quitarVenda, 
   const [ocupado, setOcupado] = useState(false);
   const [nome, setNome] = useState("");
   const [preco, setPreco] = useState("");
+  const [custo, setCusto] = useState("");
+  const [descricao, setDescricao] = useState("");
   const [foto, setFoto] = useState("");
   const [quem, setQuem] = useState("");
   const [pago, setPago] = useState("Dinheiro");
@@ -45,6 +47,7 @@ export default function CasaFacil({ d, salvarPeca, registrarVenda, quitarVenda, 
 
   const criar = async () => {
     const venda = Number(String(preco).replace(",", "."));
+    const pago = Number(String(custo).replace(",", ".")) || 0;
     if (!nome.trim() || !venda) return;
     setOcupado(true);
     setAviso("");
@@ -55,10 +58,14 @@ export default function CasaFacil({ d, salvarPeca, registrarVenda, quitarVenda, 
         qtd: 1,
         custo: 0,
         venda,
+        custo: pago,
+        descricao,
         fotos: foto ? [foto] : [],
       });
       setNome("");
       setPreco("");
+      setCusto("");
+      setDescricao("");
       setFoto("");
       setAviso("Peça no estoque.");
       if (porta === "primeira") setPorta("mandar");
@@ -199,8 +206,11 @@ export default function CasaFacil({ d, salvarPeca, registrarVenda, quitarVenda, 
     return (
       <>
         <label className="vf-campo"><span>Nome</span><input value={nome} placeholder="Colar Riviera" onChange={(ev) => setNome(ev.target.value)} /></label>
-        <label className="vf-campo"><span>Preço de venda</span><input inputMode="decimal" value={preco} placeholder="70" onChange={(ev) => setPreco(ev.target.value)} /></label>
+        <label className="vf-campo"><span>Descrição</span><input value={descricao} placeholder="O que a cliente precisa saber" onChange={(ev) => setDescricao(ev.target.value)} /></label>
+        <label className="vf-campo"><span>Quanto pagou</span><input inputMode="decimal" value={custo} placeholder="28" onChange={(ev) => setCusto(ev.target.value)} /></label>
+        <label className="vf-campo"><span>Por quanto vai vender</span><input inputMode="decimal" value={preco} placeholder="70" onChange={(ev) => setPreco(ev.target.value)} /></label>
         <label className="vf-campo"><span>Foto</span><input type="file" accept="image/*" onChange={async (ev) => { const f = ev.target.files && ev.target.files[0]; if (f) setFoto(await lerFoto(f)); }} /></label>
+        {foto ? <img src={foto} alt="" style={{ width:"100%", height:180, objectFit:"cover", borderRadius:12, marginBottom:12 }} /> : null}
         <button className="vf-acao" disabled={ocupado} onClick={criar}>{ocupado ? "Salvando…" : "Salvar peça"}</button>
       </>
     );
@@ -261,17 +271,15 @@ export default function CasaFacil({ d, salvarPeca, registrarVenda, quitarVenda, 
   }
 
   function painel() {
-    const vendas = d.vendas || [];
-    const recebido = vendas.filter((v) => v.pago).reduce((s, v) => s + Number(v.valor || 0), 0);
-    const aberto = deve.reduce((s, v) => s + Number(v.valor || 0), 0);
+    const investido = pecas.reduce((s, p) => s + Number(p.custo || 0) * Number(p.qtd || 0), 0);
+    const aVenda = pecas.reduce((s, p) => s + Number(p.venda || 0) * Number(p.qtd || 0), 0);
     return (
       <>
         <h1>Painel</h1>
-        <p>O mês, sem sair da casa.</p>
-        <div className="vf-aviso"><b>{pecas.length} peças</b><div>à venda agora</div></div>
-        <div className="vf-aviso"><b>{brl(recebido)}</b><div>{vendas.filter((v) => v.pago).length} vendas recebidas</div></div>
-        <div className="vf-aviso"><b>{brl(aberto)}</b><div>{deve.length} na confiança</div></div>
-        {deve.length ? <button className="vf-acao" onClick={() => setPorta("cobrar")}>Cobrar</button> : null}
+        <p>Quanto pagou e por quanto vende.</p>
+        <div className="vf-aviso"><b>{brl(investido)}</b><div>Você pagou nas peças</div></div>
+        <div className="vf-aviso"><b>{brl(aVenda)}</b><div>Se vender tudo</div></div>
+        <div className="vf-aviso"><b>{brl(aVenda - investido)}</b><div>Lucro previsto</div></div>
       </>
     );
   }
