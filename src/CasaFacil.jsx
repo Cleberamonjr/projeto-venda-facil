@@ -126,7 +126,7 @@ export default function CasaFacil({ d, salvarPeca, registrarVenda, quitarVenda, 
         .vf-peca:last-child{border-bottom:0}
         .vf-foto{width:56px;height:56px;border-radius:12px;background:var(--bege-2);flex:0 0 auto;background-size:cover;background-position:center}
         .vf-aviso{background:#17305C;color:#F4F1EA;border-radius:14px;padding:12px 14px;margin:12px 0}
-        .vf-abas{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #2A4068;background:#0E1A33;padding-bottom:env(safe-area-inset-bottom)}
+        .vf-abas{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid #2A4068;background:#0E1A33;padding-bottom:env(safe-area-inset-bottom)}
         .vf-abas button{min-height:56px;border:0;background:transparent;color:var(--tinta-cl)}
         .vf-abas button.on{background:#17305C;color:#C6A15B;font-weight:700}
         .vf-menu{position:fixed;inset:0;background:rgba(43,26,29,.28);display:flex;justify-content:flex-end;z-index:30}
@@ -172,10 +172,11 @@ export default function CasaFacil({ d, salvarPeca, registrarVenda, quitarVenda, 
         {porta === "vender" ? venderTela() : null}
         {porta === "loja" ? <LojaOnline d={d} irPara={() => setPorta("pecas")} recarregar={recarregar} /> : null}
         {porta === "cobrar" ? cobrar() : null}
+        {porta === "painel" ? painel() : null}
       </main>
       {porta !== "primeira" && porta !== "mandar" ? (
         <nav className="vf-abas">
-          {[["inicio", "Início"], ["pecas", "Peças"], ["vender", "Vender"], ["loja", "Loja"]].map(([id, rot]) => (
+          {[["inicio", "Início"], ["pecas", "Peças"], ["vender", "Vender"], ["loja", "Loja"], ["painel", "Painel"]].map(([id, rot]) => (
             <button key={id} className={porta === id ? "on" : ""} onClick={() => { setAviso(""); setPorta(id); }}>{rot}</button>
           ))}
         </nav>
@@ -255,6 +256,22 @@ export default function CasaFacil({ d, salvarPeca, registrarVenda, quitarVenda, 
           </select>
         </label>
         <button className="vf-acao" disabled={ocupado} onClick={vender}>Registrar venda</button>
+      </>
+    );
+  }
+
+  function painel() {
+    const vendas = d.vendas || [];
+    const recebido = vendas.filter((v) => v.pago).reduce((s, v) => s + Number(v.valor || 0), 0);
+    const aberto = deve.reduce((s, v) => s + Number(v.valor || 0), 0);
+    return (
+      <>
+        <h1>Painel</h1>
+        <p>O mês, sem sair da casa.</p>
+        <div className="vf-aviso"><b>{pecas.length} peças</b><div>à venda agora</div></div>
+        <div className="vf-aviso"><b>{brl(recebido)}</b><div>{vendas.filter((v) => v.pago).length} vendas recebidas</div></div>
+        <div className="vf-aviso"><b>{brl(aberto)}</b><div>{deve.length} na confiança</div></div>
+        {deve.length ? <button className="vf-acao" onClick={() => setPorta("cobrar")}>Cobrar</button> : null}
       </>
     );
   }
