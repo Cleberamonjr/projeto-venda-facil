@@ -2073,7 +2073,7 @@ export default function OrganizeJewelry() {
     painel: ["Sua loja hoje", "Um resumo de como as coisas estão"],
     estoque: ["Suas peças", "Tudo que você tem e o que tá parado na gaveta"],
     vendas: ["Suas vendas", "O que já vendeu e o que ainda vão te pagar"],
-    conselho: ["Dicas pra você", "O que seus números estão pedindo agora"],
+    conselho: ["A Conselheira", "O que seus números estão pedindo agora"],
     catalogo: ["Sua loja on-line", "O link para suas clientes verem as peças e pedirem"],
     lona: ["Editar loja e pedidos", "Capa, preços, Pix e os pedidos das clientes"],
     clientes: ["Suas clientes", "Quem compra sempre, quem sumiu e quem deve"],
@@ -2097,7 +2097,7 @@ export default function OrganizeJewelry() {
         ["painel", "Painel"],
         ["estoque", "Estoque"],
         ["vendas", "Vendas"],
-        ["conselho", "Conselho"],
+        ["conselho", "Conselheira"],
       ];
   const temEquipe = !ehConsultora && ["crescimento", "joalheria", "inteligencia"].includes(planoAtivo(d.perfil).id);
 
@@ -4749,6 +4749,8 @@ function Painel({ d, dentro, irPara }) {
   const ticketMedio = qtdVendas > 0 ? receita / qtdVendas : 0;
   const margemPct   = receita > 0 ? Math.round((lucro / receita) * 100) : 0;
   const semNada     = !d.estoque.length && !d.vendas.length;
+  const leituraConselheira = useMemo(() => analisarLoja(d), [d]);
+  const principalConselheira = leituraConselheira.recomendacoes?.[0];
 
   return (
     <>
@@ -4802,6 +4804,41 @@ function Painel({ d, dentro, irPara }) {
           <div className={"oj-metrica-val " + (aReceberVal > 0 ? "alerta" : "")}>{brl(aReceberVal)}</div>
           <div className="oj-metrica-sub">{receber.length > 0 ? `${receber.length} no fiado` : "tudo em dia"}</div>
         </div>
+      </div>
+
+      {/* Conselheira — sempre visível no painel, sem exigir que a dona descubra a aba. */}
+      <div className="oj-card" style={{
+        border: "1.5px solid var(--rose-metal)",
+        background: "linear-gradient(135deg, var(--bege), var(--rose-cl))",
+        boxShadow: "0 6px 20px rgba(165,107,119,.10)"
+      }}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:38,height:38,borderRadius:"50%",background:"var(--rose)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>✦</div>
+          <div>
+            <div className="oj-lbl" style={{color:"var(--rose-esc)"}}>A CONSELHEIRA</div>
+            <div style={{fontSize:19,fontWeight:600,marginTop:2}}>O que eu faria agora</div>
+          </div>
+        </div>
+        <div className="oj-meta" style={{marginTop:10,lineHeight:1.55}}>
+          {leituraConselheira.mensagem.texto}
+        </div>
+        {principalConselheira && (
+          <div style={{marginTop:12,background:"rgba(255,255,255,.72)",border:"1px solid var(--linha)",borderRadius:14,padding:13}}>
+            <div style={{fontSize:15,fontWeight:600,lineHeight:1.35}}>{principalConselheira.titulo}</div>
+            <div className="oj-meta" style={{marginTop:5,lineHeight:1.5}}>{principalConselheira.resumo}</div>
+            <button className="oj-btn sec mini" style={{marginTop:10}} onClick={() => {
+              if (principalConselheira.id === "reativacao-clientes") return irPara("clientes", { foco:"reativar", clientes:principalConselheira.dados?.clientes || [] });
+              if (principalConselheira.id === "estoque-parado") return irPara("estoque", { foco:"estoque-parado", produtos:principalConselheira.dados?.produtos || [] });
+              if (principalConselheira.id === "repor-campeao") return irPara("estoque", { foco:"repor", produtos:principalConselheira.dados?.produto ? [principalConselheira.dados.produto] : [] });
+              return irPara(principalConselheira.destino || "conselho");
+            }}>
+              {principalConselheira.acao || "Ver recomendação"} ›
+            </button>
+          </div>
+        )}
+        <button className="oj-link-sutil" style={{marginTop:8}} onClick={() => irPara("conselho")}>
+          Ver tudo que a Conselheira está observando
+        </button>
       </div>
 
       {/* Convite quando a loja está zerada */}
