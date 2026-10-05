@@ -166,9 +166,21 @@ export function mensagemDeHoje(data = new Date()) {
   return MENSAGENS_DO_DIA[dias % MENSAGENS_DO_DIA.length];
 }
 
+const ELOGIOS = [
+  "Você está no comando",
+  "Que olhar de dona",
+  "Seu cuidado aparece",
+  "Você faz isso com brilho",
+  "Que presença",
+  "Você sabe o que a loja precisa",
+  "Isso aqui tem a sua marca",
+  "Você conduz com leveza",
+];
+
+/* Elogio do dia, o mesmo o dia inteiro. Sem bom dia, boa tarde ou boa noite. */
 export function saudacao(data = new Date()) {
-  const h = data.getHours();
-  return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+  const dias = Math.floor(Date.UTC(data.getFullYear(), data.getMonth(), data.getDate()) / 86400000);
+  return ELOGIOS[dias % ELOGIOS.length];
 }
 
 export const hojeChave = (data = new Date()) =>

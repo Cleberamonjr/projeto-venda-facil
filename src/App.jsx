@@ -1154,6 +1154,7 @@ function dadosDemo() {
     consultoras: cons,
     vendas: [
       venda(1, 2, "Dinheiro", "Márcia Lopes", 3, true, 1),
+      { id: id(), pecaId: estoque[6].id, codigo: "KIT-5623", nome: "Coleção vitrine", qtd: 1, valor: 6200, custo: 420.5, modalidade: "Dinheiro", cliente: "Pedido da loja", pago: true, consultoraId: cons[0].id, data: atras(1) },
       venda(4, 1, "Crédito", "Bianca Reis", 5, true, 0),
       venda(8, 3, "Débito", "", 6, true, 2),
       venda(3, 1, CONFIANCA, "Cleusa Martins", 9, false, 1),
@@ -1338,7 +1339,7 @@ export default function OrganizeJewelry() {
     });
   };
   const [modal, setModal] = useState(null);
-  const [periodo, setPeriodo] = useState("mes");
+  const [periodo, setPeriodo] = useState("tudo");
   const [de, setDe] = useState("");
   const [ate, setAte] = useState("");
   // true = existe sessão Supabase válida (mesmo que ainda sem loja criada)
@@ -3430,7 +3431,8 @@ function LojaSuporte({ loja, voltar, pedirSenha, aoExcluida }) {
   const restam = ate ? Math.ceil((ate.getTime() - Date.now()) / 864e5) : null;
   const situacao =
     a.status === "ativa" ? ["assinatura paga", "oj-estado ativo"]
-    : a.status === "trial" && restam > 0 ? [`teste/beta · restam ${restam} dia(s)`, "oj-estado beta"]
+    : a.status === "trial" && restam > 0 && restam <= 7 ? [`teste/beta · restam ${restam} dia(s)`, "oj-estado beta"]
+    : a.status === "trial" && restam > 7 ? ["teste/beta", "oj-estado beta"]
     : a.status ? ["teste encerrado", "oj-estado vencido"] : ["sem assinatura", "oj-estado neutro"];
   const zap = String(l.whatsapp || "").replace(/\D/g, "");
   const dias = dado.dias || [];
@@ -4069,11 +4071,13 @@ function Aviso({ d, irPara }) {
       </div>
     );
 
-  if (emTeste(p))
+  if (emTeste(p)) {
+    const horas = horasRestantes(p);
+    const perto = horas <= 7 * 24;
     return (
       <div className="oj-aviso">
-        <b>Faltam {tempoRestante(horasRestantes(p))}</b> do seu teste. Você está com o{" "}
-        {plano.nome} completo: {plano.itens[1].toLowerCase()} e{" "}
+        {perto ? <><b>Faltam {tempoRestante(horas)}</b> do seu teste. </> : null}
+        Você está com o {plano.nome} completo: {plano.itens[1].toLowerCase()} e{" "}
         {plano.itens[2].toLowerCase()}. Quando o teste acabar, isso sai do ar — o
         cadastro fica.
         {pagamentoAberto && (
@@ -4083,6 +4087,7 @@ function Aviso({ d, irPara }) {
         )}
       </div>
     );
+  }
 
   if (!p.assinado)
     return (
@@ -4117,10 +4122,10 @@ function Filtro({ periodo, setPeriodo, de, ate, setDe, setAte }) {
     <>
       <div className="oj-chips">
         {[
+          ["tudo", "Tudo"],
           ["7", "7 dias"],
           ["mes", "Este mês"],
           ["custom", "Escolher datas"],
-          ["tudo", "Tudo"],
         ].map(([k, r]) => (
           <button
             key={k}

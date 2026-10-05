@@ -314,7 +314,7 @@ export function MensagemDoDia({ pausar = false }) {
       <div className="aj-folha aj-dia" role="dialog" aria-modal="true" aria-labelledby="aj-dia-titulo" onClick={(e) => e.stopPropagation()}>
         <h2 id="aj-dia-titulo">{saudacao()}!</h2>
         <p className="aj-dia-msg">{mensagemDeHoje()}</p>
-        <button type="button" className="aj-bt aj-bt--forte aj-cheio" onClick={fechar} autoFocus>Começar o meu dia</button>
+        <button type="button" className="aj-bt aj-bt--forte aj-cheio" onClick={fechar} autoFocus>Continuar</button>
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ const dias = Array.from({ length: 31 }, (_, i) => mensagemDeHoje(new Date(2026, 
 t(dias.every((m, i) => i === 0 || m !== dias[i - 1]), 'dois dias seguidos nunca têm a mesma mensagem');
 t(new Set(dias).size === 31, '31 dias seguidos usam 31 mensagens diferentes');
 t(mensagemDeHoje(new Date(2026, 9, 4, 8)) === mensagemDeHoje(new Date(2026, 9, 4, 22)), 'no mesmo dia a mensagem é a mesma (de manhã ou à noite)');
-t(saudacao(new Date(2026, 9, 4, 8)) === 'Bom dia' && saudacao(new Date(2026, 9, 4, 14)) === 'Boa tarde' && saudacao(new Date(2026, 9, 4, 21)) === 'Boa noite', 'saudação muda com a hora');
+t(saudacao(new Date(2026, 9, 4, 8)) === saudacao(new Date(2026, 9, 4, 21)) && !/bom dia|boa tarde|boa noite/i.test(saudacao(new Date(2026, 9, 4, 8))), 'saudação é elogio e não muda com a hora');
 t(hojeChave(new Date(2026, 0, 5)) === '2026-01-05', 'chave do dia no formato certo');
 t(LICOES.length >= 7, 'há pelo menos 7 lições');
 t(LICOES.every((l) => l.id && l.titulo && l.resumo && l.minutos > 0 && l.passos.length >= 3), 'toda lição tem título, resumo, tempo e ao menos 3 passos');
