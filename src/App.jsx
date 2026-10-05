@@ -21,7 +21,7 @@ const CSS = `
 
 :root{
   /* fundo leve, quase branco com toque rosado — como o fundo do logo */
-  --bege:#FBF8F9;
+  --bege:#0E1A33;
   --bege-2:#F5EEF0;
   --linha:#EDE0E4;
   /* rosé metálico do logo Luxi */
@@ -29,7 +29,7 @@ const CSS = `
   --rose-esc:#A56B77;
   --rose-cl:#F7EBEE;
   --rose-metal:#CE9AA0;
-  --rose-brand:#C48A94;
+  --rose-brand:#C6A15B;
   /* valores em azul-marinho, para contraste de leitura */
   --dourado:#1E3358;
   --marinho:#1E3358;
@@ -51,7 +51,7 @@ const CSS = `
   --border:#5A2C30; --card-bg:#3A1B1F; --card-border:#70383D;
   --tx-hi:#F3E7E6; --tx-mid:#D9B9B8; --tx-lo:#B08D8C; --tx-dis:#7A5A59;
   --rose:#BD535B; --rose-fill:#5A2226; --gold:#C7CDD1; --green:#6FAE85;
-  --rose-brand:#C48A94;
+  --rose-brand:#C6A15B;
   --bege:var(--bg-0); --bege-2:var(--bg-2); --linha:var(--border);
   --tinta:var(--tx-hi); --tinta-cl:var(--tx-mid); --rose-cl:var(--rose-fill);
   --rose-esc:var(--rose); --rose-metal:var(--rose-brand); --rose-btn:var(--rose); --rose-btn-h:#C8666E;
