@@ -8828,9 +8828,7 @@ ${linkLona}`
           `${p.nome}${p.banho ? ` · ${p.banho}` : ""}
 Cód. ${p.codigo} — ${brl(p.venda)}`
       )
-      .join("
-
-") +
+      .join("\n\n") +
     `
 
 Me chame para garantir a sua.`;
@@ -9252,7 +9250,8 @@ function Contas({ d, salvar, dentro, criarDespesa, removerDespesa, quitarVenda, 
 
 /* ---------------- vendas ---------------- */
 function Vendas({ d, dentro, quitarVenda, contexto }) {
-  const idsVendasFoco = new Set((contexto?.vendas || []).map((v) => String(v.id || "").trim()));\n  const lista = d.vendas.filter((v) => dentro(v.data)).filter((v) => contexto?.foco === "vendas" ? (!idsVendasFoco.size || idsVendasFoco.has(String(v.id || "").trim())) : true).reverse();
+  const idsVendasFoco = new Set((contexto?.vendas || []).map((v) => String(v.id || "").trim()));
+  const lista = d.vendas.filter((v) => dentro(v.data)).filter((v) => contexto?.foco === "vendas" ? (!idsVendasFoco.size || idsVendasFoco.has(String(v.id || "").trim())) : true).reverse();
   const quem = (cid) => (d.consultoras || []).find((c) => c.id === cid)?.nome;
   const [quitandoId, setQuitandoId] = useState(null);
   const [erro, setErro] = useState("");

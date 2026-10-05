@@ -8,6 +8,21 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+/* PostgREST corta lista sem range (padrão 1.000). Lê em páginas de 1.000
+   até a página vir curta, então a carga não perde peça, venda ou cliente. */
+const PAGINA = 1000;
+async function lerTudo(consulta) {
+  const tudo = [];
+  for (let inicio = 0; ; inicio += PAGINA) {
+    const { data, error } = await consulta().range(inicio, inicio + PAGINA - 1);
+    if (error) return { data: null, error };
+    const lote = data || [];
+    tudo.push(...lote);
+    if (lote.length < PAGINA) return { data: tudo, error: null };
+  }
+}
+
+
 export const sb = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY,
@@ -318,18 +333,18 @@ export async function carregarTudo() {
 
   const [assin, cons, ent, pec, mal, mit, ven, sai, des, cli, col, rec] = await comTimeout(Promise.all([
     sb.from("assinaturas").select("*").eq("loja_id", loja.id).maybeSingle(),
-    sb.from("consultoras").select("*").eq("loja_id", loja.id),
-    sb.from("entradas").select("*").eq("loja_id", loja.id),
-    sb.from("pecas").select("*").eq("loja_id", loja.id),
-    sb.from("maletas").select("*").eq("loja_id", loja.id),
-    sb.from("maleta_itens").select("*"),
-    sb.from("vendas").select("*").eq("loja_id", loja.id),
-    sb.from("saidas").select("*").eq("loja_id", loja.id),
-    sb.from("despesas").select("*").eq("loja_id", loja.id),
-    sb.from("clientes").select("*").eq("loja_id", loja.id),
-    sb.from("colecoes").select("*").eq("loja_id", loja.id),
-    sb.from("contas_receber").select("*").eq("loja_id", loja.id),
-  ]), 12000, "carregar dados da loja");
+    lerTudo(() => sb.from("consultoras").select("*").eq("loja_id", loja.id)),
+    lerTudo(() => sb.from("entradas").select("*").eq("loja_id", loja.id)),
+    lerTudo(() => sb.from("pecas").select("*").eq("loja_id", loja.id)),
+    lerTudo(() => sb.from("maletas").select("*").eq("loja_id", loja.id)),
+    lerTudo(() => sb.from("maleta_itens").select("*")),
+    lerTudo(() => sb.from("vendas").select("*").eq("loja_id", loja.id)),
+    lerTudo(() => sb.from("saidas").select("*").eq("loja_id", loja.id)),
+    lerTudo(() => sb.from("despesas").select("*").eq("loja_id", loja.id)),
+    lerTudo(() => sb.from("clientes").select("*").eq("loja_id", loja.id)),
+    lerTudo(() => sb.from("colecoes").select("*").eq("loja_id", loja.id)),
+    lerTudo(() => sb.from("contas_receber").select("*").eq("loja_id", loja.id)),
+  ]), 25000, "carregar dados da loja");
 
   const respostas = [assin, cons, ent, pec, mal, mit, ven, sai, des, cli, col, rec];
   const falha = respostas.find((x) => x && x.error);
