@@ -5519,6 +5519,9 @@ function Estoque({ d, salvarPeca, arquivarOuExcluirPeca, registrarSaidaPeca, cri
       throw e;
     }
   };
+  const focoEstoque = contexto?.foco === "estoque-parado" || contexto?.foco === "repor";
+  const idsFoco = new Set((contexto?.produtos || []).map((p) => String(p.id || p.codigo || "").trim()));
+
   const lista = d.estoque
     .filter((p) => !p.arquivada && p.qtd > 0)
     .filter((p) =>
