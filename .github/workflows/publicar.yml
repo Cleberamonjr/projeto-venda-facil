@@ -1,0 +1,38 @@
+name: Publicar Luxi
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      VITE_SUPABASE_URL: https://eraxjtfedswksiyigasf.supabase.co
+      VITE_SUPABASE_ANON_KEY: sb_publishable_n4NDtzQFfOU3f2p2RFUvVQ_ZLqtFmsx
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar build e testes
+        run: npm run verificar
+
+      - name: Publicar no repositório do site
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN || secrets.LUXI_SOURCE_TOKEN }}
+        run: npm run publicar -- "corrige publicação com variáveis do Supabase"
+
